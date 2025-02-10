@@ -1,11 +1,5 @@
-import {
-  AnalyticalAreaType,
-  ChoroplethMode,
-  SourceStatsByBoundaryQuery,
-  SourceStatsByBoundaryQueryVariables,
-} from '@/__generated__/graphql'
+import { AnalyticalAreaType } from '@/__generated__/graphql'
 import { useReport } from '@/lib/map/useReport'
-import { useQuery } from '@apollo/client'
 import {
   ColumnDef,
   getCoreRowModel,
@@ -14,7 +8,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { SpecificViewConfig, ViewType } from '../reportContext'
-import { CHOROPLETH_STATS_FOR_SOURCE } from '../useDataByBoundary'
+import { useTableDataByBoundary } from '../useDataByBoundary'
 
 import { flexRender } from '@tanstack/react-table'
 
@@ -37,6 +31,7 @@ import {
 } from '@/components/ui/table'
 import { useExplorer } from '@/lib/map/useExplorer'
 import { useView } from '@/lib/map/useView'
+import { allKeysFromAllData } from '@/lib/utils'
 import { ArrowUpDown, LucideBoxSelect, Settings2, Star } from 'lucide-react'
 import pluralize from 'pluralize'
 import { useMemo } from 'react'
@@ -116,109 +111,90 @@ function TableDisplay({
 }) {
   const report = useReport()
   const explorer = useExplorer()
-  const data = useDataByBoundaryForTable(
-    sourceId,
-    tableView.tableOptions.groupBy.area
-  )
+  const data = useTableDataByBoundary(tableView)
   const view = useView(ViewType.Table)
 
-  const rows = useMemo(
-    () =>
-      data.data?.choroplethDataForSource.map((d) => {
-        // zip up the columns and the row data
-        return d.columns
-          ? Object.fromEntries(d.columns.map((col, i) => [col, d.row[i + 1]]))
-          : {}
-      }) || [],
-    [data]
-  )
+  const rows = data.data?.statistics
+    ? Array.isArray(data.data?.statistics)
+      ? data.data.statistics
+      : [data.data.statistics]
+    : []
+
+  const columnHeaders = useMemo(() => allKeysFromAllData(rows), [data, rows])
 
   const columns = useMemo(
     () =>
-      data.data?.choroplethDataForSource[0].columns
-        ?.filter((h) => {
-          // Remove columns
-          return ![
-            // 'gss',
-            // 'label',
-            'geography',
-            'geography code',
-            'geography name',
-          ].includes(h)
-        })
-        .reduce(
-          (array, col) => {
-            array.push({
-              accessorKey: col,
-              accessorFn: (row) => row[col],
-              header: ({ column }) => {
-                return (
+      columnHeaders.reduce(
+        (array, col) => {
+          array.push({
+            accessorKey: col,
+            accessorFn: (row) => row[col],
+            header: ({ column }) => {
+              return (
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    column.toggleSorting(column.getIsSorted() === 'asc')
+                  }
+                >
+                  {col}
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+              )
+            },
+            cell: (row) => (
+              <div className="truncate max-w-xs">{String(row.getValue())}</div>
+            ),
+          } satisfies ColumnDef<{ [key: string]: string }>)
+          return array
+        },
+        [
+          {
+            id: 'groupBy',
+            enablePinning: true,
+            accessorKey: 'groupBy',
+            accessorFn: (row) => row['gss'],
+            header: ({ column }) => {
+              return (
+                <div
+                  className={twMerge(
+                    'font-semibold text-md',
+                    column.getIsPinned() ? 'w-[200px]' : ''
+                  )}
+                >
                   <Button
                     variant="ghost"
                     onClick={() =>
                       column.toggleSorting(column.getIsSorted() === 'asc')
                     }
                   >
-                    {col}
+                    Area
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
-                )
-              },
-              cell: (row) => (
-                <div className="truncate max-w-xs">
-                  {String(row.getValue())}
                 </div>
-              ),
-            } satisfies ColumnDef<{ [key: string]: string }>)
-            return array
-          },
-          [
-            {
-              id: 'groupBy',
-              enablePinning: true,
-              accessorKey: 'groupBy',
-              accessorFn: (row) => row['gss'],
-              header: ({ column }) => {
-                return (
-                  <div
-                    className={twMerge(
-                      'font-semibold text-md',
-                      column.getIsPinned() ? 'w-[200px]' : ''
-                    )}
-                  >
-                    <Button
-                      variant="ghost"
-                      onClick={() =>
-                        column.toggleSorting(column.getIsSorted() === 'asc')
-                      }
-                    >
-                      Area
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                )
-              },
-              cell: ({ row, column }) => (
-                // Render the label key with a href to the gss key
-                <div
-                  className={twMerge(
-                    'font-semibold text-md flex flex-row gap-2 items-center justify-start truncate',
-                    column.getIsPinned() ? 'w-[250px]' : ''
-                  )}
-                >
-                  {report.isStarred({
-                    entity: 'area',
-                    id: row.getValue('gss'),
-                  }) ? (
-                    <Star className="h-4 w-4 text-meepGray-300 shrink-0 grow-0" />
-                  ) : undefined}
-                  {row.getValue('label')}
-                </div>
-              ),
+              )
             },
-          ] as ColumnDef<{ [key: string]: string }>[]
-        ) || [],
-    [data]
+            cell: ({ row, column }) => (
+              // Render the label key with a href to the gss key
+              <div
+                className={twMerge(
+                  'font-semibold text-md flex flex-row gap-2 items-center justify-start truncate',
+                  column.getIsPinned() ? 'w-[250px]' : ''
+                )}
+              >
+                {report.isStarred({
+                  entity: 'area',
+                  id: row.getValue('gss'),
+                }) ? (
+                  <Star className="h-4 w-4 text-meepGray-300 shrink-0 grow-0" />
+                ) : undefined}
+                {row.getValue('label')}
+              </div>
+            ),
+          },
+        ] as ColumnDef<{ [key: string]: string }>[]
+      ) || [],
+    [columnHeaders, data, rows]
   )
 
   const table = useReactTable({
@@ -268,7 +244,7 @@ function TableDisplay({
             {pluralize(
               // area type
               toSpaceCase(tableView.tableOptions.groupBy.area),
-              data.data.choroplethDataForSource.length,
+              rows.length,
               true
             )}
           </h1>
@@ -366,21 +342,4 @@ function TableDisplay({
       </div>
     </>
   )
-}
-
-export const useDataByBoundaryForTable = (
-  sourceId: string,
-  analyticalAreaType: AnalyticalAreaType
-) => {
-  return useQuery<
-    SourceStatsByBoundaryQuery,
-    SourceStatsByBoundaryQueryVariables
-  >(CHOROPLETH_STATS_FOR_SOURCE, {
-    variables: {
-      sourceId: sourceId!,
-      analyticalAreaType,
-      mode: ChoroplethMode.Table,
-    },
-    notifyOnNetworkStatusChange: true, // required to mark loading: true on fetchMore()
-  })
 }

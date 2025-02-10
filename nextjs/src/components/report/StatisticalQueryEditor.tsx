@@ -22,6 +22,7 @@ import { toast } from 'sonner'
 import { twMerge } from 'tailwind-merge'
 import toSpaceCase from 'to-space-case'
 import { v4 } from 'uuid'
+import { useStatisticalVariables } from './statisticalVariables'
 
 export function StatisticalQueryEditor({
   value,
@@ -35,24 +36,7 @@ export function StatisticalQueryEditor({
   allowGroupByColumn?: boolean
 }) {
   const reportManager = useReport()
-
-  const fieldDefinitionValues =
-    reportManager.report.layers
-      .find((l) => l.source === value.sourceIds[0])
-      ?.sourceData.fieldDefinitions?.map((field) => field.value) || []
-
-  const calculatedValues = [
-    'first',
-    'second',
-    'third',
-    'total',
-    'first_label',
-    'second_label',
-  ]
-
-  const userDefinedValues = (value?.preGroupByCalculatedColumns || [])
-    .concat(value?.calculatedColumns || [])
-    .map((column) => column.name)
+  const statisticalVariables = useStatisticalVariables(value)
 
   return (
     <>
@@ -60,7 +44,7 @@ export function StatisticalQueryEditor({
       <section className="space-y-5 p-4">
         <h3 className="text-md font-medium">Querying</h3>
         <EditorSelect
-          value={value?.sourceIds[0]}
+          value={value?.sourceIds?.[0]}
           className={'w-full'}
           options={reportManager.report.layers.map((layer) => ({
             value: layer.source,
@@ -291,12 +275,12 @@ export function StatisticalQueryEditor({
         <h3 className="text-md font-medium">Variables for formulas</h3>
         <h4 className="font-medium text-sm">Direct from the data source:</h4>
         <pre className="flex flex-row flex-wrap gap-1">
-          {fieldDefinitionValues?.map((field) => (
+          {statisticalVariables.dataSourceFields?.map((field) => (
             <div
               key={field}
               className="bg-meepGray-700 hover:bg-meepGray-500 px-2 py-1 rounded-md text-xs cursor-pointer"
               onClick={() => {
-                navigator.clipboard.writeText(field)
+                navigator.clipboard.writeText(`\`${field}\``)
                 toast.success(`Copied '${field}' to clipboard`)
               }}
             >
@@ -306,12 +290,12 @@ export function StatisticalQueryEditor({
         </pre>
         <h4 className="font-medium text-sm">Calculated based on the data:</h4>
         <pre className="flex flex-row flex-wrap gap-1">
-          {calculatedValues.map((field) => (
+          {statisticalVariables.calculatedValues.map((field) => (
             <div
               key={field}
               className="bg-meepGray-700 hover:bg-meepGray-500 px-2 py-1 rounded-md text-xs cursor-pointer"
               onClick={() => {
-                navigator.clipboard.writeText(field)
+                navigator.clipboard.writeText(`\`${field}\``)
                 toast.success(`Copied '${field}' to clipboard`)
               }}
             >

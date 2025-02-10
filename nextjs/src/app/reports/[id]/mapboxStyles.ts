@@ -21,10 +21,7 @@ export function getChoroplethFill(
   mapOptions: IMapOptions,
   visible?: boolean
 ): FillLayerSpecification['paint'] {
-  if (
-    mapOptions.choropleth.useAdvancedStatistics &&
-    mapOptions.choropleth.dataType === StatisticalDataType.Nominal
-  ) {
+  if (mapOptions.choropleth.dataType === StatisticalDataType.Nominal) {
     // Categorical colours
     // @ts-ignore
     const keys: string[] = Array.from(

@@ -127,6 +127,7 @@
     "theme-colors": "^0.1.0",
     "to-space-case": "^1.0.0",
     "trigram-similarity": "^1.0.7",
+    "typescript-migration": "^1.1.1",
     "update": "^0.7.4",
     "uuid": "^11.0.3",
     "vanilla-cookieconsent": "^3.0.1",

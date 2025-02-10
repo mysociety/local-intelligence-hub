@@ -119,26 +119,23 @@ class Query(UserQueries):
     )
 
     generic_data_from_source_about_area: List[model_types.GenericData] = (
-        model_types.generic_data_from_source_about_area
-    )
-    generic_data_summary_from_source_about_area: Optional[model_types.DataSummary] = (
-        model_types.generic_data_summary_from_source_about_area
-    )
-    choropleth_data_for_source: List[model_types.GroupedDataCount] = (
-        model_types.choropleth_data_for_source
-    )
-    statistics: Optional[List[JSON]] = strawberry_django.field(
-        resolver=model_types.statistics,
-        extensions=[IsAuthenticated()],
-    )
-    statistics_for_choropleth: List[model_types.GroupedDataCount] = (
         strawberry_django.field(
-            resolver=model_types.statistics_for_choropleth,
+            resolver=model_types.generic_data_from_source_about_area,
             extensions=[IsAuthenticated()],
         )
     )
 
-    @strawberry.field
+    # Leave this unauthorised and we'll handle it in the resolver; see tests
+    statistics: Optional[List[JSON]] = strawberry_django.field(
+        resolver=model_types.statistics
+    )
+
+    # Leave this unauthorised and we'll handle it in the resolver; see tests
+    statistics_for_choropleth: List[model_types.GroupedDataCount] = (
+        strawberry_django.field(resolver=model_types.statistics_for_choropleth)
+    )
+
+    @strawberry_django.field(extensions=[IsAuthenticated()])
     def test_data_source(
         self,
         info: strawberry.types.Info,
@@ -152,13 +149,13 @@ class Query(UserQueries):
 
     list_api_tokens = public_queries.list_api_tokens
 
-    @strawberry.field
+    @strawberry_django.field(extensions=[IsAuthenticated()])
     def google_sheets_oauth_url(
         self, info: strawberry.types.Info, redirect_url: str
     ) -> str:
         return models.EditableGoogleSheetsSource.authorization_url(redirect_url)
 
-    @strawberry.field
+    @strawberry_django.field(extensions=[IsAuthenticated()])
     async def google_sheets_oauth_credentials(
         self,
         info: strawberry.types.Info,

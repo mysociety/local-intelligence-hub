@@ -106,6 +106,7 @@ class AggregationOp(Enum):
     Min = "Min"
     Count = "Count"
     Guess = "Guess"
+    Mode = "Mode"
 
 
 @strawberry.input
@@ -142,7 +143,10 @@ class GroupByColumn:
 
 @strawberry.input
 class StatisticsConfig:
-    source_ids: List[str]
+    # For debugging and caching
+    query_id: Optional[str] = None
+    #
+    source_ids: Optional[List[str]] = None
     # Querying
     gss_codes: Optional[List[str]] = None
     area_query_mode: Optional[AreaQueryMode] = None
@@ -232,6 +236,9 @@ def statistics(
     map_bounds: Optional[MapBounds] = None,
     is_count_key_percentage: Optional[bool] = False,
 ):
+    if not conf.source_ids or len(conf.source_ids) <= 0:
+        raise ValueError("At least one source id is required")
+
     pre_calcs = (
         [c for c in conf.pre_group_by_calculated_columns if not c.ignore]
         if conf.pre_group_by_calculated_columns
@@ -288,83 +295,10 @@ def statistics(
             # all geocoded GenericData should have `point` set
             qs = qs.filter(point__within=bbox)
 
-    filters = Q()
     if conf.gss_codes:
-        area_qs = models.Area.objects.filter(gss__in=conf.gss_codes)
-        example_area = area_qs.first()
-        combined_areas_polygon = area_qs.aggregate(union=GisUnion("polygon"))["union"]
-
-        if (
-            combined_areas_polygon
-            and conf.area_query_mode is AreaQueryMode.POINTS_WITHIN
-        ):
-            # We filter on area=None so we don't pick up statistical area data
-            # since a super-area may have a point within this area, skewing the results
-            filters |= Q(point__within=combined_areas_polygon) & Q(area=None)
-
-        if conf.area_query_mode is AreaQueryMode.AREA:
-            if combined_areas_polygon:
-                # Find only data specifically related to this GSS area — not about its children
-                filters |= Q(area__gss__in=conf.gss_codes)
-            # if area_type_filter:
-            #     # Find only data specifically related to this area type
-            #     filters |= Q(**area_type_filter.fk_filter("area"))
-
-        elif conf.area_query_mode is AreaQueryMode.AREA_OR_CHILDREN:
-            if combined_areas_polygon:
-                filters |= Q(area__gss__in=conf.gss_codes)
-                # Or find GenericData tagged with area that is fully contained by this area's polygon
-                postcode_io_key = area_to_postcode_io_key(example_area)
-                if postcode_io_key:
-                    subclause = Q()
-                    # See if there's a matched postcode data field for this area
-                    subclause &= Q(
-                        **{
-                            f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes
-                        }
-                    )
-                    # And see if the area is SMALLER than the current area — i.e. a child
-                    subclause &= Q(area__polygon__within=combined_areas_polygon)
-                    filters |= subclause
-            # if area_type_filter:
-            #     filters |= Q(**area_type_filter.fk_filter("area"))
-
-        elif conf.area_query_mode is AreaQueryMode.AREA_OR_PARENTS:
-            if combined_areas_polygon:
-                filters |= Q(area__gss__in=conf.gss_codes)
-                # Or find GenericData tagged with area that fully contains this area's polygon
-                postcode_io_key = area_to_postcode_io_key(example_area)
-                if postcode_io_key:
-                    subclause = Q()
-                    # See if there's a matched postcode data field for this area
-                    subclause &= Q(
-                        **{
-                            f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes
-                        }
-                    )
-                    # And see if the area is LARGER than the current area — i.e. a parent
-                    subclause &= Q(area__polygon__contains=combined_areas_polygon)
-                    filters |= subclause
-            # if area_type_filter:
-            #     filters |= Q(**area_type_filter.fk_filter("area"))
-
-        elif conf.area_query_mode is AreaQueryMode.OVERLAPPING:
-            if conf.gss_codes:
-                filters |= Q(area__gss__in=conf.gss_codes)
-                # Or find GenericData tagged with area that overlaps this area's polygon
-                postcode_io_key = area_to_postcode_io_key(example_area)
-                if postcode_io_key:
-                    filters |= Q(
-                        **{
-                            f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes
-                        }
-                    )
-            if combined_areas_polygon:
-                filters |= Q(area__polygon__contains=combined_areas_polygon)
-            # if area_type_filter:
-            #     filters |= Q(**area_type_filter.fk_filter("area"))
-
-    data = qs.filter(filters)
+        qs = qs.filter(
+            filter_generic_data_using_gss_code(conf.gss_codes, conf.area_query_mode)
+        )
 
     # --- Load the data in to a pandas dataframe ---
     # TODO: get columns from JSON for returning clean data
@@ -377,7 +311,7 @@ def statistics(
             "label": record.get("area__name"),
             "id": str(record["id"]),
         }
-        for record in data
+        for record in qs
     ]
 
     df = pd.DataFrame(d)
@@ -413,29 +347,7 @@ def statistics(
     ]
 
     if len(numerical_keys) > 0:
-        # Provide some special variables to the col editor
-        values = df[numerical_keys].values
-        df["first"] = values.max(axis=1)
-        # column name of "first"
-        df["first_label"] = df[numerical_keys].idxmax(axis=1)
-        if len(numerical_keys) > 1:
-            df["total"] = values.sum(axis=1)
-            try:
-                df["second"] = np.partition(values, -2, axis=1)[:, -2]
-                # df["second_label"] = # TODO: get the column name of the second highst value
-                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
-                # As above, but using numpy not pandas
-                df["second_label"] = df[numerical_keys].columns[
-                    df[numerical_keys].values.argsort()[:, -2]
-                ]
-                df["majority"] = df["first"] - df["second"]
-            except Exception:
-                pass
-            if len(numerical_keys) > 2:
-                try:
-                    df["third"] = np.partition(values, -3, axis=1)[:, -3]
-                except Exception:
-                    pass
+        df = add_computed_columns(df, numerical_keys)
 
     # Apply the row-level cols
     if pre_calcs:
@@ -457,8 +369,6 @@ def statistics(
     # --- Group by the groupby keys ---
     # respecting aggregation operations
     if conf.group_by_area:
-        # Get rid of ID index
-        df = df.reset_index(drop=True).drop(columns=["id"])
 
         def get_group_by_area_properties(row):
             if row is None:
@@ -505,11 +415,44 @@ def statistics(
 
         # Collect the mode of the string columns
         # strings = df.select_dtypes(include="object"
-        df_mode = df[["label", "gss", "area_type"]].groupby("gss").agg(get_mode)
+        mode_keys = ["label", "gss", "area_type"]
+        df_mode = df[mode_keys].groupby("gss").agg(get_mode)
 
         # Aggregate the numerical columns
-        df_stats = df[numerical_keys + ["gss"]].set_index("gss")
+        string_keys_for_aggregation = (
+            []
+            if return_numeric_keys_only
+            else [c for c in df.columns if c not in numerical_keys + mode_keys + ["id"]]
+        )
+        if conf.return_columns and len(conf.return_columns) > 0:
+            string_keys_for_aggregation = [
+                c
+                for c in string_keys_for_aggregation
+                if c in conf.return_columns or c == category_key
+            ]
+        df_stats = df[
+            list(
+                set(
+                    [
+                        # We work with all numericals even if they're not in the return columns due to mathematical operations
+                        *numerical_keys,
+                        # But we don't need to aggregate the string columns if they're not in the return columns
+                        *string_keys_for_aggregation,
+                        # This is for joining back on the original data
+                        "gss",
+                        # And this is for counting
+                        "id",
+                    ]
+                )
+            )
+        ].set_index("gss")
         agg_config = dict()
+        #
+        df_stats["count"] = 1
+        agg_config["count"] = np.size
+        #
+        for key in string_keys_for_aggregation:
+            agg_config[key] = get_mode
         if conf.aggregation_operations and len(conf.aggregation_operations) > 0:
             # Per-key config
             for key in numerical_keys:
@@ -519,7 +462,7 @@ def statistics(
                     agg_config[key] = "sum"
                 for op in conf.aggregation_operations:
                     if op.column == key and op.operation is not AggregationOp.Guess:
-                        agg_config[key] = op.operation.value.lower()
+                        agg_config[key] = aggregation_op_to_agg_func(op.operation)
                         break
         else:
             # Guess
@@ -535,14 +478,16 @@ def statistics(
                     and calculated_column.aggregation_operation
                     is not AggregationOp.Guess
                 ):
-                    agg_config[key] = (
-                        calculated_column.aggregation_operation.value.lower()
+                    agg_config[key] = aggregation_op_to_agg_func(
+                        calculated_column.aggregation_operation
                     )
                 elif (
                     conf.aggregation_operation
                     and conf.aggregation_operation is not AggregationOp.Guess
                 ):
-                    agg_config[key] = conf.aggregation_operation.value.lower()
+                    agg_config[key] = aggregation_op_to_agg_func(
+                        conf.aggregation_operation
+                    )
                 elif key in percentage_keys:
                     agg_config[key] = "mean"
                 else:
@@ -554,29 +499,7 @@ def statistics(
         df = df_mode.join(df_aggregated, on="gss", how="left")
 
     if len(numerical_keys) > 0:
-        # Provide some special variables to the col editor
-        values = df[numerical_keys].values
-        df["first"] = values.max(axis=1)
-        # column name of "first"
-        df["first_label"] = df[numerical_keys].idxmax(axis=1)
-        if len(numerical_keys) > 1:
-            df["total"] = values.sum(axis=1)
-            try:
-                df["second"] = np.partition(values, -2, axis=1)[:, -2]
-                # df["second_label"] = # TODO: get the column name of the second highst value
-                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
-                # As above, but using numpy not pandas
-                df["second_label"] = df[numerical_keys].columns[
-                    df[numerical_keys].values.argsort()[:, -2]
-                ]
-                df["majority"] = df["first"] - df["second"]
-            except Exception:
-                pass
-        if len(numerical_keys) > 2:
-            try:
-                df["third"] = np.partition(values, -3, axis=1)[:, -3]
-            except Exception:
-                pass
+        df = add_computed_columns(df, numerical_keys)
 
         # Apply formulas
         if post_calcs and len(post_calcs) > 0:
@@ -596,31 +519,15 @@ def statistics(
                     logger.warning(f"Error in statistics post_calcs: {e}")
 
             # Then recalculate based on the formula, since they may've doctored the values.
-            values = df[numerical_keys].values
-            df["first"] = values.max(axis=1)
-            # column name of "first"
-            df["first_label"] = df[numerical_keys].idxmax(axis=1)
-            try:
-                df["second"] = np.partition(values, -2, axis=1)[:, -2]
-                # df["second_label"] = # TODO: get the column name of the second highst value
-                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
-                # As above, but using numpy not pandas
-                df["second_label"] = df[numerical_keys].columns[
-                    df[numerical_keys].values.argsort()[:, -2]
-                ]
-                df["majority"] = df["first"] - df["second"]
-            except IndexError:
-                pass
-            try:
-                df["third"] = np.partition(values, -3, axis=1)[:, -3]
-            except IndexError:
-                pass
-            df["total"] = values.sum(axis=1)
+            df = add_computed_columns(df, numerical_keys)
 
     if category_key:
         df["category"] = df[category_key]
     if count_key:
         df["count"] = df[count_key]
+
+    # For serialisation
+    df = df.replace({np.nan: 0})
 
     # Final grouping
     groups = (
@@ -661,7 +568,7 @@ def statistics(
                 AggregationOp.Mean if col in percentage_keys else AggregationOp.Sum
             )
             aggop = calculated_column_aggop or simple_asserted_aggop or default_aggop
-            agg_dict[col] = aggop.value.lower()
+            agg_dict[col] = aggregation_op_to_agg_func(aggop)
         df_n = (
             df[[n for n in numerical_keys if n not in exclude_keys]]
             .reset_index()
@@ -695,7 +602,7 @@ def statistics(
                 **{
                     name: pd.NamedAgg(column=col.column, aggfunc=get_mode),
                     f"{name}_{aggop.value.lower()}": pd.NamedAgg(
-                        column=col.column, aggfunc=aggop.value.lower()
+                        column=col.column, aggfunc=aggregation_op_to_agg_func(aggop)
                     ),
                 }
             )
@@ -708,11 +615,12 @@ def statistics(
         return df_agg.to_dict(orient="records")
     else:
         # Return the results in the requested format
+        if conf.group_by_area:
+            # Place the GSS column back on the dataframe
+            df = df.reset_index(drop=False)
         if return_numeric_keys_only:
             d = df[numerical_keys].to_dict(orient="records")
         elif conf.return_columns and len(conf.return_columns) > 0:
-            if conf.group_by_area:
-                df = df.reset_index(drop=False)
             d = df[conf.return_columns].to_dict(orient="records")
         else:
             d = df.to_dict(orient="records")
@@ -745,12 +653,115 @@ def statistics(
             ]
         return d
 
-    # elif return_shape is StatisticsReturnShape.Row:
-    #     if conf.gss_codes is None:
-    #         raise ValueError("`conf.gss_codes` must be specified when returning a row")
-    #     return df.loc[df["gss"] == conf.gss_codes].to_dict(orient="index")
 
-    # elif return_shape is StatisticsReturnShape.Cell:
-    #     if conf.gss_codes is None or return_columns is None or len(return_columns) <= 0:
-    #         raise ValueError("`gss` and `return_column` must be specified when returning a cell")
-    #     return df.loc[df["gss"] == conf.gss_codes, return_columns].iloc[0]
+def aggregation_op_to_agg_func(agg_op: AggregationOp, guess="sum"):
+    if agg_op == AggregationOp.Mode:
+        return get_mode
+    elif agg_op == AggregationOp.Guess:
+        return guess
+    else:
+        return agg_op.value.lower()
+
+
+def add_computed_columns(df: pd.DataFrame, numerical_keys: list[str]) -> pd.DataFrame:
+    if len(numerical_keys) > 0:
+        # Provide some special variables to the col editor
+        values = df[numerical_keys].values
+        df["first"] = values.max(axis=1)
+        # column name of "first"
+        df["first_label"] = df[numerical_keys].idxmax(axis=1)
+        if len(numerical_keys) > 1:
+            df["total"] = values.sum(axis=1)
+            try:
+                df["second"] = np.partition(values, -2, axis=1)[:, -2]
+                # df["second_label"] = # TODO: get the column name of the second highst value
+                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
+                # As above, but using numpy not pandas
+                df["second_label"] = df[numerical_keys].columns[
+                    df[numerical_keys].values.argsort()[:, -2]
+                ]
+                df["majority"] = df["first"] - df["second"]
+            except Exception:
+                pass
+            if len(numerical_keys) > 2:
+                try:
+                    df["third"] = np.partition(values, -3, axis=1)[:, -3]
+                except Exception:
+                    pass
+    return df
+
+
+def filter_generic_data_using_gss_code(
+    gss_codes: str | list[str], area_query_mode: AreaQueryMode
+) -> Q:
+    gss_codes = ensure_list(gss_codes)
+    filters = Q()
+    area_qs = models.Area.objects.filter(gss__in=gss_codes)
+    example_area = area_qs.first()
+    if len(area_qs) == 0:
+        return filters
+    if len(area_qs) == 1:
+        search_polygon = area_qs.first().polygon
+    else:
+        search_polygon = area_qs.aggregate(union=GisUnion("polygon"))["union"]
+
+    if search_polygon and area_query_mode is AreaQueryMode.POINTS_WITHIN:
+        # We filter on area=None so we don't pick up statistical area data
+        # since a super-area may have a point within this area, skewing the results
+        filters |= Q(point__within=search_polygon) & Q(area=None)
+
+    if area_query_mode is AreaQueryMode.AREA:
+        if search_polygon:
+            # Find only data specifically related to this GSS area — not about its children
+            filters |= Q(area__gss__in=gss_codes)
+        # if area_type_filter:
+        #     # Find only data specifically related to this area type
+        #     filters |= Q(**area_type_filter.fk_filter("area"))
+
+    elif area_query_mode is AreaQueryMode.AREA_OR_CHILDREN:
+        if search_polygon:
+            filters |= Q(area__gss__in=gss_codes)
+            # Or find GenericData tagged with area that is fully contained by this area's polygon
+            postcode_io_key = area_to_postcode_io_key(example_area)
+            if postcode_io_key:
+                subclause = Q()
+                # See if there's a matched postcode data field for this area
+                subclause &= Q(
+                    **{f"postcode_data__codes__{postcode_io_key.value}__in": gss_codes}
+                )
+                # And see if the area is SMALLER than the current area — i.e. a child
+                subclause &= Q(area__polygon__within=search_polygon)
+                filters |= subclause
+        # if area_type_filter:
+        #     filters |= Q(**area_type_filter.fk_filter("area"))
+
+    elif area_query_mode is AreaQueryMode.AREA_OR_PARENTS:
+        if search_polygon:
+            filters |= Q(area__gss__in=gss_codes)
+            # Or find GenericData tagged with area that fully contains this area's polygon
+            postcode_io_key = area_to_postcode_io_key(example_area)
+            if postcode_io_key:
+                subclause = Q()
+                # See if there's a matched postcode data field for this area
+                subclause &= Q(
+                    **{f"postcode_data__codes__{postcode_io_key.value}__in": gss_codes}
+                )
+                # And see if the area is LARGER than the current area — i.e. a parent
+                subclause &= Q(area__polygon__contains=search_polygon)
+                filters |= subclause
+        # if area_type_filter:
+        #     filters |= Q(**area_type_filter.fk_filter("area"))
+
+    elif area_query_mode is AreaQueryMode.OVERLAPPING:
+        if gss_codes:
+            filters |= Q(area__gss__in=gss_codes)
+            # Or find GenericData tagged with area that overlaps this area's polygon
+            postcode_io_key = area_to_postcode_io_key(example_area)
+            if postcode_io_key:
+                filters |= Q(
+                    **{f"postcode_data__codes__{postcode_io_key.value}__in": gss_codes}
+                )
+        if search_polygon:
+            filters |= Q(area__polygon__contains=search_polygon)
+
+    return filters

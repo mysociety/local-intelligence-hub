@@ -3,15 +3,9 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
-from django.contrib.gis.db.models import Union as GisUnion
-from django.contrib.gis.geos import Polygon
-from django.db.models import F, Q
-from django.db.models.fields import FloatField
-from django.db.models.functions import Cast
+from django.db.models import Q
 from django.http import HttpRequest
 
-import numexpr as ne
-import numpy as np
 import pandas as pd
 import procrastinate.contrib.django.models
 import strawberry
@@ -47,12 +41,6 @@ from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
 from utils.geo_reference import AnalyticalAreaType, area_to_postcode_io_key
 from utils.postcode import get_postcode_data_for_gss
-from utils.statistics import (
-    attempt_interpret_series_as_number,
-    attempt_interpret_series_as_percentage,
-    check_numeric,
-    check_percentage,
-)
 
 pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 
@@ -1466,67 +1454,6 @@ def generic_data_by_external_data_source(
     )
 
 
-def __get_generic_data_for_area_and_external_data_source(
-    external_data_source: models.ExternalDataSource,
-    gss: str,
-    mode: stats.AreaQueryMode,
-) -> List[GenericData]:
-    area = models.Area.objects.get(gss=gss)
-    data_source_records = external_data_source.get_import_data()
-
-    filters = Q()
-
-    if mode is stats.AreaQueryMode.POINTS_WITHIN:
-        # We filter on area=None so we don't pick up statistical area data
-        # since a super-area may have a point within this area, skewing the results
-        filters = Q(point__within=area.polygon) & Q(area=None)
-
-    elif mode is stats.AreaQueryMode.AREA:
-        # Find only data specifically related to this GSS area — not about its children
-        filters = Q(area__gss=area.gss)
-
-    elif mode is stats.AreaQueryMode.AREA_OR_CHILDREN:
-        filters = Q(area__gss=area.gss)
-        # Or find GenericData tagged with area that is fully contained by this area's polygon
-        postcode_io_key = area_to_postcode_io_key(area)
-        if postcode_io_key:
-            subclause = Q()
-            # See if there's a matched postcode data field for this area
-            subclause &= Q(
-                **{f"postcode_data__codes__{postcode_io_key.value}": area.gss}
-            )
-            # And see if the area is SMALLER than the current area — i.e. a child
-            subclause &= Q(area__polygon__within=area.polygon)
-            filters |= subclause
-
-    elif mode is stats.AreaQueryMode.AREA_OR_PARENTS:
-        filters = Q(area__gss=area.gss)
-        # Or find GenericData tagged with area that fully contains this area's polygon
-        postcode_io_key = area_to_postcode_io_key(area)
-        if postcode_io_key:
-            subclause = Q()
-            # See if there's a matched postcode data field for this area
-            subclause &= Q(
-                **{f"postcode_data__codes__{postcode_io_key.value}": area.gss}
-            )
-            # And see if the area is LARGER than the current area — i.e. a parent
-            subclause &= Q(area__polygon__contains=area.polygon)
-            filters |= subclause
-
-    elif mode is stats.AreaQueryMode.OVERLAPPING:
-        filters = Q(area__gss=area.gss)
-        # Or find GenericData tagged with area that overlaps this area's polygon
-        postcode_io_key = area_to_postcode_io_key(area)
-        if postcode_io_key:
-            filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
-
-    else:
-        raise ValueError(f"Unknown stats.AreaQueryMode: {mode}")
-
-    return data_source_records.filter(filters)
-
-
-@strawberry_django.field()
 def generic_data_from_source_about_area(
     info: Info,
     source_id: str,
@@ -1544,365 +1471,11 @@ def generic_data_from_source_about_area(
             f"User {user} does not have permission to view this external data source's data"
         )
 
-    qs = __get_generic_data_for_area_and_external_data_source(
-        external_data_source, gss, mode
+    qs = external_data_source.get_import_data().filter(
+        stats.filter_generic_data_using_gss_code(gss, mode)
     )
 
     return qs
-
-
-@strawberry.type
-class DataSummaryMetadata:
-    first: Optional[float] = None
-    second: Optional[float] = None
-    third: Optional[float] = None
-    last: Optional[float] = None
-    total: Optional[float] = None
-    majority: Optional[float] = None
-    count: Optional[float] = None
-    mean: Optional[float] = None
-    median: Optional[float] = None
-    percentage_keys: Optional[List[str]] = None
-    numerical_keys: Optional[List[str]] = None
-    is_percentage: Optional[bool] = False
-
-
-@strawberry.type
-class DataSummary:
-    aggregated: JSON
-    metadata: DataSummaryMetadata
-
-
-@strawberry_django.field()
-def generic_data_summary_from_source_about_area(
-    info: Info,
-    source_id: str,
-    gss: str,
-    mode: stats.AreaQueryMode = stats.AreaQueryMode.AREA,
-) -> Optional[DataSummary]:
-    user = get_current_user(info)
-    # Check user can access the external data source
-    external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
-    permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
-    if not permissions.get("can_display_points") or not permissions.get(
-        "can_display_details"
-    ):
-        raise ValueError(
-            f"User {user} does not have permission to view this external data source's data"
-        )
-
-    qs = __get_generic_data_for_area_and_external_data_source(
-        external_data_source, gss, mode
-    )
-
-    # ingest the .json data into a pandas dataframe
-    df = pd.DataFrame([record.json for record in qs])
-    # convert any stringified numbers to floats
-    is_percentage = False
-    percentage_keys = []
-    for column in df:
-        if all(df[column].apply(check_percentage)):
-            is_percentage = True
-            percentage_keys += [str(column)]
-            df[column] = attempt_interpret_series_as_percentage(df[column])
-        else:
-            df[column] = attempt_interpret_series_as_number(df[column])
-    numerical_keys = df.select_dtypes(include="number").columns
-    # remove columns that aren't numerical_keys
-    df = df[numerical_keys]
-    # summarise the data in a single dictionary, with summed values for each column
-    if is_percentage:
-        summary = df.mean()
-    else:
-        summary = df.sum()
-    summary_dict = summary.to_dict()
-
-    if len(summary_dict.keys()) <= 0:
-        return None
-
-    # Convert selected columns to numpy array for faster operations
-    summary_values = dict()
-    if not is_percentage:
-        np_values = summary.values
-        summary["first"] = np_values.max()
-        summary["second"] = np.partition(np_values, -2)[:, -2]
-        summary["third"] = np.partition(np_values, -3)[:, -3]
-        try:
-            summary["majority"] = summary["first"] - summary["second"]
-        except IndexError:
-            # In case there's only one value.
-            pass
-        summary["last"] = np_values.min()
-        summary["total"] = np_values.sum()
-        summary["count"] = np_values.count()
-        summary["mean"] = np_values.mean()
-        summary["median"] = np_values.median()
-        summary_values = summary_values.update(
-            first=summary["first"],
-            second=summary["second"],
-            majority=summary["majority"],
-            third=summary["third"],
-            last=summary["last"],
-            total=summary["total"],
-            count=summary["count"],
-            mean=summary["mean"],
-            median=summary["median"],
-        )
-
-    return DataSummary(
-        aggregated=summary_dict,
-        metadata=DataSummaryMetadata(
-            **summary_values,
-            is_percentage=is_percentage,
-            percentage_keys=percentage_keys,
-            numerical_keys=numerical_keys,
-        ),
-    )
-
-
-@strawberry.enum
-class ChoroplethMode(Enum):
-    Count = "Count"
-    Field = "Field"
-    Formula = "Formula"
-    Table = "Table"
-
-
-@strawberry_django.field()
-def choropleth_data_for_source(
-    info: Info,
-    source_id: str,
-    analytical_area_key: AnalyticalAreaType,
-    # Field could be a column name or a Pandas formulaic expression
-    # or, if not provided, a count of records
-    mode: Optional[ChoroplethMode] = ChoroplethMode.Count,
-    field: Optional[str] = None,
-    map_bounds: Optional[stats.MapBounds] = None,
-    formula: Optional[str] = None,
-    aggregation_operation: Optional[stats.AggregationOp] = None,
-) -> List[GroupedDataCount]:
-    decided_operation = aggregation_operation
-    # Check user can access the external data source
-    user = get_current_user(info)
-    external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
-    permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
-    if not permissions.get("can_display_points") or not permissions.get(
-        "can_display_details"
-    ):
-        raise ValueError(
-            f"User {user} does not have permission to view this external data source's data"
-        )
-
-    # Get the required data for the source
-    gss_field = (
-        "postcode_data__postcode"
-        if analytical_area_key == AnalyticalAreaType.postcode
-        else f"postcode_data__codes__{analytical_area_key.value}"
-    )
-    qs = (
-        external_data_source.get_import_data()
-        .filter(postcode_data__codes__isnull=False)
-        .annotate(
-            label=F(f"postcode_data__{analytical_area_key.value}"),
-            gss=F(gss_field),
-            latitude=Cast("postcode_data__latitude", output_field=FloatField()),
-            longitude=Cast("postcode_data__longitude", output_field=FloatField()),
-        )
-    )
-
-    if map_bounds:
-        area_type_filter = stats.postcodeIOKeyAreaTypeLookup[analytical_area_key]
-        bbox_coords = (
-            (map_bounds.west, map_bounds.north),  # Top left
-            (map_bounds.east, map_bounds.north),  # Top right
-            (map_bounds.east, map_bounds.south),  # Bottom right
-            (map_bounds.west, map_bounds.south),  # Bottom left
-            (map_bounds.west, map_bounds.north),  # Back to start to close polygon
-        )
-        bbox = Polygon(bbox_coords, srid=4326)
-        areas = models.Area.objects.filter(**area_type_filter.query_filter).filter(
-            point__within=bbox
-        )
-        combined_area = areas.aggregate(union=GisUnion("polygon"))["union"]
-        # all geocoded GenericData should have `point` set
-        qs = qs.filter(point__within=combined_area or bbox)
-
-    qs = qs.values("json", "label", "gss")
-
-    if not qs:
-        return []
-
-    # ingest the .json data into a pandas dataframe so we can do analytics
-    df = pd.DataFrame([record for record in qs])
-
-    # if length of dataframe is 0, return an empty list
-    if len(df) <= 0:
-        logger.debug("No data found for this source")
-        return []
-
-    # Break the json column into separate columns for each key
-    df = df.join(pd.json_normalize(df["json"]))
-
-    # Remove the json column
-    df = df.drop(columns=["json"])
-
-    # Choropleth mode
-    # TODO: maybe make this explicit via an argument?
-    # is_data_source_statistical = external_data_source.data_type == models.ExternalDataSource.DataSourceType.AREA_STATS
-    # check that field is in DF
-    is_valid_field = (
-        mode is ChoroplethMode.Field
-        and field
-        and field is not None
-        and len(field)
-        and field in df.columns
-    )
-    is_row_count = mode is ChoroplethMode.Count
-    is_valid_formula = (
-        mode is ChoroplethMode.Formula
-        and formula
-        and formula is not None
-        and len(formula)
-    )
-    is_table = mode is ChoroplethMode.Table
-
-    if mode is ChoroplethMode.Field and not is_valid_field:
-        raise ValueError("Field not found in data source")
-
-    if mode is ChoroplethMode.Formula and not is_valid_formula:
-        raise ValueError("Formula is invalid")
-
-    is_percentage = False
-    if is_row_count:
-        # Simple count of data points per area
-
-        # Count the number of rows per GSS
-        df_count = (
-            df.drop(columns=["label"]).groupby("gss").size().reset_index(name="count")
-        )
-
-        # Calculate the mode for the 'label' column
-        def get_mode(series):
-            try:
-                return series.mode()[0]
-            except KeyError:
-                return None
-
-        df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
-
-        # Merge the summed DataFrame with the mode DataFrame
-        df = pd.merge(df_count, df_mode, on="gss")
-
-        # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
-        return [
-            GroupedDataCount(
-                label=row.label,
-                gss=row.gss,
-                count=row.count,
-                formatted_count=f"{row.count:,.0f}",
-            )
-            for row in df.itertuples()
-        ]
-    elif is_valid_field or is_valid_formula or is_table:
-        # Convert any stringified JSON numbers to floats
-        for column in df:
-            if all(df[column].apply(check_percentage)):
-                is_percentage = True
-                if decided_operation is None:
-                    decided_operation = stats.AggregationOp.Mean
-                df[column] = attempt_interpret_series_as_percentage(df[column])
-            elif all(df[column].apply(check_numeric)):
-                df[column] = attempt_interpret_series_as_number(df[column])
-
-        # You end up with something like:
-        """
-                        json
-          gss    label  Ref Lab Con LDem
-        0 E10001 Bucks  1   2   3   4
-        1 E10002 Herts  2   3   4   5
-        2 E10003 Beds   3   4   5   6
-        """
-
-        # Group by the postcode_io level that we want to
-        # Aggregation will be by summing the values in the field, excluding 'label'
-        grouped_data = df.drop(columns=["label"]).groupby("gss")
-        match decided_operation:
-            case stats.AggregationOp.Mean:
-                df_aggregated = grouped_data.mean().reset_index()
-            case stats.AggregationOp.Sum | _:
-                df_aggregated = grouped_data.sum().reset_index()
-
-        # Calculate the mode for the 'label' column
-        def get_mode(series):
-            try:
-                return series.mode()[0]
-            except KeyError:
-                return None
-
-        df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
-
-        # Merge the summed DataFrame with the mode DataFrame
-        df = pd.merge(df_aggregated, df_mode, on="gss")
-
-        # Add a "maximum" column that figures out the biggest numerical value in each row
-        numerical_keys = df.select_dtypes(include="number").columns
-        if len(numerical_keys) > 0:
-            try:
-                # Convert selected columns to numpy array for faster operations
-                values = df[numerical_keys].values
-                df["first"] = values.max(axis=1)
-                if len(numerical_keys) > 1:
-                    df["second"] = np.partition(values, -2, axis=1)[:, -2]
-                    df["majority"] = df["first"] - df["second"]
-                    df["total"] = df[numerical_keys].sum(axis=1)
-                    df["count"] = df[numerical_keys].count(axis=1)
-                    df["mean"] = df[numerical_keys].mean(axis=1)
-                    df["median"] = df[numerical_keys].median(axis=1)
-                if len(numerical_keys) > 2:
-                    df["third"] = np.partition(values, -3, axis=1)[:, -3]
-                df["last"] = values.min(axis=1)
-            except Exception:
-                pass
-
-        # Now fetch the requested series from the dataframe
-        # If the field is a column name, we can just return that column
-        if is_valid_field:
-            df["count"] = df[field]
-        # If the field is a formula, we need to evaluate it
-        elif is_valid_formula:
-            try:
-                df["count"] = df.eval(formula)
-            except ValueError:
-                # In case "where" is used, which pandas doesn't support
-                # https://github.com/pandas-dev/pandas/issues/34834
-                df["count"] = ne.evaluate(formula, local_dict=df)
-
-        # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
-        return [
-            GroupedDataCount(
-                label=row.label,
-                gss=row.gss,
-                count=row.count,
-                columns=df.columns.to_list() if is_table else None,
-                row=row if is_table else None,
-                is_percentage=is_percentage,
-                formatted_count=(
-                    (
-                        # pretty percentage
-                        f"{row.count:.0%}"
-                    )
-                    if is_percentage
-                    else (
-                        # comma-separated integer
-                        f"{row.count:,.0f}"
-                    )
-                ),
-            )
-            for row in df.itertuples()
-        ]
-
-    else:
-        raise ValueError("Incorrect configuration for choropleth")
 
 
 def statistics(
@@ -1915,7 +1488,8 @@ def statistics(
 ):
     user = get_current_user(info)
     for source in stats_config.source_ids:
-        check_user_can_view_source(user, source)
+        assert check_user_can_view_source(user, source)
+
     return stats.statistics(
         stats_config, return_numeric_keys_only=return_numeric_keys_only
     )
@@ -1934,7 +1508,7 @@ def statistics_for_choropleth(
 ):
     user = get_current_user(info)
     for source in stats_config.source_ids:
-        check_user_can_view_source(user, source)
+        assert check_user_can_view_source(user, source)
 
     return (
         stats.statistics(

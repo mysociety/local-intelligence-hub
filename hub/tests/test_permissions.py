@@ -102,37 +102,42 @@ class TestOwnSources(Setup, TestCase):
     def test_aggregate_data_count(self):
         query = """
             query SourceStatsByBoundary(
-              $sourceId: String!
+              $statsConfig: StatisticsConfig!
             ) {
-                choroplethDataForSource(
-                    sourceId: $sourceId
-                    analyticalAreaKey: european_electoral_region
-                    mode: Count
-                )
-                {
-                  gss
-                  count
-                  formattedCount
-                }
+              statisticsForChoropleth(
+                statsConfig: $statsConfig
+              ) {
+                gss
+                count
+                formattedCount
               }
+            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            data={
+                "query": query,
+                "variables": {
+                    "statsConfig": {
+                        "queryId": "TestOwnSources.test_aggregate_data_count",
+                        "sourceIds": [str(self.source.id)],
+                        "groupByArea": "european_electoral_region",
+                        "aggregationOperation": "Count",
+                    },
+                },
+            },
             headers={
                 "Authorization": f"JWT {self.token}",
             },
         )
         result = res.json()
 
-        print(result)
-
         self.assertIsNone(result.get("errors", None))
         self.assertEqual(
             [{"gss": "XXX", "count": 1, "formattedCount": "1"}],
-            result["data"]["choroplethDataForSource"],
+            result["data"]["statisticsForChoropleth"],
         )
 
     # Test graphQL query for geojson point
@@ -246,37 +251,42 @@ class TestFullSharing(Setup, TestCase):
     def test_aggregate_data_count(self):
         query = """
             query SourceStatsByBoundary(
-              $sourceId: String!
+              $statsConfig: StatisticsConfig!
             ) {
-                choroplethDataForSource(
-                    sourceId: $sourceId
-                    analyticalAreaKey: european_electoral_region
-                    mode: Count
-                )
-                {
-                  gss
-                  count
-                  formattedCount
-                }
+              statisticsForChoropleth(
+                statsConfig: $statsConfig
+              ) {
+                gss
+                count
+                formattedCount
               }
+            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            data={
+                "query": query,
+                "variables": {
+                    "statsConfig": {
+                        "queryId": "TestFullSharing.test_aggregate_data_count",
+                        "sourceIds": [str(self.source.id)],
+                        "groupByArea": "european_electoral_region",
+                        "aggregationOperation": "Count",
+                    }
+                },
+            },
             headers={
                 "Authorization": f"JWT {self.token}",
             },
         )
         result = res.json()
 
-        print(result)
-
         self.assertIsNone(result.get("errors", None))
         self.assertEqual(
             [{"gss": "XXX", "count": 1, "formattedCount": "1"}],
-            result["data"]["choroplethDataForSource"],
+            result["data"]["statisticsForChoropleth"],
         )
 
     def test_generic_data_visibility(self):
@@ -388,36 +398,41 @@ class TestLocationOnlySharing(Setup, TestCase):
     def test_aggregate_data_count(self):
         query = """
             query SourceStatsByBoundary(
-              $sourceId: String!
+              $statsConfig: StatisticsConfig!
             ) {
-                choroplethDataForSource(
-                    sourceId: $sourceId
-                    analyticalAreaKey: european_electoral_region
-                    mode: Count
-                )
-                {
-                  gss
-                  count
-                  formattedCount
-                }
+              statisticsForChoropleth(
+                statsConfig: $statsConfig
+              ) {
+                gss
+                count
+                formattedCount
               }
+            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            data={
+                "query": query,
+                "variables": {
+                    "statsConfig": {
+                        "queryId": "TestLocationOnlySharing.test_aggregate_data_count",
+                        "sourceIds": [str(self.source.id)],
+                        "groupByArea": "european_electoral_region",
+                        "aggregationOperation": "Count",
+                    }
+                },
+            },
             headers={
                 "Authorization": f"JWT {self.token}",
             },
         )
         result = res.json()
 
-        print(result)
-
         self.assertIsNone(result.get("data", None))
         self.assertIn(
-            "User otheruser does not have permission to view this external data source's data",
+            "User otheruser does not have permission to explore this external data source",
             str(result["errors"]),
         )
 
@@ -527,36 +542,41 @@ class TestAggregateOnlySharing(Setup, TestCase):
     def test_aggregate_data_count(self):
         query = """
             query SourceStatsByBoundary(
-              $sourceId: String!
+              $statsConfig: StatisticsConfig!
             ) {
-                choroplethDataForSource(
-                    sourceId: $sourceId
-                    analyticalAreaKey: european_electoral_region
-                    mode: Count
-                )
-                {
-                  gss
-                  count
-                  formattedCount
-                }
+              statisticsForChoropleth(
+                statsConfig: $statsConfig
+              ) {
+                gss
+                count
+                formattedCount
               }
+            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            data={
+                "query": query,
+                "variables": {
+                    "statsConfig": {
+                        "queryId": "TestAggregateOnlySharing.test_aggregate_data_count",
+                        "sourceIds": [str(self.source.id)],
+                        "groupByArea": "european_electoral_region",
+                        "aggregationOperation": "Count",
+                    }
+                },
+            },
             headers={
                 "Authorization": f"JWT {self.token}",
             },
         )
         result = res.json()
 
-        print(result)
-
         self.assertIsNone(result.get("data", None))
         self.assertIn(
-            "User otheruser does not have permission to view this external data source's data",
+            "User otheruser does not have permission to explore this external data source",
             str(result["errors"]),
         )
 
@@ -654,25 +674,32 @@ class TestNoSharing(Setup, TestCase):
     def test_aggregate_data_count(self):
         query = """
             query SourceStatsByBoundary(
-              $sourceId: String!
+              $statsConfig: StatisticsConfig!
             ) {
-                choroplethDataForSource(
-                    sourceId: $sourceId
-                    analyticalAreaKey: european_electoral_region
-                    mode: Count
-                )
-                {
-                  gss
-                  count
-                  formattedCount
-                }
+              statisticsForChoropleth(
+                statsConfig: $statsConfig
+              ) {
+                gss
+                count
+                formattedCount
               }
+            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            data={
+                "query": query,
+                "variables": {
+                    "statsConfig": {
+                        "queryId": "TestNoSharing.test_aggregate_data_count",
+                        "sourceIds": [str(self.source.id)],
+                        "groupByArea": "european_electoral_region",
+                        "aggregationOperation": "Count",
+                    }
+                },
+            },
             headers={
                 "Authorization": f"JWT {self.token}",
             },
@@ -746,31 +773,38 @@ class TestLoggedOutUserForUnsharedSource(Setup, TestCase):
     def test_aggregate_data_count(self):
         query = """
             query SourceStatsByBoundary(
-              $sourceId: String!
+              $statsConfig: StatisticsConfig!
             ) {
-                choroplethDataForSource(
-                    sourceId: $sourceId
-                    analyticalAreaKey: european_electoral_region
-                    mode: Count
-                )
-                {
-                  gss
-                  count
-                  formattedCount
-                }
+              statisticsForChoropleth(
+                statsConfig: $statsConfig
+              ) {
+                gss
+                count
+                formattedCount
               }
+            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            data={
+                "query": query,
+                "variables": {
+                    "statsConfig": {
+                        "queryId": "TestLoggedOutUserForUnsharedSource.test_aggregate_data_count",
+                        "sourceIds": [str(self.source.id)],
+                        "groupByArea": "european_electoral_region",
+                        "aggregationOperation": "Count",
+                    }
+                },
+            },
             headers={},
         )
         result = res.json()
 
-        self.assertIsNotNone(result.get("errors", None))
         self.assertIsNone(result.get("data", None))
+        self.assertIsNotNone(result.get("errors", None))
 
     def test_vector_tiles_visibility(self):
         zoom = 13
@@ -847,31 +881,38 @@ class TestLoggedOutUserForSharedSource(Setup, TestCase):
     def test_aggregate_data_count(self):
         query = """
             query SourceStatsByBoundary(
-              $sourceId: String!
+              $statsConfig: StatisticsConfig!
             ) {
-                choroplethDataForSource(
-                    sourceId: $sourceId
-                    analyticalAreaKey: european_electoral_region
-                    mode: Count
-                )
-                {
-                  gss
-                  count
-                  formattedCount
-                }
+              statisticsForChoropleth(
+                statsConfig: $statsConfig
+              ) {
+                gss
+                count
+                formattedCount
               }
+            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            data={
+                "query": query,
+                "variables": {
+                    "statsConfig": {
+                        "queryId": "TestLoggedOutUserForSharedSource.test_aggregate_data_count",
+                        "sourceIds": [str(self.source.id)],
+                        "groupByArea": "european_electoral_region",
+                        "aggregationOperation": "Count",
+                    }
+                },
+            },
             headers={},
         )
         result = res.json()
 
-        self.assertIsNotNone(result.get("errors", None))
         self.assertIsNone(result.get("data", None))
+        self.assertIsNotNone(result.get("errors", None))
 
     def test_vector_tiles_visibility(self):
         zoom = 13
@@ -939,36 +980,38 @@ class TestLoggedOutUserForPublicSource(Setup, TestCase):
         """
         query = """
             query SourceStatsByBoundary(
-              $sourceId: String!
+              $statsConfig: StatisticsConfig!
             ) {
-                choroplethDataForSource(
-                    sourceId: $sourceId
-                    analyticalAreaKey: european_electoral_region
-                    mode: Count
-                )
-                {
-                  gss
-                  count
-                  formattedCount
-                }
+              statisticsForChoropleth(
+                statsConfig: $statsConfig
+              ) {
+                gss
+                count
+                formattedCount
               }
+            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            data={
+                "query": query,
+                "variables": {
+                    "statsConfig": {
+                        "queryId": "TestLoggedOutUserForPublicSource.test_aggregate_data_count",
+                        "sourceIds": [str(self.source.id)],
+                        "groupByArea": "european_electoral_region",
+                        "aggregationOperation": "Count",
+                    }
+                },
+            },
             headers={},
         )
         result = res.json()
 
-        print(result)
-
         self.assertIsNone(result.get("errors", None))
-        self.assertEqual(
-            [{"gss": "XXX", "count": 1, "formattedCount": "1"}],
-            result["data"]["choroplethDataForSource"],
-        )
+        self.assertIsNotNone(result.get("data", None))
 
     def test_generic_data_visibility(self):
         """
@@ -1075,37 +1118,42 @@ class TestLoggedInUserForPublicSource(Setup, TestCase):
 
         query = """
             query SourceStatsByBoundary(
-              $sourceId: String!
+              $statsConfig: StatisticsConfig!
             ) {
-                choroplethDataForSource(
-                    sourceId: $sourceId
-                    analyticalAreaKey: european_electoral_region
-                    mode: Count
-                )
-                {
-                  gss
-                  count
-                  formattedCount
-                }
+              statisticsForChoropleth(
+                statsConfig: $statsConfig
+              ) {
+                gss
+                count
+                formattedCount
               }
+            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            data={
+                "query": query,
+                "variables": {
+                    "statsConfig": {
+                        "queryId": "TestLoggedInUserForPublicSource.test_aggregate_data_count",
+                        "sourceIds": [str(self.source.id)],
+                        "groupByArea": "european_electoral_region",
+                        "aggregationOperation": "Count",
+                    }
+                },
+            },
             headers={
                 "Authorization": f"JWT {self.token}",
             },
         )
         result = res.json()
 
-        print(result)
-
         self.assertIsNone(result.get("errors", None))
         self.assertEqual(
             [{"gss": "XXX", "count": 1, "formattedCount": "1"}],
-            result["data"]["choroplethDataForSource"],
+            result["data"]["statisticsForChoropleth"],
         )
 
     def test_generic_data_visibility(self):

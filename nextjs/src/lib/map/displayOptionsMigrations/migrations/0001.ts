@@ -1,5 +1,6 @@
 import { AreaQueryMode, GetMapReportQuery } from '@/__generated__/graphql'
 import {
+  DisplayOptionsVersion,
   IDisplayOptions,
   IExplorerDisplay,
   SpecificViewConfig,
@@ -11,7 +12,7 @@ import { InspectorDisplayType } from '@/lib/explorer'
 import { produce } from 'immer'
 import { v4 } from 'uuid'
 
-export const VERSION = '20250125'
+export const NEXT_VERSION = DisplayOptionsVersion['20250125']
 
 function starId(starredState: any): string {
   return `ENTITY:${starredState.entity}::ID:${starredState.id}`
@@ -20,14 +21,14 @@ function starId(starredState: any): string {
 /**
  * Move dataVisualisation and display to views[0].mapOptions.
  */
-export function migration0001(
+export default function migration(
   unmigratedReport: GetMapReportQuery['mapReport']
 ) {
   return produce(unmigratedReport, (draft) => {
     // Move dataVisualisation and display to views[0].mapOptions
     const viewId = v4()
     const newDisplayOptions = {
-      version: VERSION,
+      version: NEXT_VERSION,
       starred: unmigratedReport.displayOptions.starred.reduce(
         (acc: any, star: any) => {
           acc[starId(star)] = star

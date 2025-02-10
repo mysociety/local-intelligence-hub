@@ -269,8 +269,6 @@ export default function InspectExternalDataSource({
       {
         loading: 'Creating report...',
         success: (d) => {
-          console.log('Mutation Response:', d)
-
           if (d.data?.createMapReport?.__typename === 'MapReport') {
             router.push(`/reports/${d.data.createMapReport.id}`)
             return 'Map created!'
