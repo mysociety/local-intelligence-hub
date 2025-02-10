@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 import json
 from datetime import timedelta
-from enum import Enum
 from pathlib import Path
 from typing import List, Tuple
 
@@ -108,6 +107,7 @@ env = environ.Env(
     NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=(str, ""),
     DATA_UPLOAD_MAX_MEMORY_SIZE=(int, 2621440),
     FILE_UPLOAD_MAX_MEMORY_SIZE=(int, 2621440),
+    CURRENT_MAPIT_GENERATION=(int, 56),
     # Batch
     IMPORT_UPDATE_ALL_BATCH_SIZE=(int, 100),
     ROW_COUNT_PER_WORKER=(int, 15000),
@@ -170,6 +170,7 @@ LOG_QUERIES = env("LOG_QUERIES")
 CACHE_FILE = env("CACHE_FILE")
 MAPIT_URL = env("MAPIT_URL")
 MAPIT_API_KEY = env("MAPIT_API_KEY")
+CURRENT_MAPIT_GENERATION = env("CURRENT_MAPIT_GENERATION")
 GOOGLE_ANALYTICS = env("GOOGLE_ANALYTICS")
 GOOGLE_SITE_VERIFICATION = env("GOOGLE_SITE_VERIFICATION")
 GOOGLE_SHEETS_CLIENT_CONFIG = json.loads(env("GOOGLE_SHEETS_CLIENT_CONFIG"))

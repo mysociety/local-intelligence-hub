@@ -82,7 +82,7 @@ from hub.tasks import (
 )
 from hub.validation import validate_and_format_phone_number
 from hub.views.mapped import ExternalDataSourceWebhook
-from utils import google_maps, google_sheets
+from utils import google_maps, google_sheets, postgis_geocoder
 from utils.django_json import DBJSONEncoder, PandasMappingSafeForPG
 from utils.log import get_simple_debug_logger
 from utils.postcodesIO import (
@@ -793,6 +793,9 @@ class GenericData(CommonData):
     description = models.TextField(max_length=3000, blank=True, null=True)
     image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
     can_display_point = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ["data_type", "data"]
 
     def remote_url(self):
         return self.data_type.data_set.external_data_source.record_url(
@@ -1755,14 +1758,45 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         loaders = await self.get_loaders()
         geocoder_context = geocoding_config.GeocoderContext()
 
+        logger.info(f"Importing {len(members)} records")
+
         if self.uses_valid_geocoding_config():
-            await asyncio.gather(
+            geocode_results = await asyncio.gather(
                 *[
-                    geocoding_config.import_record(
+                    geocoding_config.geocode_record(
                         record, self, data_type, loaders, geocoder_context
                     )
                     for record in data
                 ]
+            )
+
+            geocode_results = [r for r in geocode_results if r]
+            if not geocode_results:
+                return
+
+            unique_fields = ["data_type", "data"]
+            # Update all other fields in GeocodeResult
+            update_fields = [
+                field
+                for field in geocode_results[0].__dict__.keys()
+                if field not in unique_fields
+            ]
+            generic_data = [
+                GenericData(**result.__dict__) for result in geocode_results
+            ]
+            logger.info(
+                f"Geocoded {len(members)} records, first data: {generic_data[0].data}"
+            )
+
+            await GenericData.objects.abulk_create(
+                generic_data,
+                update_conflicts=True,
+                unique_fields=["data_type", "data"],
+                update_fields=update_fields,
+            )
+
+            logger.info(
+                f"Updated {len(members)} records, first data: {generic_data[0].data}"
             )
         elif (
             self.geography_column
@@ -2057,10 +2091,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         get_record_id(record) on the source data (i.e. the record that
         comes from the 3rd party data source) – NOT the GenericData.id.
         """
+        if not record_ids:
+            return []
+
+        logger.info(
+            f"Loading previously imported data for {len(record_ids)} records, first data: {record_ids[0]}"
+        )
         results = GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id, data__in=record_ids
-        )
+        ).select_related("area")
         results = await sync_to_async(list)(results)
+
+        logger.info(f"Loaded previously imported data, first data: {record_ids[0]}")
         return [
             next(
                 (result for result in results if result.data == id),
@@ -2167,6 +2209,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         loaders = Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
             postcodesIOFromPoint=DataLoader(load_fn=get_bulk_postcode_geo_from_coords),
+            postgis_geocoder=DataLoader(
+                load_fn=postgis_geocoder.get_bulk_postcode_geo_from_coords
+            ),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
             source_loaders=await self.get_source_loaders(),
             generic_data=DataLoader(load_fn=self.imported_data_loader),
@@ -2421,7 +2466,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     def handle_import_webhook_view(self, member_ids):
         try:
             if not self.auto_import_enabled:
-                logger.error(f"Imports requested for CRM without webhooks enabled: {self}")
+                logger.error(
+                    f"Imports requested for CRM without webhooks enabled: {self}"
+                )
                 return False
 
             async_to_sync(self.schedule_import_many)(members=member_ids)
@@ -2575,7 +2622,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
             logger.info(f"Scheduled import batch {i} for source {external_data_source}")
         metrics.distribution(key="import_rows_requested", value=member_count)
-        call_command("autoscale_render_workers")
+        await sync_to_async(call_command)("autoscale_render_workers")
 
     async def schedule_refresh_one(self, member) -> int:
         logger.info(f"Scheduling refresh one for source {self} and member {member}")
@@ -3964,7 +4011,7 @@ class ActionNetworkSource(ExternalDataSource):
             request_id=request_id,
             priority=ProcrastinateQueuePriority.UNGUESSABLE.value,
         )
-        call_command("autoscale_render_workers")
+        await sync_to_async(call_command)("autoscale_render_workers")
 
     @classmethod
     async def deferred_refresh_all(

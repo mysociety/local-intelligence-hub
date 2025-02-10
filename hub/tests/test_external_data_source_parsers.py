@@ -163,6 +163,12 @@ class TestMultiLevelGeocoding(TestCase):
         # load up the data for tests
         self.data = self.source.get_import_data()
 
+        self.assertEqual(
+            len(self.data),
+            len(self.source.data),
+            "All data should be imported.",
+        )
+
         for d in self.data:
             try:
                 if d.json["expected_area_gss"] is not None:
@@ -257,6 +263,12 @@ class TestMultiLevelGeocoding(TestCase):
         # load up the data for tests
         self.data = self.source.get_import_data()
 
+        self.assertEqual(
+            len(self.data),
+            len(self.source.data),
+            "All data should be imported.",
+        )
+
         for d in self.data:
             try:
                 try:
@@ -305,6 +317,12 @@ class TestMultiLevelGeocoding(TestCase):
 
         # load up the data for tests
         self.data = self.source.get_import_data()
+
+        self.assertEqual(
+            len(self.data),
+            len(self.source.data),
+            "All data should be imported.",
+        )
 
         for d in self.data:
             try:
@@ -442,6 +460,12 @@ class TestComplexAddressGeocoding(TestCase):
         # load up the data for tests
         self.data = self.source.get_import_data()
 
+        self.assertEqual(
+            len(self.data),
+            len(self.source.data),
+            "All data should be imported.",
+        )
+
         for d in self.data:
             try:
                 try:
@@ -567,6 +591,12 @@ class TestCoordinateGeocoding(TestCase):
         # load up the data for tests
         self.data = self.source.get_import_data()
 
+        self.assertEqual(
+            len(self.data),
+            len(self.source.data),
+            "All data should be imported.",
+        )
+
         for d in self.data:
             try:
                 try:
@@ -629,6 +659,12 @@ class TestAreaCodeGeocoding(TestCase):
 
         # load up the data for tests
         self.data = self.source.get_import_data()
+
+        self.assertEqual(
+            len(self.data),
+            len(self.source.data),
+            "All data should be imported.",
+        )
 
         for d in self.data:
             try:
@@ -710,6 +746,12 @@ class TestAreaCodeGeocoding(TestCase):
         # load up the data for tests
         self.data = self.source.get_import_data()
 
+        self.assertEqual(
+            len(self.data),
+            len(self.source.data),
+            "All data should be imported.",
+        )
+
         for d in self.data:
             try:
                 try:
@@ -749,6 +791,12 @@ class TestAreaCodeGeocoding(TestCase):
 
         # load up the data for tests
         self.data = self.source.get_import_data()
+
+        self.assertEqual(
+            len(self.data),
+            len(self.source.data),
+            "All data should be imported.",
+        )
 
         for d in self.data:
             try:

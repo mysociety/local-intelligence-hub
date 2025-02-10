@@ -44,6 +44,7 @@ class TestPublicAPI(TestCase):
                 "council district": "Newcastle upon Tyne",
             },
             data_type=dt,
+            data="1",
         )
         models.GenericData.objects.update_or_create(
             json={
@@ -51,6 +52,7 @@ class TestPublicAPI(TestCase):
                 "council district": "County Durham",
             },
             data_type=dt,
+            data="2",
         )
         # Make a dummy region
         area_type, x = models.AreaType.objects.update_or_create(

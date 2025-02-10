@@ -1,11 +1,13 @@
 import logging
 import re
+import traceback
+from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.gis.geos import Point
-from django.db.models import Q
+from django.db.models import Model, Q
 
 from asgiref.sync import sync_to_async
 
@@ -21,7 +23,7 @@ from utils.py import are_dicts_equal, ensure_list, find
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
-    from hub.models import DataType, ExternalDataSource, Loaders
+    from hub.models import Area, DataType, ExternalDataSource, Loaders
 
 
 def find_config_item(source: "ExternalDataSource", key: str, value, default=None):
@@ -44,9 +46,30 @@ class GeocoderContext:
         self.dataloaders = {}
 
 
+@dataclass
+class GeocodeResult:
+    """
+    Returned by the geocode_record method, ready
+    to be bulk saved to the database.
+    """
+
+    data_type: Model
+    data: str
+    json: dict
+    geocoder: str = None
+    geocode_data: dict = None
+    postcode_data: dict = None
+    area: "Area" = None
+    point: Point = None
+
+    def __str__(self):
+        return f"{self.data_type.name}: {self.data}"
+
+
 # enum of geocoders: postcodes_io, mapbox, google
 class Geocoder(Enum):
     POSTCODES_IO = "postcodes_io"
+    POSTGIS = "postgis"
     FINDTHATPOSTCODE = "findthatpostcode"
     MAPBOX = "mapbox"
     GOOGLE = "google"
@@ -90,13 +113,13 @@ def get_config_item_field_value(
     return value or default
 
 
-async def import_record(
+async def geocode_record(
     record,
     source: "ExternalDataSource",
     data_type: "DataType",
     loaders: "Loaders",
     geocoder_context: GeocoderContext,
-):
+) -> GeocodeResult:
     from hub.models import ExternalDataSource, GenericData
 
     id = source.get_record_id(record)
@@ -128,7 +151,7 @@ async def import_record(
 
     # check if geocoding_config and dependent fields are the same; if so, skip geocoding
     try:
-        generic_data = await loaders["generic_data"].load(id)
+        generic_data: GenericData = await loaders["generic_data"].load(id)
         # First check if the configs are the same
         if (
             generic_data is not None
@@ -164,8 +187,16 @@ async def import_record(
                 # And simply update the other data.
                 update_data["geocode_data"] = generic_data.geocode_data or {}
                 update_data["geocode_data"]["skipped"] = True
-                return await GenericData.objects.aupdate_or_create(
-                    data_type=data_type, data=id, defaults=update_data
+                # Return a complete GeocodeResult to avoid clearing previous data
+                return GeocodeResult(
+                    data_type=data_type,
+                    data=id,
+                    json=update_data["json"],
+                    geocoder=generic_data.geocoder,
+                    geocode_data=generic_data.geocode_data,
+                    postcode_data=generic_data.postcode_data,
+                    area=generic_data.area,
+                    point=generic_data.point,
                 )
     except GenericData.DoesNotExist:
         # logger.debug("Generic Data doesn't exist, no equality check to be done", id)
@@ -191,7 +222,7 @@ async def import_area_code_data(
     update_data: dict,
     geocoder_context: GeocoderContext,
 ):
-    from hub.models import Area, GenericData
+    from hub.models import Area
 
     update_data["geocoder"] = LATEST_AREA_CODE_GEOCODER.value
 
@@ -220,15 +251,16 @@ async def import_area_code_data(
 
     area_filters = {}
     if literal_lih_area_type__code:
-        area_filters["area_type__code"] = literal_lih_area_type__code
+        area_filters["area_type__code__in"] = ensure_list(literal_lih_area_type__code)
     if literal_mapit_type:
-        area_filters["mapit_type"] = literal_mapit_type
+        area_filters["mapit_type__in"] = ensure_list(literal_mapit_type)
 
     AreaLoader = FieldDataLoaderFactory.get_loader_class(
         Area, field="gss", filters=area_filters, select_related=["area_type"]
     )
 
     area = await AreaLoader(geocoder_context).load(area_code)
+
     if area is None:
         return
 
@@ -265,8 +297,8 @@ async def import_area_code_data(
     # Update the geocode data regardless, for debugging purposes
     update_data["geocode_data"].update({"steps": steps})
 
-    await GenericData.objects.aupdate_or_create(
-        data_type=data_type, data=source.get_record_id(record), defaults=update_data
+    return GeocodeResult(
+        data_type=data_type, data=source.get_record_id(record), **update_data
     )
 
 
@@ -278,7 +310,7 @@ async def import_area_data(
     update_data: dict,
     geocoder_context: GeocoderContext,
 ):
-    from hub.models import Area, GenericData
+    from hub.models import Area
 
     update_data["geocoder"] = LATEST_AREA_GEOCODER.value
 
@@ -456,32 +488,53 @@ async def import_area_data(
     # Update the geocode data regardless, for debugging purposes
     update_data["geocode_data"].update({"steps": steps})
 
-    await GenericData.objects.aupdate_or_create(
-        data_type=data_type, data=source.get_record_id(record), defaults=update_data
+    return GeocodeResult(
+        data_type=data_type, data=source.get_record_id(record), **update_data
     )
 
 
 async def get_postcode_data_for_area(area, loaders, steps):
     sample_point = area.polygon.centroid
+
     # get postcodeIO result for area.coordinates
     try:
-        postcode_data: PostcodesIOResult = await loaders["postcodesIOFromPoint"].load(
+        postcode_data: PostcodesIOResult = await loaders["postgis_geocoder"].load(
             sample_point
         )
     except Exception as e:
+        print(
+            traceback.format_exc()
+        )  # Keep for now to track tricky database errors with bad error messages
+
         logger.error(f"Failed to get postcode data for {sample_point}: {e}")
         postcode_data = None
 
     steps.append(
         {
             "task": "postcode_from_area_coordinates",
-            "service": Geocoder.POSTCODES_IO.value,
+            "service": Geocoder.POSTGIS.value,
             "result": "failed" if postcode_data is None else "success",
         }
     )
 
     # Try a few other backup strategies (example postcode, another geocoder)
     # to get postcodes.io data
+    if postcode_data is None:
+        try:
+            postcode_data: PostcodesIOResult = await loaders[
+                "postcodesIOFromPoint"
+            ].load(sample_point)
+        except Exception as e:
+            logger.error(f"Failed to get postcode data for {sample_point}: {e}")
+
+        steps.append(
+            {
+                "task": "postcode_from_area_coordinates",
+                "service": Geocoder.POSTCODES_IO.value,
+                "result": "failed" if postcode_data is None else "success",
+            }
+        )
+
     if postcode_data is None:
         try:
             postcode = await get_example_postcode_from_area_gss(area.gss)
@@ -541,8 +594,6 @@ async def import_address_data(
 
     Used to batch-import data.
     """
-    from hub.models import GenericData
-
     update_data["geocoder"] = LATEST_ADDRESS_GEOCODER.value
 
     point = None
@@ -684,8 +735,8 @@ async def import_address_data(
     update_data["postcode_data"] = postcode_data
     update_data["point"] = point
 
-    await GenericData.objects.aupdate_or_create(
-        data_type=data_type, data=source.get_record_id(record), defaults=update_data
+    return GeocodeResult(
+        data_type=data_type, data=source.get_record_id(record), **update_data
     )
 
 
@@ -697,8 +748,6 @@ async def import_coordinate_data(
     update_data: dict,
     geocoder_context: GeocoderContext,
 ):
-    from hub.models import GenericData
-
     update_data["geocoder"] = LATEST_COORDINATE_GEOCODER.value
 
     steps = []
@@ -755,8 +804,6 @@ async def import_coordinate_data(
     update_data["postcode_data"] = postcode_data
     update_data["point"] = point
 
-    await GenericData.objects.aupdate_or_create(
-        data_type=data_type,
-        data=source.get_record_id(record),
-        defaults=update_data,
+    return GeocodeResult(
+        data_type=data_type, data=source.get_record_id(record), **update_data
     )

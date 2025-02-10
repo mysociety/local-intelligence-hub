@@ -50,8 +50,8 @@ from utils.postcode import get_postcode_data_for_gss
 from utils.statistics import (
     attempt_interpret_series_as_number,
     attempt_interpret_series_as_percentage,
+    check_numeric,
     check_percentage,
-    check_numeric
 )
 
 pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")

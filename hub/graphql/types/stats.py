@@ -161,6 +161,7 @@ class StatisticsConfig:
     exclude_columns: Optional[List[str]] = None
     format_numeric_keys: Optional[bool] = False
 
+
 """
 # Some examples of use
 
@@ -405,7 +406,11 @@ def statistics(
                 if column not in numerical_keys:
                     numerical_keys += [str(column)]
     # Review the attempt to interpret data as numeric, and update numerical_keys where there is in fact numeric data
-    numerical_keys = [d for d in df.select_dtypes(include="number").columns.tolist() if d not in exclude_keys]
+    numerical_keys = [
+        d
+        for d in df.select_dtypes(include="number").columns.tolist()
+        if d not in exclude_keys
+    ]
 
     if len(numerical_keys) > 0:
         # Provide some special variables to the col editor
@@ -430,7 +435,7 @@ def statistics(
                 try:
                     df["third"] = np.partition(values, -3, axis=1)[:, -3]
                 except Exception:
-                  pass
+                    pass
 
     # Apply the row-level cols
     if pre_calcs:
@@ -447,7 +452,7 @@ def statistics(
                 if col.is_percentage and col.name not in percentage_keys:
                     percentage_keys += [col.name]
             except Exception as e:
-                pass
+                logger.warning(f"Error in statistics pre_calcs: {e}")
 
     # --- Group by the groupby keys ---
     # respecting aggregation operations
@@ -558,7 +563,7 @@ def statistics(
             df["total"] = values.sum(axis=1)
             try:
                 df["second"] = np.partition(values, -2, axis=1)[:, -2]
-                    # df["second_label"] = # TODO: get the column name of the second highst value
+                # df["second_label"] = # TODO: get the column name of the second highst value
                 # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
                 # As above, but using numpy not pandas
                 df["second_label"] = df[numerical_keys].columns[
@@ -566,12 +571,12 @@ def statistics(
                 ]
                 df["majority"] = df["first"] - df["second"]
             except Exception:
-              pass
+                pass
         if len(numerical_keys) > 2:
             try:
                 df["third"] = np.partition(values, -3, axis=1)[:, -3]
             except Exception:
-              pass
+                pass
 
         # Apply formulas
         if post_calcs and len(post_calcs) > 0:
@@ -588,7 +593,7 @@ def statistics(
                     if col.is_percentage and col.name not in percentage_keys:
                         percentage_keys += [col.name]
                 except Exception as e:
-                    pass
+                    logger.warning(f"Error in statistics post_calcs: {e}")
 
             # Then recalculate based on the formula, since they may've doctored the values.
             values = df[numerical_keys].values
@@ -657,7 +662,11 @@ def statistics(
             )
             aggop = calculated_column_aggop or simple_asserted_aggop or default_aggop
             agg_dict[col] = aggop.value.lower()
-        df_n = df[[n for n in numerical_keys if n not in exclude_keys]].reset_index().drop(columns=[k for k in exclude_keys if k in df.columns])
+        df_n = (
+            df[[n for n in numerical_keys if n not in exclude_keys]]
+            .reset_index()
+            .drop(columns=[k for k in exclude_keys if k in df.columns])
+        )
         df_agg = df_n.agg(agg_dict)
         d = df_agg.to_dict()
         if conf.format_numeric_keys:
