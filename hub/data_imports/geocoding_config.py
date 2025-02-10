@@ -1,12 +1,13 @@
 import logging
 import re
 import traceback
+from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.gis.geos import Point
-from django.db.models import Q
+from django.db.models import Model, Q
 
 from asgiref.sync import sync_to_async
 
@@ -45,31 +46,21 @@ class GeocoderContext:
         self.dataloaders = {}
 
 
+@dataclass
 class GeocodeResult:
     """
     Returned by the geocode_record method, ready
     to be bulk saved to the database.
     """
 
-    def __init__(
-        self,
-        data_type,
-        data: str,
-        json: dict,
-        geocoder: str = None,
-        geocode_data: dict = None,
-        postcode_data: dict = None,
-        area=None,  # Can't type Area as can't import models (circular import)
-        point=None,
-    ):
-        self.data_type = data_type
-        self.data = data
-        self.json = json
-        self.geocoder = geocoder
-        self.geocode_data = geocode_data
-        self.postcode_data = postcode_data
-        self.area = area
-        self.point = point
+    data_type: Model
+    data: str
+    json: dict
+    geocoder: str = None
+    geocode_data: dict = None
+    postcode_data: dict = None
+    area: Model = None  # Can't type Area as can't import models (circular import)
+    point: Point = None
 
     def __str__(self):
         return f"{self.data_type.name}: {self.data}"
@@ -260,9 +251,9 @@ async def import_area_code_data(
 
     area_filters = {}
     if literal_lih_area_type__code:
-        area_filters["area_type__code"] = literal_lih_area_type__code
+        area_filters["area_type__code__in"] = ensure_list(literal_lih_area_type__code)
     if literal_mapit_type:
-        area_filters["mapit_type__in"] = literal_mapit_type
+        area_filters["mapit_type__in"] = ensure_list(literal_mapit_type)
 
     AreaLoader = FieldDataLoaderFactory.get_loader_class(
         Area, field="gss", filters=area_filters, select_related=["area_type"]

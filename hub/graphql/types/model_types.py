@@ -48,8 +48,9 @@ from hub.management.commands.import_mps import party_shades
 from utils.geo_reference import AnalyticalAreaType, area_to_postcode_io_key
 from utils.postcode import get_postcode_data_for_gss
 from utils.statistics import (
-    attempt_interpret_series_as_float,
+    attempt_interpret_series_as_number,
     attempt_interpret_series_as_percentage,
+    check_numeric,
     check_percentage,
 )
 
@@ -1605,7 +1606,7 @@ def generic_data_summary_from_source_about_area(
             percentage_keys += [str(column)]
             df[column] = attempt_interpret_series_as_percentage(df[column])
         else:
-            df[column] = attempt_interpret_series_as_float(df[column])
+            df[column] = attempt_interpret_series_as_number(df[column])
     numerical_keys = df.select_dtypes(include="number").columns
     # remove columns that aren't numerical_keys
     df = df[numerical_keys]
@@ -1810,8 +1811,8 @@ def choropleth_data_for_source(
                 if decided_operation is None:
                     decided_operation = stats.AggregationOp.Mean
                 df[column] = attempt_interpret_series_as_percentage(df[column])
-            else:
-                df[column] = attempt_interpret_series_as_float(df[column])
+            elif all(df[column].apply(check_numeric)):
+                df[column] = attempt_interpret_series_as_number(df[column])
 
         # You end up with something like:
         """
@@ -1845,25 +1846,23 @@ def choropleth_data_for_source(
 
         # Add a "maximum" column that figures out the biggest numerical value in each row
         numerical_keys = df.select_dtypes(include="number").columns
-        try:
-            # Convert selected columns to numpy array for faster operations
-            values = df[numerical_keys].values
-            df["first"] = values.max(axis=1)
-            df["second"] = np.partition(values, -2, axis=1)[:, -2]
-            df["third"] = np.partition(values, -3, axis=1)[:, -3]
+        if len(numerical_keys) > 0:
             try:
-                df["majority"] = df["first"] - df["second"]
-            except IndexError:
-                # In case there's only one value.
+                # Convert selected columns to numpy array for faster operations
+                values = df[numerical_keys].values
+                df["first"] = values.max(axis=1)
+                if len(numerical_keys) > 1:
+                    df["second"] = np.partition(values, -2, axis=1)[:, -2]
+                    df["majority"] = df["first"] - df["second"]
+                    df["total"] = df[numerical_keys].sum(axis=1)
+                    df["count"] = df[numerical_keys].count(axis=1)
+                    df["mean"] = df[numerical_keys].mean(axis=1)
+                    df["median"] = df[numerical_keys].median(axis=1)
+                if len(numerical_keys) > 2:
+                    df["third"] = np.partition(values, -3, axis=1)[:, -3]
+                df["last"] = values.min(axis=1)
+            except Exception:
                 pass
-            df["last"] = values.min(axis=1)
-
-            df["total"] = df[numerical_keys].sum(axis=1)
-            df["count"] = df[numerical_keys].count(axis=1)
-            df["mean"] = df[numerical_keys].mean(axis=1)
-            df["median"] = df[numerical_keys].median(axis=1)
-        except IndexError:
-            pass
 
         # Now fetch the requested series from the dataframe
         # If the field is a column name, we can just return that column
@@ -1930,6 +1929,7 @@ def statistics_for_choropleth(
     stats_config: stats.StatisticsConfig,
     category_key: Optional[str] = None,
     count_key: Optional[str] = None,
+    is_count_key_percentage: Optional[bool] = False,
     map_bounds: Optional[stats.MapBounds] = None,
 ):
     user = get_current_user(info)
@@ -1943,6 +1943,7 @@ def statistics_for_choropleth(
             category_key=category_key,
             count_key=count_key,
             map_bounds=map_bounds,
+            is_count_key_percentage=is_count_key_percentage,
         )
         or []
     )  # Convert None to empty list for better front-end integration

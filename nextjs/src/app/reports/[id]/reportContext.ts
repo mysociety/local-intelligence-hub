@@ -191,6 +191,7 @@ export const explorerDisplaySchema = z.object({
   advancedStatisticsConfig: StatisticsConfigSchema()
     .optional()
     .describe('Configuring this will add arguments to the statistics query'),
+  hideTitle: z.boolean().optional(),
 })
 
 export type IExplorerDisplay = z.infer<typeof explorerDisplaySchema>
@@ -262,6 +263,7 @@ const mapOptionsSchema = z.object({
           'If categorical data should be interpreted using party colours.'
         ),
       advancedStatisticsDisplayField: z.string().optional(),
+      advancedStatisticsDisplayFieldIsPercentage: z.boolean().optional(),
     })
     .default({}),
   display: z

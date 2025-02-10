@@ -17,8 +17,9 @@ from utils.geo_reference import (
     area_to_postcode_io_key,
     lih_to_postcodes_io_key_map,
 )
+from utils.py import ensure_list
 from utils.statistics import (
-    attempt_interpret_series_as_float,
+    attempt_interpret_series_as_number,
     attempt_interpret_series_as_percentage,
     check_numeric,
     check_percentage,
@@ -155,7 +156,10 @@ class StatisticsConfig:
     calculated_columns: Optional[List[CalculatedColumn]] = None
     aggregation_operation: Optional[AggregationOp] = None
     aggregation_operations: Optional[List[AggregationDefinition]] = None
+    #
     return_columns: Optional[List[str]] = None
+    exclude_columns: Optional[List[str]] = None
+    format_numeric_keys: Optional[bool] = False
 
 
 """
@@ -226,6 +230,7 @@ def statistics(
     count_key: Optional[str] = None,
     return_numeric_keys_only: Optional[bool] = False,
     map_bounds: Optional[MapBounds] = None,
+    is_count_key_percentage: Optional[bool] = False,
 ):
     pre_calcs = (
         [c for c in conf.pre_group_by_calculated_columns if not c.ignore]
@@ -383,21 +388,29 @@ def statistics(
     df = df.set_index("id", drop=False)
 
     # Format numerics
-    percentage_keys = []
+    DEFAULT_EXCLUDE_KEYS = ["id"]
+    user_exclude_keys = ensure_list(conf.exclude_columns or [])
+    exclude_keys = [*DEFAULT_EXCLUDE_KEYS, *user_exclude_keys]
     numerical_keys = []
+    percentage_keys = []
     for column in df:
-        if column != "id":
+        if column not in exclude_keys:
             if all(df[column].apply(check_percentage)):
                 df[column] = attempt_interpret_series_as_percentage(df[column])
-                percentage_keys += [str(column)]
+                if column not in percentage_keys:
+                    percentage_keys += [str(column)]
+                if column not in numerical_keys:
+                    numerical_keys += [str(column)]
             elif all(df[column].apply(check_numeric)):
-                df[column] = attempt_interpret_series_as_float(df[column])
-                numerical_keys += [str(column)]
-    # Narrow down the DF to just the numerical columns then
-    numerical_keys = df.select_dtypes(include="number").columns.tolist()
-    # Exclude "id" from the numerical keys
-    if "id" in numerical_keys:
-        numerical_keys = numerical_keys.drop("id")
+                df[column] = attempt_interpret_series_as_number(df[column])
+                if column not in numerical_keys:
+                    numerical_keys += [str(column)]
+    # Review the attempt to interpret data as numeric, and update numerical_keys where there is in fact numeric data
+    numerical_keys = [
+        d
+        for d in df.select_dtypes(include="number").columns.tolist()
+        if d not in exclude_keys
+    ]
 
     if len(numerical_keys) > 0:
         # Provide some special variables to the col editor
@@ -405,37 +418,41 @@ def statistics(
         df["first"] = values.max(axis=1)
         # column name of "first"
         df["first_label"] = df[numerical_keys].idxmax(axis=1)
-        try:
-            df["second"] = np.partition(values, -2, axis=1)[:, -2]
-            # df["second_label"] = # TODO: get the column name of the second highst value
-            # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
-            # As above, but using numpy not pandas
-            df["second_label"] = df[numerical_keys].columns[
-                df[numerical_keys].values.argsort()[:, -2]
-            ]
-            df["majority"] = df["first"] - df["second"]
-        except IndexError:
-            pass
-        try:
-            df["third"] = np.partition(values, -3, axis=1)[:, -3]
-        except IndexError:
-            pass
-        df["total"] = values.sum(axis=1)
+        if len(numerical_keys) > 1:
+            df["total"] = values.sum(axis=1)
+            try:
+                df["second"] = np.partition(values, -2, axis=1)[:, -2]
+                # df["second_label"] = # TODO: get the column name of the second highst value
+                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
+                # As above, but using numpy not pandas
+                df["second_label"] = df[numerical_keys].columns[
+                    df[numerical_keys].values.argsort()[:, -2]
+                ]
+                df["majority"] = df["first"] - df["second"]
+            except Exception:
+                pass
+            if len(numerical_keys) > 2:
+                try:
+                    df["third"] = np.partition(values, -3, axis=1)[:, -3]
+                except Exception:
+                    pass
 
     # Apply the row-level cols
     if pre_calcs:
         for col in pre_calcs:
-            df[col.name] = df.eval(col.expression)
             try:
-                df[col.name] = df.eval(col.expression)
-            except ValueError:
-                # In case "where" is used, which pandas doesn't support
-                # https://github.com/pandas-dev/pandas/issues/34834
-                df[col.name] = ne.evaluate(col, local_dict=df)
-            if col.name not in numerical_keys:
-                numerical_keys += [col.name]
-            if col.is_percentage and col.name not in percentage_keys:
-                percentage_keys += [col.name]
+                try:
+                    df[col.name] = df.eval(col.expression)
+                except ValueError:
+                    # In case "where" is used, which pandas doesn't support
+                    # https://github.com/pandas-dev/pandas/issues/34834
+                    df[col.name] = ne.evaluate(col, local_dict=df)
+                if col.name not in numerical_keys:
+                    numerical_keys += [col.name]
+                if col.is_percentage and col.name not in percentage_keys:
+                    percentage_keys += [col.name]
+            except Exception as e:
+                pass
 
     # --- Group by the groupby keys ---
     # respecting aggregation operations
@@ -530,6 +547,7 @@ def statistics(
                     agg_config[key] = "mean"
                 else:
                     agg_config[key] = "sum"
+
         df_aggregated = df_stats.groupby("gss").agg(agg_config)
 
         # Merge the strings and the numericals back together
@@ -541,37 +559,41 @@ def statistics(
         df["first"] = values.max(axis=1)
         # column name of "first"
         df["first_label"] = df[numerical_keys].idxmax(axis=1)
-        try:
-            df["second"] = np.partition(values, -2, axis=1)[:, -2]
-            # df["second_label"] = # TODO: get the column name of the second highst value
-            # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
-            # As above, but using numpy not pandas
-            df["second_label"] = df[numerical_keys].columns[
-                df[numerical_keys].values.argsort()[:, -2]
-            ]
-            df["majority"] = df["first"] - df["second"]
-        except IndexError:
-            pass
-        try:
-            df["third"] = np.partition(values, -3, axis=1)[:, -3]
-        except IndexError:
-            pass
-        df["total"] = values.sum(axis=1)
+        if len(numerical_keys) > 1:
+            df["total"] = values.sum(axis=1)
+            try:
+                df["second"] = np.partition(values, -2, axis=1)[:, -2]
+                # df["second_label"] = # TODO: get the column name of the second highst value
+                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
+                # As above, but using numpy not pandas
+                df["second_label"] = df[numerical_keys].columns[
+                    df[numerical_keys].values.argsort()[:, -2]
+                ]
+                df["majority"] = df["first"] - df["second"]
+            except Exception:
+                pass
+        if len(numerical_keys) > 2:
+            try:
+                df["third"] = np.partition(values, -3, axis=1)[:, -3]
+            except Exception:
+                pass
 
         # Apply formulas
         if post_calcs and len(post_calcs) > 0:
             for col in post_calcs:
-                df[col.name] = df.eval(col.expression)
                 try:
-                    df[col.name] = df.eval(col.expression)
-                except ValueError:
-                    # In case "where" is used, which pandas doesn't support
-                    # https://github.com/pandas-dev/pandas/issues/34834
-                    df[col.name] = ne.evaluate(col, local_dict=df)
-                if col.name not in numerical_keys:
-                    numerical_keys += [col.name]
-                if col.is_percentage and col.name not in percentage_keys:
-                    percentage_keys += [col.name]
+                    try:
+                        df[col.name] = df.eval(col.expression)
+                    except ValueError:
+                        # In case "where" is used, which pandas doesn't support
+                        # https://github.com/pandas-dev/pandas/issues/34834
+                        df[col.name] = ne.evaluate(col, local_dict=df)
+                    if col.name not in numerical_keys:
+                        numerical_keys += [col.name]
+                    if col.is_percentage and col.name not in percentage_keys:
+                        percentage_keys += [col.name]
+                except Exception as e:
+                    pass
 
             # Then recalculate based on the formula, since they may've doctored the values.
             values = df[numerical_keys].values
@@ -640,9 +662,23 @@ def statistics(
             )
             aggop = calculated_column_aggop or simple_asserted_aggop or default_aggop
             agg_dict[col] = aggop.value.lower()
-        df_n = df[numerical_keys].reset_index().drop(columns=["id"])
-        df_agg = df_n.agg(agg_dict).to_dict()
-        return [df_agg]
+        df_n = (
+            df[[n for n in numerical_keys if n not in exclude_keys]]
+            .reset_index()
+            .drop(columns=[k for k in exclude_keys if k in df.columns])
+        )
+        df_agg = df_n.agg(agg_dict)
+        d = df_agg.to_dict()
+        if conf.format_numeric_keys:
+            format_dict = {}
+            for key in numerical_keys:
+                format_dict[key] = "{:,.0f}"
+            for key in percentage_keys:
+                format_dict[key] = "{:,.0%}"
+            for key in format_dict:
+                if key in d:
+                    d[key] = format_dict[key].format(d[key])
+        return [d]
     if groups and len(groups) > 0:
         agg_config = dict()
         for col in groups:
@@ -663,9 +699,13 @@ def statistics(
                     ),
                 }
             )
-        df = df.groupby(col.column, as_index=False).agg(**agg_config)
-        d = df.to_dict(orient="records")
-        return d
+        df_agg = df.groupby(col.column, as_index=False).agg(**agg_config)
+        if conf.format_numeric_keys:
+            for key in numerical_keys:
+                df_agg[key].style.format("{:,.0f}")
+            for key in percentage_keys:
+                df_agg[key].style.format("{:,.0%}")
+        return df_agg.to_dict(orient="records")
     else:
         # Return the results in the requested format
         if return_numeric_keys_only:
@@ -680,7 +720,7 @@ def statistics(
         if as_grouped_data:
             from hub.graphql.types.model_types import GroupedDataCount
 
-            is_percentage = "count" in percentage_keys
+            is_percentage = (count_key in percentage_keys) or is_count_key_percentage
             return [
                 GroupedDataCount(
                     row=row,

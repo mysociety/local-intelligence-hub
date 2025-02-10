@@ -2464,11 +2464,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return True
 
     def handle_import_webhook_view(self, member_ids):
-        if not self.auto_import_enabled:
-            logger.error(f"Imports requested for CRM without webhooks enabled: {self}")
-            return False
+        try:
+            if not self.auto_import_enabled:
+                logger.error(
+                    f"Imports requested for CRM without webhooks enabled: {self}"
+                )
+                return False
 
-        async_to_sync(self.schedule_import_many)(members=member_ids)
+            async_to_sync(self.schedule_import_many)(members=member_ids)
+        except AlreadyEnqueued:
+            # This is fine.
+            pass
         return True
 
     # Scheduling
@@ -2592,27 +2598,27 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
-        priority = None
+        priority_enum = None
         match len(members):
             case _ if len(members) < settings.SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD:
-                priority = ProcrastinateQueuePriority.SUPER_QUICK.value
+                priority_enum = ProcrastinateQueuePriority.SUPER_QUICK
             case _ if len(
                 members
             ) < settings.MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD:
-                priority = ProcrastinateQueuePriority.MEDIUM.value
+                priority_enum = ProcrastinateQueuePriority.MEDIUM
             case _ if len(members) < settings.LARGE_IMPORT_ROW_COUNT_THRESHOLD:
-                priority = ProcrastinateQueuePriority.SLOW.value
+                priority_enum = ProcrastinateQueuePriority.SLOW
             case _:
-                priority = ProcrastinateQueuePriority.VERY_SLOW.value
+                priority_enum = ProcrastinateQueuePriority.VERY_SLOW
         member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for i, batch in enumerate(batches):
             logger.info(
-                f"Scheduling import batch {i} for source {external_data_source}"
+                f"Scheduling import batch {i} for source {external_data_source} with priority {priority_enum.name}"
             )
             member_count += len(batch)
             await external_data_source.schedule_import_many(
-                batch, request_id=request_id, priority=priority
+                batch, request_id=request_id, priority=priority_enum.value
             )
             logger.info(f"Scheduled import batch {i} for source {external_data_source}")
         metrics.distribution(key="import_rows_requested", value=member_count)
@@ -2724,6 +2730,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+                # So that import jobs themselves can be correctly prioritised
+                priority=ProcrastinateQueuePriority.BEFORE_ANY_MORE_IMPORT_EXPORT.value,
             ).defer_async(
                 external_data_source_id=str(self.id),
                 requested_at=requested_at,
@@ -3052,9 +3060,13 @@ class UploadedCSVSource(ExternalDataSource):
     allow_updates = False
     default_data_type = ExternalDataSource.DataSourceType.AREA_STATS
 
+    def org_directory_path(instance, filename):
+        # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+        return f"user_content/org_{instance.organisation.pk}/data_sources/{filename}"
+
     # User provided
     spreadsheet_file = SafeFileField(
-        upload_to="uploaded_data_sources", allowed_extensions=("csv",)
+        upload_to=org_directory_path, allowed_extensions=("csv",)
     )
     id_field = models.TextField()
     delimiter = models.TextField(default=",", blank=True)

@@ -1,6 +1,7 @@
 import dataclasses
 import logging
 
+from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.db import connection
 
@@ -11,7 +12,7 @@ from utils.postcodesIO import Codes, PostcodesIOResult
 logger = logging.getLogger(__name__)
 
 
-CURRENT_MAPIT_GENERATION = 56
+CURRENT_MAPIT_GENERATION = settings.CURRENT_MAPIT_GENERATION
 
 
 async def get_bulk_postcode_geo_from_coords(coordinates: list[Point]):

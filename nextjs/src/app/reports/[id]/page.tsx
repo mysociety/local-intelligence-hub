@@ -55,14 +55,25 @@ function QueryContext({ params: { id } }: { params: Params }) {
   const rootError = report.error?.graphQLErrors.find(
     (e) => e.path && e.path.length === 1 && e.path?.[0] === 'mapReport'
   )
-  const reportDoesNotExist = rootError?.message.includes(
-    'matching query does not exist'
-  )
 
   if (rootError) {
+    const reportDoesNotExist = rootError?.message.includes(
+      'matching query does not exist'
+    )
     // redirect
     if (reportDoesNotExist) {
       router.push('/reports')
+      return null
+    }
+
+    const userIsNotAuthorised = rootError?.message.includes(
+      'User is not authenticated.'
+    )
+
+    if (userIsNotAuthorised) {
+      router.push(
+        `/login?redirect=${encodeURIComponent('/' + window.location.pathname)}`
+      )
       return null
     }
 

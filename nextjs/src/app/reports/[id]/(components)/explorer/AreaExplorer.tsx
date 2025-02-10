@@ -63,7 +63,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { contrastColor } from 'contrast-color'
 import { format } from 'd3-format'
 import { produce } from 'immer'
-import { cloneDeep, sum } from 'lodash'
+import { cloneDeep, isUndefined, sum } from 'lodash'
 import {
   ArrowLeft,
   ArrowRight,
@@ -324,7 +324,7 @@ function SortableAreaDisplay({
 
   return (
     <div
-      className="py-1 px-4 bg-meepGray-600"
+      className="py-1 px-4 bg-meepGray-600 group/display"
       style={style}
       ref={setNodeRef}
       {...attributes}
@@ -399,6 +399,7 @@ function AreaDisplay({
         sourceIds: [sourceId!],
         gssCodes: gss ? [gss] : null,
         groupAbsolutely: display.dataDisplayMode === DataDisplayMode.Aggregated,
+        formatNumericKeys: true,
       },
     },
     skip: !sourceId,
@@ -418,6 +419,18 @@ function AreaDisplay({
           draft.displayOptions.areaExplorer.displays[display.id].name = d
         })
       })}
+      headerClassName={
+        // hide when not configuring?
+        display.hideTitle || isUndefined(display.hideTitle)
+          ? `
+            [[data-state="open"]_&]:opacity-0 group-hover/display:[[data-state="open"]_&]:opacity-100
+            [[data-state="open"]_&]:mt-1 group-hover/display:[[data-state="open"]_&]:mt-3
+            [[data-state="open"]_&]:mb-1 group-hover/display:[[data-state="open"]_&]:mb-3
+            [[data-state="open"]_&]:max-h-0 group-hover/display:[[data-state="open"]_&]:max-h-[200px]
+            transition-all duration-300 ease-in-out
+          `
+          : undefined
+      }
       id={display.id}
       actions={
         // Dropdown with these two editor select options
@@ -609,6 +622,17 @@ function AreaDisplay({
                 }}
               />
             )}
+            <EditorSwitch
+              label="Hide title"
+              value={display.hideTitle || isUndefined(display.hideTitle)}
+              onChange={(value) => {
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].hideTitle = value
+                })
+              }}
+            />
             <hr className="mt-4 my-2" />
             <Button
               variant="ghost"
@@ -737,7 +761,7 @@ function AreaDisplay({
                 display.bigNumberField
                   ? stats.data?.statistics?.[0]?.[display.bigNumberField] ||
                     '???'
-                  : data.data?.data?.length
+                  : format(',')(data.data?.data?.length || 0)
               }
               dataType={display.dataSourceType || layer.sourceData.dataType}
               label={
@@ -1168,22 +1192,22 @@ function BigNumberDisplay({
   dataType,
   label,
 }: {
-  count: number
+  count: any
   dataType?: DataSourceType
   label?: string
 }) {
   return (
     <div className="py-2">
       {!!(dataType || label) && (
-        <div className="uppercase text-xs text-meepGray-400">
-          {label
-            ? label
-            : dataType
-              ? pluralize(toSpaceCase(dataType) || 'record', 2)
-              : null}
+        <div className="uppercase text-xs text-meepGray-300">
+          {label ? (
+            label
+          ) : dataType ? (
+            <span>{pluralize(`${toSpaceCase(dataType)}`, 1)} records</span>
+          ) : null}
         </div>
       )}
-      <div className="text-white text-3xl">{format(',')(count)}</div>
+      <div className="text-white text-3xl">{count}</div>
     </div>
   )
 }

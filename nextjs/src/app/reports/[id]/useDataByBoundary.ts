@@ -127,6 +127,13 @@ const useDataByBoundary = ({
           // ),
         },
         mapBounds,
+        isCountKeyPercentage:
+          view?.mapOptions?.choropleth.dataType ===
+            StatisticalDataType.Continuous &&
+          !!view?.mapOptions?.choropleth.advancedStatisticsDisplayField
+            ? view?.mapOptions?.choropleth
+                .advancedStatisticsDisplayFieldIsPercentage
+            : undefined,
       },
       skip:
         !useAdvancedStatistics ||
@@ -152,7 +159,7 @@ const useDataByBoundary = ({
         })
       }
     }
-  }, [view, query])
+  }, [view, query, setChoroplethErrors])
 
   return useAdvancedStatistics ? statisticsQuery : query
 }
@@ -200,19 +207,20 @@ export const STATISTICS_QUERY = gql`
     $categoryKey: String
     $countKey: String
     $mapBounds: MapBounds
+    $isCountKeyPercentage: Boolean
   ) {
     statisticsForChoropleth(
       statsConfig: $config
       categoryKey: $categoryKey
       countKey: $countKey
       mapBounds: $mapBounds
+      isCountKeyPercentage: $isCountKeyPercentage
     ) {
       label
       gss
       count
       formattedCount
       category
-      row
       columns
       gssArea {
         point {
