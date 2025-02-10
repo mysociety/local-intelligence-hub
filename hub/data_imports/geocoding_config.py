@@ -23,7 +23,7 @@ from utils.py import are_dicts_equal, ensure_list, find
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
-    from hub.models import DataType, ExternalDataSource, Loaders, Area
+    from hub.models import Area, DataType, ExternalDataSource, Loaders
 
 
 def find_config_item(source: "ExternalDataSource", key: str, value, default=None):
