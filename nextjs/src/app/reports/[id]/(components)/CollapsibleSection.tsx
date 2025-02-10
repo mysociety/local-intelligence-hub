@@ -19,7 +19,10 @@ interface Props {
     React.HTMLAttributes<HTMLHeadingElement>,
     HTMLHeadingElement
   >
-  headerClassName?: string
+  headerProps?: React.DetailedHTMLProps<
+    React.HTMLAttributes<HTMLDivElement>,
+    HTMLDivElement
+  >
 }
 
 const collapsibleSectionsAtom = atom<{ [key: string]: boolean }>({})
@@ -30,7 +33,7 @@ const CollapsibleSection: React.FC<Props> = ({
   title,
   actions,
   className,
-  headerClassName = '',
+  headerProps = {},
   titleProps = {},
 }) => {
   const [sections, setSections] = useAtom(collapsibleSectionsAtom)
@@ -56,9 +59,10 @@ const CollapsibleSection: React.FC<Props> = ({
     >
       <div>
         <header
+          {...headerProps}
           className={twMerge(
             'flex flex-row gap-2 items-start my-3 cursor-pointer',
-            headerClassName
+            headerProps?.className
           )}
         >
           <h3
@@ -67,15 +71,17 @@ const CollapsibleSection: React.FC<Props> = ({
           >
             {title}
           </h3>
-          <CollapsibleTrigger className="w-full grow flex items-start flex-row justify-start">
-            <TriangleDownIcon
-              className={clsx(
-                'mt-1 h-4 w-4 text-white',
-                thisSectionOpen ? '' : 'rotate-180'
-              )}
-            />
-          </CollapsibleTrigger>
-          <div className="ml-auto">{actions}</div>
+          <div className="flex flex-row gap-2 items-start">
+            <CollapsibleTrigger className="w-full grow flex items-start flex-row justify-start">
+              <TriangleDownIcon
+                className={clsx(
+                  'mt-1 h-4 w-4 text-white',
+                  thisSectionOpen ? '' : 'rotate-180'
+                )}
+              />
+            </CollapsibleTrigger>
+            <div className="ml-auto">{actions}</div>
+          </div>
         </header>
 
         <CollapsibleContent className="CollapsibleContent">
