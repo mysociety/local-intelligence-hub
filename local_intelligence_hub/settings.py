@@ -25,6 +25,7 @@ from hub.management.commands.autoscale_render_workers import ScalingStrategy
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
+    DATABASE_CONNECTION_POOLER_HOSTPORT=(str, None),
     MINIO_STORAGE_ENDPOINT=(str, False),
     MINIO_STORAGE_ACCESS_KEY=(str, ""),
     MINIO_STORAGE_SECRET_KEY=(str, ""),
@@ -339,6 +340,11 @@ WSGI_APPLICATION = "local_intelligence_hub.wsgi.application"
 
 DATABASES = {"default": env.db(engine="django.contrib.gis.db.backends.postgis")}
 
+if env("DATABASE_CONNECTION_POOLER_HOSTPORT"):
+    # Replace the hostport in the DATABASE_URL with the connection pooler hostport
+    host, port = env("DATABASE_CONNECTION_POOLER_HOSTPORT").split(":")
+    DATABASES["default"]["HOST"] = host
+    DATABASES["default"]["PORT"] = port
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
