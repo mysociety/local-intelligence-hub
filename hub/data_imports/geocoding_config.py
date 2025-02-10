@@ -23,7 +23,7 @@ from utils.py import are_dicts_equal, ensure_list, find
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
-    from hub.models import DataType, ExternalDataSource, Loaders
+    from hub.models import DataType, ExternalDataSource, Loaders, Area
 
 
 def find_config_item(source: "ExternalDataSource", key: str, value, default=None):
@@ -59,7 +59,7 @@ class GeocodeResult:
     geocoder: str = None
     geocode_data: dict = None
     postcode_data: dict = None
-    area: Model = None  # Can't type Area as can't import models (circular import)
+    area: "Area" = None
     point: Point = None
 
     def __str__(self):
