@@ -256,6 +256,16 @@ async def signal_request_complete(request_id: str, success: bool, *args, **kwarg
     pass
 
 
+@app.periodic(cron="*/10 * * * *")
+@app.task(queueing_lock="retry_stalled_jobs", pass_context=True)
+async def retry_stalled_jobs(context, timestamp):
+    stalled_jobs = await app.job_manager.get_stalled_jobs(
+        nb_seconds=settings.RUNNING_JOBS_MAX_SECONDS
+    )
+    for job in stalled_jobs:
+        await app.job_manager.retry_job(job)
+
+
 # cron that sends batch job emails every hour
 # @app.periodic(cron="0 * * * *")
 # @app.task(queue="emails")
