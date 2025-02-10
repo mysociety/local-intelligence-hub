@@ -48,18 +48,18 @@ class Command(BaseCommand):
 
         # Find out how many rows of data need importing, updating, so on, so forth
         if options["strategy"] == ScalingStrategy.row_count:
-            new_worker_count = self.row_count_strategy(
+            requested_worker_count = self.row_count_strategy(
                 min_worker_count=options["min_worker_count"],
                 max_worker_count=options["max_worker_count"],
                 row_count_per_worker=options["row_count_per_worker"],
             )
         elif options["strategy"] == ScalingStrategy.simple_data_source_count:
-            new_worker_count = self.simple_data_source_count_strategy(
+            requested_worker_count = self.simple_data_source_count_strategy(
                 min_worker_count=options["min_worker_count"],
                 max_worker_count=options["max_worker_count"],
             )
         elif options["strategy"] == ScalingStrategy.sources_and_row_count:
-            new_worker_count = self.sources_and_row_count_strategy(
+            requested_worker_count = self.sources_and_row_count_strategy(
                 min_worker_count=options["min_worker_count"],
                 max_worker_count=options["max_worker_count"],
                 row_count_per_worker=options["row_count_per_worker"],
@@ -67,7 +67,7 @@ class Command(BaseCommand):
         else:
             raise ValueError(f"Unknown strategy: {options['strategy']}")
 
-        logger.info(f"New worker count: {new_worker_count}.")
+        logger.info(f"Requested worker count: {requested_worker_count}.")
 
         if not settings.RENDER_API_TOKEN:
             raise ValueError("settings.RENDER_API_TOKEN is required")
@@ -78,12 +78,36 @@ class Command(BaseCommand):
         render = get_render_client()
         res = render.post(
             f"/v1/services/{settings.RENDER_WORKER_SERVICE_ID}/scale",
-            json={"numInstances": new_worker_count},
+            json={"numInstances": requested_worker_count},
         )
 
         logger.info(
             f"Render response: {res.status_code}, {render_response_dict[res.status_code]}"
         )
+
+        # report new instance count to posthog
+        try:
+            if settings.POSTHOG_API_KEY:
+                import posthog
+
+                count_res = render.get(
+                    "/v1/metrics/instance-count",
+                    params={"resource": settings.RENDER_WORKER_SERVICE_ID},
+                )
+
+                count_res_json = count_res.json()
+                actual_worker_count = count_res_json[0]["values"][0]["value"]
+
+                posthog.capture(
+                    "commonknowledge-server-worker",
+                    event="render_worker_count_changed",
+                    properties={
+                        "requested_worker_count": requested_worker_count,
+                        "actual_worker_count": actual_worker_count,
+                    },
+                )
+        except Exception as e:
+            logger.error(f"Error reporting to posthog: {e}")
 
     def row_count_strategy(
         self, min_worker_count, max_worker_count, row_count_per_worker
@@ -103,7 +127,7 @@ class Command(BaseCommand):
             count_of_rows_to_process = cursor.fetchone()[0] or 0
 
             # Decide how many workers we need based on the number of rows of data
-            new_worker_count = min(
+            requested_worker_count = min(
                 max_worker_count,
                 max(
                     min_worker_count,
@@ -115,7 +139,7 @@ class Command(BaseCommand):
                 f"Strategy: Consistent global throughput.\n- Rows to process: {count_of_rows_to_process}."
             )
 
-            return new_worker_count
+            return requested_worker_count
 
     # New strategy: count of sources in jobs
     # 1 worker per source
@@ -130,7 +154,7 @@ class Command(BaseCommand):
             )
             count_of_data_sources = cursor.fetchone()[0] or 0
 
-            new_worker_count = min(
+            requested_worker_count = min(
                 max_worker_count, max(min_worker_count, count_of_data_sources)
             )
 
@@ -138,7 +162,7 @@ class Command(BaseCommand):
                 f"Strategy: Consistent global throughput.\n- Sources to process: {count_of_data_sources}."
             )
 
-            return new_worker_count
+            return requested_worker_count
 
     def sources_and_row_count_strategy(
         self, min_worker_count, max_worker_count, row_count_per_worker
@@ -156,7 +180,7 @@ class Command(BaseCommand):
             # At the least, we need one worker per source
             # But we also want to make sure we have enough workers to process the rows
             # So we take the max of the two
-            new_worker_count = min(
+            requested_worker_count = min(
                 max_worker_count,
                 max(
                     min_worker_count,
@@ -169,7 +193,7 @@ class Command(BaseCommand):
                 f"Strategy: Consistent global throughput + 1 source per worker.\n- Sources to process: {count_of_data_sources}."
             )
 
-            return new_worker_count
+            return requested_worker_count
 
 
 render_response_dict = {
