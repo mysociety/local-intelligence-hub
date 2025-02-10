@@ -16,7 +16,7 @@ services:
   repo: https://github.com/render-oss/docker-pgbouncer
   region: frankfurt
   previews:
-    generation: manual
+    generation: off
   envVars:
   - key: DATABASE_URL
     fromDatabase:
