@@ -9,26 +9,26 @@ databases:
   region: frankfurt
   postgresMajorVersion: "16"
 services:
- - type: pserv
-   name: pgbouncer
-   runtime: docker
-   plan: standard
-   repo: https://github.com/render-oss/docker-pgbouncer
-   previews:
-     generation: manual
-   envVars:
-   - key: DATABASE_URL
-     fromDatabase:
-       name: meep-database
-       property: connectionString
-   - key: POOL_MODE
-     value: transaction
-   - key: SERVER_RESET_QUERY
-     value: DISCARD ALL
-   - key: MAX_CLIENT_CONN
-     value: 500
-   - key: DEFAULT_POOL_SIZE
-     value: 150
+- type: pserv
+  name: pgbouncer
+  runtime: docker
+  plan: standard
+  repo: https://github.com/render-oss/docker-pgbouncer
+  previews:
+    generation: manual
+  envVars:
+  - key: DATABASE_URL
+    fromDatabase:
+      name: meep-database
+      property: connectionString
+  - key: POOL_MODE
+    value: transaction
+  - key: SERVER_RESET_QUERY
+    value: DISCARD ALL
+  - key: MAX_CLIENT_CONN
+    value: 500
+  - key: DEFAULT_POOL_SIZE
+    value: 150
 - type: web
   name: meep-intelligence-hub-backend
   runtime: python
