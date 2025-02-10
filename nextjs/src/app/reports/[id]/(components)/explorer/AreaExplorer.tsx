@@ -77,6 +77,7 @@ import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { CSSProperties, Fragment, useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { twMerge } from 'tailwind-merge'
 import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
 import { v4 } from 'uuid'
@@ -419,18 +420,24 @@ function AreaDisplay({
           draft.displayOptions.areaExplorer.displays[display.id].name = d
         })
       })}
-      headerClassName={
-        // hide when not configuring?
-        display.hideTitle || isUndefined(display.hideTitle)
-          ? `
+      headerProps={{
+        style: {
+          gridTemplateColumns: '1fr 50px',
+        },
+        className: twMerge(
+          'grid',
+          // hide when not configuring?
+          !!display.hideTitle
+            ? `
             [[data-state="open"]_&]:opacity-0 group-hover/display:[[data-state="open"]_&]:opacity-100
             [[data-state="open"]_&]:mt-1 group-hover/display:[[data-state="open"]_&]:mt-3
             [[data-state="open"]_&]:mb-1 group-hover/display:[[data-state="open"]_&]:mb-3
             [[data-state="open"]_&]:max-h-0 group-hover/display:[[data-state="open"]_&]:max-h-[200px]
             transition-all duration-300 ease-in-out
           `
-          : undefined
-      }
+            : undefined
+        ),
+      }}
       id={display.id}
       actions={
         // Dropdown with these two editor select options
