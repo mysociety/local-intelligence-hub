@@ -33,7 +33,7 @@ def check_numeric(x):
         if re.search(r"\d", x):
             x = parse_as_number(x)
             return isinstance(x, (int, float, np.int64, np.float64))
-    except Exception as e:
+    except Exception:
         pass
     return False
 

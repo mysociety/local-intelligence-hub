@@ -452,7 +452,7 @@ def statistics(
                 if col.is_percentage and col.name not in percentage_keys:
                     percentage_keys += [col.name]
             except Exception as e:
-                pass
+                logger.warning(f"Error in statistics pre_calcs: {e}")
 
     # --- Group by the groupby keys ---
     # respecting aggregation operations
@@ -593,7 +593,7 @@ def statistics(
                     if col.is_percentage and col.name not in percentage_keys:
                         percentage_keys += [col.name]
                 except Exception as e:
-                    pass
+                    logger.warning(f"Error in statistics post_calcs: {e}")
 
             # Then recalculate based on the formula, since they may've doctored the values.
             values = df[numerical_keys].values
