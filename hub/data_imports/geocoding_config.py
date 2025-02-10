@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.gis.geos import Point
-from django.db.models import Model, Q
+from django.db.models import Q
 
 from asgiref.sync import sync_to_async
 
@@ -53,7 +53,7 @@ class GeocodeResult:
     to be bulk saved to the database.
     """
 
-    data_type: Model
+    data_type: DataType
     data: str
     json: dict
     geocoder: str = None
