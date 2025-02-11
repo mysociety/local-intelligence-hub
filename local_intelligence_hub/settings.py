@@ -553,23 +553,26 @@ SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 SENTRY_TRACE_SAMPLE_RATE = env("SENTRY_TRACE_SAMPLE_RATE")
 
 posthog.disabled = True
-if env("POSTHOG_API_KEY") is not False:
-    posthog.project_api_key = env("POSTHOG_API_KEY")
-if env("POSTHOG_HOST") is not False:
-    posthog.host = env("POSTHOG_HOST")
+POSTHOG_API_KEY = env("POSTHOG_API_KEY")
+POSTHOG_HOST = env("POSTHOG_HOST")
+if POSTHOG_API_KEY is not False:
+    posthog.project_api_key = POSTHOG_API_KEY
+if POSTHOG_HOST is not False:
+    posthog.host = POSTHOG_HOST
 
 # Configure Sentry and HSTS headers only if in production
+SENTRY_DSN = env("SENTRY_DSN")
 if ENVIRONMENT == "production":
     SECURE_HSTS_SECONDS = 600
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    if env("SENTRY_DSN") is not False:
+    if SENTRY_DSN is not False:
         import sentry_sdk
         from sentry_sdk.integrations.django import DjangoIntegration
         from sentry_sdk.integrations.strawberry import StrawberryIntegration
 
         sentry_sdk.init(
-            dsn=env("SENTRY_DSN"),
+            dsn=SENTRY_DSN,
             environment=ENVIRONMENT,
             integrations=[
                 DjangoIntegration(),
@@ -579,7 +582,7 @@ if ENVIRONMENT == "production":
             traces_sample_rate=1.0,  # Adjust sample rate as needed
         )
 
-    if env("POSTHOG_API_KEY") is not False and env("POSTHOG_HOST") is not False:
+    if POSTHOG_API_KEY is not False and POSTHOG_HOST is not False:
         posthog.disabled = False
 
 
