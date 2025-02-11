@@ -793,7 +793,7 @@ class GenericData(CommonData):
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
     image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
-    can_display_point = models.BooleanField(default=True)
+    can_display_point = models.BooleanField(default=True, null=True, blank=True)
 
     class Meta:
         unique_together = ["data_type", "data"]
