@@ -125,6 +125,8 @@ class Command(BaseCommand):
                 """
             )
             count_of_rows_to_process = cursor.fetchone()[0] or 0
+            if count_of_rows_to_process == 0 or count_of_rows_to_process is None:
+                count_of_rows_to_process = 1
 
             # Decide how many workers we need based on the number of rows of data
             requested_worker_count = min(
@@ -176,6 +178,10 @@ class Command(BaseCommand):
                 """
             )
             count_of_data_sources, count_of_rows_to_process = cursor.fetchone()
+            if count_of_rows_to_process == 0 or count_of_rows_to_process is None:
+                count_of_rows_to_process = 1
+            if count_of_data_sources == 0 or count_of_data_sources is None:
+                count_of_data_sources = 1
 
             # At the least, we need one worker per source
             # But we also want to make sure we have enough workers to process the rows
