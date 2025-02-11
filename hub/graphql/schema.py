@@ -2,6 +2,7 @@ import logging
 from typing import List, Optional
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.files.uploadedfile import UploadedFile
 
 import strawberry
 import strawberry_django
@@ -11,6 +12,7 @@ from gqlauth.user import arg_mutations as auth_mutations
 from gqlauth.user.queries import UserQueries
 from graphql import GraphQLError
 from strawberry.extensions import QueryDepthLimiter
+from strawberry.file_uploads import Upload
 from strawberry.scalars import JSON
 from strawberry.types import ExecutionContext
 from strawberry_django import mutations as django_mutations
@@ -226,6 +228,9 @@ class Mutation:
     update_map_report: model_types.MapReport = django_mutations.update(
         mutation_types.MapReportInput, extensions=[IsAuthenticated()]
     )
+    upload_cover_image_to_report: model_types.MapReport = (
+        mutation_types.upload_cover_image_to_report
+    )
     patch_map_report_display_options: model_types.MapReport = (
         mutation_types.patch_map_report_display_options
     )
@@ -300,4 +305,5 @@ schema = CustomErrorLoggingSchema(
         DjangoOptimizerExtension,  # not required, but highly recommended
         QueryDepthLimiter(max_depth=10),
     ],
+    scalar_overrides={UploadedFile: Upload},
 )

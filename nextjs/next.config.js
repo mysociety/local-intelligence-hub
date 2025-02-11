@@ -1,3 +1,22 @@
+const env = require('dotenv')
+env.config()
+
+const imageRemotePatterns = []
+
+const ENV = process.env.NEXT_PUBLIC_ENVIRONMENT || 'development'
+const BACKEND_URL =
+  (ENV !== 'production'
+    ? process.env.NEXT_PUBLIC_BACKEND_URL
+    : process.env.NEXT_PUBLIC_PROD_BACKEND_URL) || 'http://127.0.0.1:8000'
+
+if (BACKEND_URL) {
+  const hostname = new URL(BACKEND_URL).hostname
+  imageRemotePatterns.push({
+    protocol: 'http',
+    hostname,
+  })
+}
+
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   async headers() {
@@ -21,6 +40,19 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'www.localintelligencehub.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'uploads.commonknowledge.coop',
+      },
+      // {
+      //   protocol: 'http',
+      //   hostname: '127.0.0.1',
+      // },
+      {
+        protocol: 'http',
+        hostname: 'api.mapped.commonknowledge.coop',
+      },
+      ...imageRemotePatterns,
     ],
   },
   experimental: {

@@ -20,15 +20,18 @@ export function ReportCard({
 }) {
   return (
     <Link href={`/reports/${report.id}`}>
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
-          <CardContent>
+          <CardContent className="relative h-[200px]">
             <Image
-              src="/reports_page_card_image.png"
+              src={
+                report.coverImageAbsoluteUrl ?? '/reports_page_card_image.png'
+              }
               alt="Description of the image"
-              width={300}
-              height={300}
-              className="w-auto"
+              fill
+              className="w-full"
+              objectFit="cover"
+              objectPosition="center"
             />
           </CardContent>
           <CardTitle className="mb-1 px-5 pt-4">{report.name}</CardTitle>

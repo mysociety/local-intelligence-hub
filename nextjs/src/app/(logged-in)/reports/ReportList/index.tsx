@@ -16,10 +16,11 @@ import { ReportCard } from './ReportCard'
 
 const LIST_REPORTS = gql`
   query ListReports($currentOrganisationId: ID!) {
-    reports(filters: { organisation: { pk: $currentOrganisationId } }) {
+    reports(filters: { organisation: { id: $currentOrganisationId } }) {
       id
       name
       lastUpdate
+      coverImageAbsoluteUrl
     }
   }
 `
@@ -33,7 +34,7 @@ export default function ReportList() {
     variables: {
       currentOrganisationId,
     },
-    skip: !currentOrganisationId,
+    skip: !currentOrganisationId || currentOrganisationId === '',
   })
 
   useEffect(() => {

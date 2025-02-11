@@ -9,3 +9,7 @@ export const FRONTEND_URL =
     ? process.env.NEXT_PUBLIC_FRONTEND_URL
     : process.env.NEXT_PUBLIC_PROD_FRONTEND_URL) || 'http://localhost:3000'
 export const FRONTEND_HOSTNAME = new URL(FRONTEND_URL).hostname.split(':')[0]
+export const SECONDS_BETWEEN_SCREENSHOT_UPDATES =
+  parseInt(
+    String(process.env.NEXT_PUBLIC_SECONDS_BETWEEN_SCREENSHOT_UPDATES)
+  ) || 60

@@ -1,8 +1,10 @@
 import logging
+import urllib.parse
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
+from django.conf import settings
 from django.db.models import Q
 from django.http import HttpRequest
 
@@ -59,7 +61,7 @@ class ProcrastinateJobStatus(Enum):
     cancelled = "cancelled"  #: The job was cancelled
 
 
-@strawberry_django.filters.filter(
+@strawberry_django.filter(
     procrastinate.contrib.django.models.ProcrastinateJob, lookups=True
 )
 class QueueFilter:
@@ -138,7 +140,7 @@ class UserProperties:
     full_name: auto
 
 
-@strawberry_django.filters.filter(models.Organisation)
+@strawberry_django.filter(models.Organisation)
 class OrganisationFilters:
     id: auto
     slug: auto
@@ -1117,7 +1119,7 @@ class TicketTailorSource(ExternalDataSource):
 
 @strawberry_django.filter(models.Report, lookups=True)
 class ReportFilter:
-    organisation: auto
+    organisation: OrganisationFilters
     created_at: auto
     last_update: auto
 
@@ -1132,6 +1134,17 @@ class Report:
     description: auto
     created_at: auto
     last_update: auto
+    cover_image: auto
+
+    @strawberry_django.field
+    def cover_image_absolute_url(self) -> Optional[str]:
+        if not self.cover_image:
+            return None
+        url = self.cover_image.url
+        if url.startswith("http"):
+            return url
+        print(settings.BACKEND_URL)
+        return urllib.parse.urljoin(settings.BACKEND_URL, url)
 
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
