@@ -994,11 +994,12 @@ def cast_data(sender, instance, *args, **kwargs):
 
 
 class Loaders(TypedDict):
-    postcodesIO: DataLoader
-    postcodesIOFromPoint: DataLoader
-    mapbox_geocoder: DataLoader
-    fetch_record: DataLoader
-    source_loaders: dict[str, DataLoader]
+    postcodesIO: DataLoader[str, PostcodesIOResult | None]
+    postcodesIOFromPoint: DataLoader[Point, PostcodesIOResult | None]
+    fetch_record: DataLoader[str, dict | None]
+    source_loaders: dict[str, DataLoader["EnrichmentLookup", str | None]]
+    generic_data: DataLoader[str, GenericData | None]
+    postgis_geocoder: DataLoader[Point, PostcodesIOResult | None]
 
 
 class EnrichmentLookup(TypedDict):
@@ -1811,7 +1812,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 Used to batch-import data.
                 """
                 structured_data = get_update_data(self, record)
-                postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
+                postcode_data = await loaders["postcodesIO"].load(
                     self.get_record_field(record, self.geography_column)
                 )
                 update_data = {
@@ -1853,9 +1854,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 ).afirst()
                 if ward:
                     coord = ward.point.centroid
-                    postcode_data: PostcodesIOResult = await loaders[
-                        "postcodesIOFromPoint"
-                    ].load(coord)
+                    postcode_data = await loaders["postcodesIOFromPoint"].load(coord)
                 else:
                     logger.warning(
                         f"Could not find ward for record {self.get_record_id(record)} and gss {gss}"
@@ -1890,10 +1889,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     gss=gss,
                 ).afirst()
                 if output_area:
-                    postcode_data: PostcodesIOResult = (
-                        await geocoding_config.get_postcode_data_for_area(
-                            output_area, loaders, []
-                        )
+                    postcode_data = await geocoding_config.get_postcode_data_for_area(
+                        output_area, loaders, []
                     )
                     if postcode_data:
                         # override lat/lng based output_area with known output area
@@ -1969,9 +1966,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             # (e.g. for analytical queries that aggregate on region)
                             # even if the address is not postcode-specific (e.g. "London").
                             # this can be gleaned from geocode_data__types, e.g. [ "administrative_area_level_1", "political" ]
-                            postcode_data: PostcodesIOResult = await loaders[
-                                "postcodesIOFromPoint"
-                            ].load(point)
+                            postcode_data = await loaders["postcodesIOFromPoint"].load(
+                                point
+                            )
 
                 update_data = {
                     **structured_data,
@@ -2278,9 +2275,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # Get postcode from member
                 postcode = self.get_record_field(member, self.geography_column)
                 # Get relevant config data for that postcode
-                postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
-                    postcode
-                )
+                postcode_data = await loaders["postcodesIO"].load(postcode)
             # Map the fields
             for mapping_dict in mapping:
                 source = mapping_dict["source"]
