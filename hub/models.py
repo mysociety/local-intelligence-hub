@@ -18,6 +18,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
@@ -44,6 +45,7 @@ from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2.credentials import Credentials as GoogleCredentials
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
+from procrastinate.contrib.django import app as procrastinate
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from procrastinate.exceptions import AlreadyEnqueued
 from psycopg.errors import UniqueViolation
@@ -69,7 +71,6 @@ from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField, EncryptedTextField
 from hub.filters import Filter
 from hub.parsons.action_network.action_network import ActionNetwork
-from hub.restricted_file_field.fields import SafeFileField
 from hub.storage import OverwriteStorage
 from hub.tasks import (
     import_all,
@@ -793,7 +794,7 @@ class GenericData(CommonData):
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
     image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
-    can_display_point = models.BooleanField(default=True)
+    can_display_point = models.BooleanField(default=True, null=True, blank=True)
 
     class Meta:
         unique_together = ["data_type", "data"]
@@ -1773,7 +1774,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
 
             geocode_results = [r for r in geocode_results if r]
-            if not geocode_results:
+            if not geocode_results or len(geocode_results) == 0:
                 return
 
             unique_fields = ["data_type", "data"]
@@ -2980,22 +2981,30 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 is_cancelled_by_user=None,
                 **({"type": type.value} if type else {}),
             ).update(is_cancelled_by_user=True)
-            # Cancel all BatchRequests
+
             cancelled_request_ids = BatchRequest.objects.filter(
                 source=self,
                 is_cancelled_by_user=True,
             )
+
             job_filters.update(
                 args__request_id__in=[
                     str(id) for id in cancelled_request_ids.values_list("id", flat=True)
                 ]
             )
 
+        # Cancel all user-requested procrastinate import jobs
+        jobs = ProcrastinateJob.objects.filter(**job_filters)
+
+        # by using the sync method
+        for job in jobs:
+            try:
+                procrastinate.job_manager.cancel_job_by_id(job.id, abort=True)
+            except Exception as e:
+                logger.error(f"Failed to cancel job {job.id}: {e}")
+
         # run command to update worker instances
         call_command("autoscale_render_workers")
-
-        # Cancel all user-requested procrastinate import jobs
-        return ProcrastinateJob.objects.filter(**job_filters).update(status="cancelled")
 
 
 class DatabaseJSONSource(ExternalDataSource):
@@ -3095,8 +3104,9 @@ class UploadedCSVSource(ExternalDataSource):
         return f"user_content/org_{instance.organisation.pk}/data_sources/{filename}"
 
     # User provided
-    spreadsheet_file = SafeFileField(
-        upload_to=org_directory_path, allowed_extensions=("csv",)
+    spreadsheet_file = models.FileField(
+        upload_to=org_directory_path,
+        validators=[FileExtensionValidator(("csv",))],
     )
     id_field = models.TextField()
     delimiter = models.TextField(default=",", blank=True)

@@ -10,7 +10,7 @@ from .utils import detect_content_type
 class FileContentTypeValidator:
     message = _(
         "File has invalid content-type. "
-        "Maybe file extension is equal to file content?"
+        "Maybe file extension is not equal to file content?"
     )
 
     code = "invalid_content_type"

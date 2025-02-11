@@ -8,7 +8,7 @@ import os
 from django.conf import settings
 from django.db.models import Count, Q
 
-from procrastinate.contrib.django import app
+from procrastinate.contrib.django import app as procrastinate
 from procrastinate.contrib.django.models import ProcrastinateJob
 from sentry_sdk import metrics
 
@@ -63,7 +63,7 @@ def telemetry_task(func):
     return wrapper
 
 
-@app.task(queue="external_data_sources")
+@procrastinate.task(queue="external_data_sources")
 @telemetry_task
 async def refresh_one(external_data_source_id: str, member):
     from hub.models import ExternalDataSource
@@ -73,7 +73,9 @@ async def refresh_one(external_data_source_id: str, member):
     )
 
 
-@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@procrastinate.task(
+    queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT
+)
 @telemetry_task
 async def refresh_many(
     external_data_source_id: str, members: list, request_id: str = None
@@ -87,7 +89,9 @@ async def refresh_many(
     )
 
 
-@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@procrastinate.task(
+    queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT
+)
 @telemetry_task
 async def refresh_pages(
     external_data_source_id: str, current_page: int, request_id: str = None
@@ -132,7 +136,7 @@ async def refresh_pages(
     return enqueue_result
 
 
-@app.task(queue="external_data_sources")
+@procrastinate.task(queue="external_data_sources")
 @telemetry_task
 async def refresh_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
@@ -146,8 +150,8 @@ async def refresh_all(external_data_source_id: str, request_id: str = None):
 
 
 # Refresh webhooks once a day
-@app.periodic(cron="0 3 * * *")
-@app.task(queue="external_data_sources")
+@procrastinate.periodic(cron="0 3 * * *")
+@procrastinate.task(queue="external_data_sources")
 async def refresh_webhooks(external_data_source_id: str, timestamp=None):
     from hub.models import ExternalDataSource
 
@@ -159,7 +163,7 @@ async def refresh_webhooks(external_data_source_id: str, timestamp=None):
     )
 
 
-@app.task(queue="external_data_sources")
+@procrastinate.task(queue="external_data_sources")
 async def setup_webhooks(external_data_source_id: str, refresh: bool = True):
     from hub.models import ExternalDataSource
 
@@ -173,7 +177,9 @@ async def setup_webhooks(external_data_source_id: str, refresh: bool = True):
     )
 
 
-@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@procrastinate.task(
+    queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT
+)
 @telemetry_task
 async def import_many(
     external_data_source_id: str, members: list, request_id: str = None
@@ -187,7 +193,9 @@ async def import_many(
     )
 
 
-@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@procrastinate.task(
+    queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT
+)
 @telemetry_task
 async def import_pages(
     external_data_source_id: str, current_page=1, request_id: str = None
@@ -232,7 +240,7 @@ async def import_pages(
     return enqueue_result
 
 
-@app.task(queue="external_data_sources")
+@procrastinate.task(queue="external_data_sources")
 @telemetry_task
 async def import_all(
     external_data_source_id: str, requested_at: str = None, request_id: str = None
@@ -248,7 +256,7 @@ async def import_all(
     )
 
 
-@app.task(queue="external_data_sources")
+@procrastinate.task(queue="external_data_sources")
 async def signal_request_complete(request_id: str, success: bool, *args, **kwargs):
     """
     Empty task which is used to query the status of the batch tasks.
@@ -256,19 +264,19 @@ async def signal_request_complete(request_id: str, success: bool, *args, **kwarg
     pass
 
 
-@app.periodic(cron="*/10 * * * *")
-@app.task(queueing_lock="retry_stalled_jobs", pass_context=True)
+@procrastinate.periodic(cron="*/10 * * * *")
+@procrastinate.task(queueing_lock="retry_stalled_jobs", pass_context=True)
 async def retry_stalled_jobs(context, timestamp):
-    stalled_jobs = await app.job_manager.get_stalled_jobs(
+    stalled_jobs = await procrastinate.job_manager.get_stalled_jobs(
         nb_seconds=settings.RUNNING_JOBS_MAX_SECONDS
     )
     for job in stalled_jobs:
-        await app.job_manager.retry_job(job)
+        await procrastinate.job_manager.retry_job(job)
 
 
 # cron that sends batch job emails every hour
-# @app.periodic(cron="0 * * * *")
-# @app.task(queue="emails")
+# @procrastinate.periodic(cron="0 * * * *")
+# @procrastinate.task(queue="emails")
 # def send_batch_job_emails(timestamp=None):
 #     from django.core.mail import EmailMessage
 #     from hub.models import BatchRequest

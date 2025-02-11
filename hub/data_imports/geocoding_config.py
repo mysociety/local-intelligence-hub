@@ -2,6 +2,7 @@ import logging
 import re
 import traceback
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -60,6 +61,41 @@ class GeocodeResult:
     postcode_data: dict = None
     area: "Area" = None
     point: Point = None
+    # and all the other columns of GenericData:
+    postcode: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    first_name: str = None
+    # models.CharField(max_length=300, blank=True, null=True)
+    last_name: str = None
+    # models.CharField(max_length=300, blank=True, null=True)
+    full_name: str = None
+    # models.CharField(max_length=300, blank=True, null=True)
+    email: str = None
+    # models.EmailField(max_length=300, blank=True, null=True)
+    phone: str = None
+    # models.CharField(max_length=100, blank=True, null=True)
+    start_time: datetime = None
+    # models.DateTimeField(blank=True, null=True)
+    end_time: datetime = None
+    # models.DateTimeField(blank=True, null=True)
+    public_url: str = None
+    # models.URLField(max_length=2000, blank=True, null=True)
+    social_url: str = None
+    # models.URLField(max_length=2000, blank=True, null=True)
+    geocode_data: dict = None
+    # models.JSONField(blank=True, null=True)
+    geocoder: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    address: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    title: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    description: str = None
+    # models.TextField(max_length=3000, blank=True, null=True)
+    image: str = None
+    # models.ImageField(null=True, max_length=1000, upload_to="generic_data")
+    can_display_point: bool = None
+    # models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.data_type.name}: {self.data}"
@@ -187,16 +223,17 @@ async def geocode_record(
                 update_data["geocode_data"] = generic_data.geocode_data or {}
                 update_data["geocode_data"]["skipped"] = True
                 # Return a complete GeocodeResult to avoid clearing previous data
-                return GeocodeResult(
-                    data_type=data_type,
-                    data=id,
-                    json=update_data["json"],
-                    geocoder=generic_data.geocoder,
-                    geocode_data=generic_data.geocode_data,
-                    postcode_data=generic_data.postcode_data,
-                    area=generic_data.area,
-                    point=generic_data.point,
-                )
+                kwargs = {
+                    **update_data,
+                    "data_type": data_type,
+                    "data": id,
+                    "geocoder": generic_data.geocoder,
+                    "geocode_data": update_data["geocode_data"],
+                    "postcode_data": generic_data.postcode_data,
+                    "area": generic_data.area,
+                    "point": generic_data.point,
+                }
+                return GeocodeResult(**kwargs)
     except GenericData.DoesNotExist:
         # logger.debug("Generic Data doesn't exist, no equality check to be done", id)
         pass
@@ -297,7 +334,7 @@ async def import_area_code_data(
     update_data["geocode_data"].update({"steps": steps})
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
 
 
@@ -488,7 +525,7 @@ async def import_area_data(
     update_data["geocode_data"].update({"steps": steps})
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
 
 
@@ -503,7 +540,9 @@ async def get_postcode_data_for_area(area: "Area", loaders: "Loaders", steps: li
         print(
             traceback.format_exc()
         )  # Keep for now to track tricky database errors with bad error messages
-        logger.error(f"Failed to get postcode data for {sample_point}: {e}")
+        logger.error(
+            f"Failed to get postcode data from postgis_geocoder for {sample_point}: {e}"
+        )
 
     steps.append(
         {
@@ -519,7 +558,7 @@ async def get_postcode_data_for_area(area: "Area", loaders: "Loaders", steps: li
         try:
             postcode_data = await loaders["postcodesIOFromPoint"].load(sample_point)
         except Exception as e:
-            logger.error(f"Failed to get postcode data for {sample_point}: {e}")
+            logger.warning(f"Failed to get postcode data for {sample_point}: {e}")
 
         steps.append(
             {
@@ -533,7 +572,7 @@ async def get_postcode_data_for_area(area: "Area", loaders: "Loaders", steps: li
         try:
             postcode = await get_example_postcode_from_area_gss(area.gss)
         except Exception as e:
-            logger.error(f"Failed to get example postcode for {area.gss}: {e}")
+            logger.warning(f"Failed to get example postcode for {area.gss}: {e}")
             postcode = None
 
         steps.append(
@@ -728,7 +767,7 @@ async def import_address_data(
     update_data["point"] = point
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
 
 
@@ -807,5 +846,5 @@ async def import_coordinate_data(
     update_data["point"] = point
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
