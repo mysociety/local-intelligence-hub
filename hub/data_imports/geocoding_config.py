@@ -539,7 +539,7 @@ async def get_postcode_data_for_area(area: "Area", loaders: "Loaders", steps: li
         print(
             traceback.format_exc()
         )  # Keep for now to track tricky database errors with bad error messages
-        logger.error(f"Failed to get postcode data for {sample_point}: {e}")
+        logger.error(f"Failed to get postcode data from postgis_geocoder for {sample_point}: {e}")
 
     steps.append(
         {
@@ -555,7 +555,7 @@ async def get_postcode_data_for_area(area: "Area", loaders: "Loaders", steps: li
         try:
             postcode_data = await loaders["postcodesIOFromPoint"].load(sample_point)
         except Exception as e:
-            logger.error(f"Failed to get postcode data for {sample_point}: {e}")
+            logger.warning(f"Failed to get postcode data for {sample_point}: {e}")
 
         steps.append(
             {
@@ -569,7 +569,7 @@ async def get_postcode_data_for_area(area: "Area", loaders: "Loaders", steps: li
         try:
             postcode = await get_example_postcode_from_area_gss(area.gss)
         except Exception as e:
-            logger.error(f"Failed to get example postcode for {area.gss}: {e}")
+            logger.warning(f"Failed to get example postcode for {area.gss}: {e}")
             postcode = None
 
         steps.append(
