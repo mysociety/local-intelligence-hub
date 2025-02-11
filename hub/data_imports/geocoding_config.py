@@ -760,15 +760,25 @@ async def import_coordinate_data(
                 x=float(raw_lng),
                 y=float(raw_lat),
             )
-            postcode_data = await loaders["postcodesIOFromPoint"].load(point)
-
+            postcode_data = await loaders["postgis_geocoder"].load(point)
             steps.append(
                 {
                     "task": "postcode_from_coordinates",
-                    "service": Geocoder.POSTCODES_IO.value,
+                    "service": Geocoder.POSTGIS.value,
                     "result": "failed" if postcode_data is None else "success",
                 }
             )
+
+            if postcode_data is None:
+                postcode_data = await loaders["postcodesIOFromPoint"].load(point)
+
+                steps.append(
+                    {
+                        "task": "postcode_from_coordinates",
+                        "service": Geocoder.POSTCODES_IO.value,
+                        "result": "failed" if postcode_data is None else "success",
+                    }
+                )
         except ValueError:
             # If the coordinates are invalid, let it go.
             pass
