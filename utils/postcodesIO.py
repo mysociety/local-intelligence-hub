@@ -119,20 +119,40 @@ async def enrich_postcodes_io_result(
 
     # Add output_area and correct msoa and lsoa results (postcodes.io doesn't use up-to-date boundaries)
     point = create_point(latitude=result["latitude"], longitude=result["longitude"])
-    for area_code, result_key in [
+    enrichment_areas = [
         ("OA21", "output_area"),
         ("MSOA", "msoa"),
         ("LSOA", "lsoa"),
         ("PCA", "postcode_area"),
         ("PCD", "postcode_district"),
         ("PCS", "postcode_sector"),
-    ]:
-        output_area = await Area.objects.filter(
-            area_type__code=area_code, polygon__contains=point
-        ).afirst()
-        if output_area:
-            result[result_key] = output_area.name
-            result["codes"][result_key] = output_area.gss
+    ]
+    # Get one geometry for each code
+    areas = (
+        Area.objects.filter(
+            polygon__contains=point,
+            area_type__code__in=[area_code for area_code, _ in enrichment_areas],
+        )
+        # Get the latest generation for each area type
+        .order_by("area_type_id", "-mapit_generation_high")
+        .distinct("area_type_id")
+        .values(
+            "area_type_id", "area_type__code", "gss", "name", "mapit_generation_high"
+        )
+    )
+
+    async for area in areas:
+        postcode_io_key = next(
+            (
+                postcode_io_key
+                for code, postcode_io_key in enrichment_areas
+                if code == area["area_type__code"]
+            ),
+            None,
+        )
+        if postcode_io_key:
+            result[postcode_io_key] = area.get("name", area.get("gss", None))
+            result["codes"][postcode_io_key] = area.get("gss", None)
 
     return result
 
