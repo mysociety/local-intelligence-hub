@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import re
 import traceback
@@ -60,6 +61,41 @@ class GeocodeResult:
     postcode_data: dict = None
     area: "Area" = None
     point: Point = None
+    # and all the other columns of GenericData:
+    postcode: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    first_name: str = None
+    # models.CharField(max_length=300, blank=True, null=True)
+    last_name: str = None
+    # models.CharField(max_length=300, blank=True, null=True)
+    full_name: str = None
+    # models.CharField(max_length=300, blank=True, null=True)
+    email: str = None
+    # models.EmailField(max_length=300, blank=True, null=True)
+    phone: str = None
+    # models.CharField(max_length=100, blank=True, null=True)
+    start_time: datetime = None
+    # models.DateTimeField(blank=True, null=True)
+    end_time: datetime = None
+    # models.DateTimeField(blank=True, null=True)
+    public_url: str = None
+    # models.URLField(max_length=2000, blank=True, null=True)
+    social_url: str = None
+    # models.URLField(max_length=2000, blank=True, null=True)
+    geocode_data: dict = None
+    # models.JSONField(blank=True, null=True)
+    geocoder: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    address: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    title: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    description: str = None
+    # models.TextField(max_length=3000, blank=True, null=True)
+    image: str = None
+    # models.ImageField(null=True, max_length=1000, upload_to="generic_data")
+    can_display_point: bool = None
+    # models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.data_type.name}: {self.data}"
