@@ -44,8 +44,8 @@ from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2.credentials import Credentials as GoogleCredentials
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
-from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from procrastinate.contrib.django import app as procrastinate
+from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from procrastinate.exceptions import AlreadyEnqueued
 from psycopg.errors import UniqueViolation
 from pyairtable import Api as AirtableAPI

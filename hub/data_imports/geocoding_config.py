@@ -1,8 +1,8 @@
-from datetime import datetime
 import logging
 import re
 import traceback
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -539,7 +539,9 @@ async def get_postcode_data_for_area(area: "Area", loaders: "Loaders", steps: li
         print(
             traceback.format_exc()
         )  # Keep for now to track tricky database errors with bad error messages
-        logger.error(f"Failed to get postcode data from postgis_geocoder for {sample_point}: {e}")
+        logger.error(
+            f"Failed to get postcode data from postgis_geocoder for {sample_point}: {e}"
+        )
 
     steps.append(
         {
