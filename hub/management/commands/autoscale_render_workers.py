@@ -88,6 +88,8 @@ class Command(BaseCommand):
         # report new instance count to posthog
         try:
             if settings.POSTHOG_API_KEY:
+                logger.info("Reporting to posthog")
+
                 import posthog
 
                 count_res = render.get(
@@ -96,16 +98,22 @@ class Command(BaseCommand):
                 )
 
                 count_res_json = count_res.json()
+                logger.info(f"Instance count response: {count_res_json}")
                 actual_worker_count = count_res_json[0]["values"][0]["value"]
+
+                event_properties = {
+                    "requested_worker_count": requested_worker_count,
+                    "actual_worker_count": actual_worker_count,
+                }
 
                 posthog.capture(
                     "commonknowledge-server-worker",
                     event="render_worker_count_changed",
-                    properties={
-                        "requested_worker_count": requested_worker_count,
-                        "actual_worker_count": actual_worker_count,
-                    },
+                    properties=event_properties,
                 )
+                logger.info(f"Reported to posthog: {event_properties}")
+            else:
+                logger.info("No POSTHOG_API_KEY, skipping reporting to posthog")
         except Exception as e:
             logger.error(f"Error reporting to posthog: {e}")
 
