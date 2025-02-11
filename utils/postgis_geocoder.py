@@ -91,7 +91,7 @@ def _get_bulk_postcode_geo_from_coords(
             area_joins.append(join)
 
         area_joins = ",\n".join(area_selects)
-        area_selects = "\n".join(area_selects)
+        area_selects = ",\n".join(area_selects)
 
         query = f"""
         SELECT
