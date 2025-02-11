@@ -71,7 +71,6 @@ from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField, EncryptedTextField
 from hub.filters import Filter
 from hub.parsons.action_network.action_network import ActionNetwork
-from hub.restricted_file_field.fields import SafeFileField
 from hub.tasks import (
     import_all,
     import_many,
