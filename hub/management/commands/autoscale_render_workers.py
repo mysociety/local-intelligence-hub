@@ -244,7 +244,7 @@ class Command(BaseCommand):
                           COALESCE(sum(jsonb_array_length(job.args->'members')), 0)
                         ) as total_record_backlog
                     FROM procrastinate_jobs job
-                    WHERE status in ('doing', 'todo');
+                    WHERE status in ('doing', 'todo')
                 """
 
                 with connection.cursor() as cursor:
