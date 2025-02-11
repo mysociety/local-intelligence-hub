@@ -126,7 +126,7 @@ class Command(BaseCommand):
             cursor.execute(
                 """
                     SELECT
-                        multi + single as rows_to_process
+                        multi + single as count_of_rows_to_process
                     FROM (
                         SELECT sum(jsonb_array_length(job.args->'members')) as multi, count(job.args->>'member') as single
                         FROM procrastinate_jobs job
@@ -147,6 +147,21 @@ class Command(BaseCommand):
                 ),
             )
 
+            try:
+                if settings.POSTHOG_API_KEY:
+                    import posthog
+
+                    posthog.identify("commonknowledge-server-worker")
+                    posthog.capture(
+                        "commonknowledge-server-worker",
+                        event="job_monitoring",
+                        properties={
+                            "count_of_rows_to_process": count_of_rows_to_process,
+                        },
+                    )
+            except Exception as e:
+                logger.error(f"Error reporting to posthog: {e}")
+
             logger.info(
                 f"Strategy: Consistent global throughput.\n- Rows to process: {count_of_rows_to_process}."
             )
@@ -159,19 +174,19 @@ class Command(BaseCommand):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                    SELECT count(distinct job.args->>'external_data_source_id') as count_of_sources
+                    SELECT count(distinct job.args->>'external_data_source_id') as count_of_data_sources_with_jobs
                     FROM procrastinate_jobs job
                     WHERE status in ('doing', 'todo')
                 """
             )
-            count_of_data_sources = cursor.fetchone()[0] or 0
+            count_of_data_sources_with_jobs = cursor.fetchone()[0] or 0
 
             requested_worker_count = min(
-                max_worker_count, max(min_worker_count, count_of_data_sources)
+                max_worker_count, max(min_worker_count, count_of_data_sources_with_jobs)
             )
 
             logger.info(
-                f"Strategy: Consistent global throughput.\n- Sources to process: {count_of_data_sources}."
+                f"Strategy: Consistent global throughput.\n- Sources to process: {count_of_data_sources_with_jobs}."
             )
 
             return requested_worker_count
@@ -182,16 +197,37 @@ class Command(BaseCommand):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                    SELECT count(distinct job.args->>'external_data_source_id') as count_of_sources, sum(jsonb_array_length(job.args->'members')) as rows_to_process
+                    SELECT count(distinct job.args->>'external_data_source_id') as count_of_data_sources_with_jobs, sum(jsonb_array_length(job.args->'members')) as count_of_rows_to_process
                     FROM procrastinate_jobs job
                     WHERE status in ('doing', 'todo')
                 """
             )
-            count_of_data_sources, count_of_rows_to_process = cursor.fetchone()
+            count_of_data_sources_with_jobs, count_of_rows_to_process = (
+                cursor.fetchone()
+            )
             if count_of_rows_to_process == 0 or count_of_rows_to_process is None:
                 count_of_rows_to_process = 1
-            if count_of_data_sources == 0 or count_of_data_sources is None:
-                count_of_data_sources = 1
+            if (
+                count_of_data_sources_with_jobs == 0
+                or count_of_data_sources_with_jobs is None
+            ):
+                count_of_data_sources_with_jobs = 1
+
+            try:
+                if settings.POSTHOG_API_KEY:
+                    import posthog
+
+                    posthog.identify("commonknowledge-server-worker")
+                    posthog.capture(
+                        "commonknowledge-server-worker",
+                        event="job_monitoring",
+                        properties={
+                            "count_of_data_sources_with_jobs": count_of_data_sources_with_jobs,
+                            "count_of_rows_to_process": count_of_rows_to_process,
+                        },
+                    )
+            except Exception as e:
+                logger.error(f"Error reporting to posthog: {e}")
 
             # At the least, we need one worker per source
             # But we also want to make sure we have enough workers to process the rows
@@ -200,13 +236,13 @@ class Command(BaseCommand):
                 max_worker_count,
                 max(
                     min_worker_count,
-                    count_of_data_sources,
+                    count_of_data_sources_with_jobs,
                     math.ceil(count_of_rows_to_process / row_count_per_worker),
                 ),
             )
 
             logger.info(
-                f"Strategy: Consistent global throughput + 1 source per worker.\n- Sources to process: {count_of_data_sources}."
+                f"Strategy: Consistent global throughput + 1 source per worker.\n- Sources to process: {count_of_data_sources_with_jobs}."
             )
 
             return requested_worker_count
