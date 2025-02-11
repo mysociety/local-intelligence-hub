@@ -492,6 +492,8 @@ class TestComplexAddressGeocoding(TestCase):
 class TestCoordinateGeocoding(TestCase):
     @classmethod
     def setUpTestData(cls):
+        subprocess.call("bin/import_areas_into_test_db.sh")
+
         cls.source = DatabaseJSONSource.objects.create(
             name="coordinates_test",
             id_field="id",
@@ -500,41 +502,41 @@ class TestCoordinateGeocoding(TestCase):
                     "id": "1",
                     "longitude": -1.342881,
                     "latitude": 51.846073,
-                    "expected_postcode": "OX20 1ND",
+                    "expected_constituency": "E14001090",
                 },
                 {
                     # Should work with strings too
                     "id": "2",
                     "longitude": "-1.702695",
                     "latitude": "52.447681",
-                    "expected_postcode": "B92 0HJ",
+                    "expected_constituency": "E14001358",
                 },
                 {
                     "id": "3",
                     "longitude": " -1.301473",
                     "latitude": 53.362753,
-                    "expected_postcode": "S26 2GA",
+                    "expected_constituency": "E14001451",
                 },
                 {
                     # Handle failure cases gracefully
                     "id": "4",
                     "longitude": -4.2858,
                     "latitude": None,
-                    "expected_postcode": None,
+                    "expected_constituency": None,
                 },
                 # Gracefully handle non-numeric coordinates
                 {
                     "id": "5",
                     "longitude": "invalid",
                     "latitude": "invalid",
-                    "expected_postcode": None,
+                    "expected_constituency": None,
                 },
                 # Gracefully handle crazy big coordinates
                 {
                     "id": "6",
                     "longitude": 0,
                     "latitude": 1000,
-                    "expected_postcode": None,
+                    "expected_constituency": None,
                 },
             ],
             # Resulting address query should be something like "Barclays, Victoria Road, Glasgow"
@@ -563,12 +565,15 @@ class TestCoordinateGeocoding(TestCase):
         for d in self.data:
             try:
                 try:
-                    if d.json["expected_postcode"] is not None:
+                    if d.json["expected_constituency"] is not None:
                         self.assertIsNotNone(d.postcode_data)
                         self.assertEqual(
-                            d.postcode_data["postcode"], d.json["expected_postcode"]
+                            d.postcode_data["codes"]["parliamentary_constituency"],
+                            d.json["expected_constituency"],
                         )
                         self.assertGreaterEqual(len(d.geocode_data["steps"]), 1)
+                    else:
+                        self.assertIsNone(d.postcode_data)
                 except KeyError:
                     raise AssertionError("Expected geocoding data was missing.")
             except AssertionError as e:
@@ -600,11 +605,13 @@ class TestCoordinateGeocoding(TestCase):
         for d in self.data:
             try:
                 try:
-                    if d.json["expected_postcode"] is not None:
+                    if d.json["expected_constituency"] is not None:
                         self.assertIsNotNone(d.postcode_data)
                         self.assertTrue(
                             d.geocode_data["skipped"], "Geocoding should be skipped."
                         )
+                    else:
+                        self.assertIsNone(d.postcode_data)
                 except KeyError:
                     raise AssertionError("Expected geocoding data was missing.")
             except AssertionError as e:

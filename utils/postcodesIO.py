@@ -7,6 +7,7 @@ from django.contrib.gis.geos import Point
 
 import httpx
 import requests
+from asgiref.sync import sync_to_async
 
 from utils.geo import EERs, create_point
 from utils.py import async_batch_and_aggregate, get, get_path
@@ -108,17 +109,7 @@ async def enrich_postcodes_io_result(
         {},
     ).get("code", None)
 
-    # Ensure output_area keys exist
-    result["output_area"] = None
-    result["codes"]["output_area"] = None
-
-    if not result["latitude"] or not result["longitude"]:
-        return result
-
-    from hub.models import Area
-
-    # Add output_area and correct msoa and lsoa results (postcodes.io doesn't use up-to-date boundaries)
-    point = create_point(latitude=result["latitude"], longitude=result["longitude"])
+    # Ensure keys exist
     enrichment_areas = [
         ("OA21", "output_area"),
         ("MSOA", "msoa"),
@@ -127,8 +118,21 @@ async def enrich_postcodes_io_result(
         ("PCD", "postcode_district"),
         ("PCS", "postcode_sector"),
     ]
+    for _, key in enrichment_areas:
+        if key not in result:
+            result[key] = None
+        if key not in result["codes"]:
+            result["codes"][key] = None
+
+    if not result["latitude"] or not result["longitude"]:
+        return result
+
+    from hub.models import Area
+
+    # Add output_area and correct msoa and lsoa results (postcodes.io doesn't use up-to-date boundaries)
+    point = create_point(latitude=result["latitude"], longitude=result["longitude"])
     # Get one geometry for each code
-    areas = (
+    areas = await sync_to_async(list)(
         Area.objects.filter(
             polygon__contains=point,
             area_type__code__in=[area_code for area_code, _ in enrichment_areas],
@@ -141,7 +145,7 @@ async def enrich_postcodes_io_result(
         )
     )
 
-    async for area in areas:
+    for area in areas:
         postcode_io_key = next(
             (
                 postcode_io_key
@@ -168,7 +172,7 @@ async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
     data = response.json()
     status = get(data, "status")
     result: PostcodesIOResult = get(data, "result")
-    await enrich_postcodes_io_result(result)
+    result = await enrich_postcodes_io_result(result)
 
     if status != 200 or result is None:
         raise Exception(f"Failed to geocode postcode: {postcode}.")

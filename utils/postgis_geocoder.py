@@ -90,8 +90,8 @@ def _get_bulk_postcode_geo_from_coords(
             join = f"LEFT JOIN hub_area AS {alias} ON {alias}.id = ({gis_query})"
             area_joins.append(join)
 
-        area_joins = ",\n".join(area_selects)
         area_selects = ",\n".join(area_selects)
+        area_joins = "\n".join(area_joins)
 
         query = f"""
         SELECT

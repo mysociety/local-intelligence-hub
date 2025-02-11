@@ -23,7 +23,6 @@ class TestAreaCodeGeocoding(TestCase):
             Point(x=-4.244741, y=55.858026),
         ]
         results = _get_bulk_postcode_geo_from_coords(coordinates)
-        print("results", results)
 
         self.assertEqual(results[0].latitude, 51.5)
         self.assertEqual(results[0].longitude, -0.1)

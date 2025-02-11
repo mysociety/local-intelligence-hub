@@ -62,6 +62,8 @@ class Command(BaseCommand):
         if not settings.ROW_COUNT_PER_WORKER:
             raise ValueError("settings.ROW_COUNT_PER_WORKER is required")
 
+        requested_worker_count = 0
+
         # Find out how many rows of data need importing, updating, so on, so forth
         if strategy == ScalingStrategy.row_count:
             requested_worker_count = self.row_count_strategy(
@@ -100,6 +102,8 @@ class Command(BaseCommand):
         logger.info(
             f"Render response: {res.status_code}, {render_response_dict[res.status_code]}"
         )
+
+        return requested_worker_count
 
     def row_count_strategy(
         self, min_worker_count, max_worker_count, row_count_per_worker
