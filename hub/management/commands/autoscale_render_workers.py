@@ -88,6 +88,8 @@ class Command(BaseCommand):
         # report new instance count to posthog
         try:
             if settings.POSTHOG_API_KEY:
+                logger.info("Reporting to posthog")
+
                 import posthog
 
                 count_res = render.get(
@@ -96,16 +98,24 @@ class Command(BaseCommand):
                 )
 
                 count_res_json = count_res.json()
-                actual_worker_count = count_res_json[0]["values"][0]["value"]
+                logger.info(f"Instance count response: {count_res_json}")
+                actual_worker_count = count_res_json[0]["values"][-1]["value"]
 
-                posthog.capture(
+                event_properties = {
+                    "requested_worker_count": requested_worker_count,
+                    "actual_worker_count": actual_worker_count,
+                }
+
+                posthog.identify("commonknowledge-server-worker")
+                res = posthog.capture(
                     "commonknowledge-server-worker",
                     event="render_worker_count_changed",
-                    properties={
-                        "requested_worker_count": requested_worker_count,
-                        "actual_worker_count": actual_worker_count,
-                    },
+                    properties=event_properties,
                 )
+                logger.info(f"Posthog response: {res}")
+                logger.info(f"Reported to posthog: {event_properties}")
+            else:
+                logger.info("No POSTHOG_API_KEY, skipping reporting to posthog")
         except Exception as e:
             logger.error(f"Error reporting to posthog: {e}")
 
@@ -125,6 +135,8 @@ class Command(BaseCommand):
                 """
             )
             count_of_rows_to_process = cursor.fetchone()[0] or 0
+            if count_of_rows_to_process == 0 or count_of_rows_to_process is None:
+                count_of_rows_to_process = 1
 
             # Decide how many workers we need based on the number of rows of data
             requested_worker_count = min(
@@ -176,6 +188,10 @@ class Command(BaseCommand):
                 """
             )
             count_of_data_sources, count_of_rows_to_process = cursor.fetchone()
+            if count_of_rows_to_process == 0 or count_of_rows_to_process is None:
+                count_of_rows_to_process = 1
+            if count_of_data_sources == 0 or count_of_data_sources is None:
+                count_of_data_sources = 1
 
             # At the least, we need one worker per source
             # But we also want to make sure we have enough workers to process the rows
