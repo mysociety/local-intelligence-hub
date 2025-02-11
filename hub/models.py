@@ -1772,7 +1772,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
 
             geocode_results = [r for r in geocode_results if r]
-            if not geocode_results:
+            if not geocode_results or len(geocode_results) == 0:
                 return
 
             unique_fields = ["data_type", "data"]

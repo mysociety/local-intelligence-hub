@@ -224,11 +224,11 @@ async def geocode_record(
                 update_data["geocode_data"]["skipped"] = True
                 # Return a complete GeocodeResult to avoid clearing previous data
                 return GeocodeResult(
+                    **update_data,
                     data_type=data_type,
                     data=id,
-                    json=update_data["json"],
                     geocoder=generic_data.geocoder,
-                    geocode_data=generic_data.geocode_data,
+                    geocode_data=update_data["geocode_data"],
                     postcode_data=generic_data.postcode_data,
                     area=generic_data.area,
                     point=generic_data.point,
@@ -333,7 +333,7 @@ async def import_area_code_data(
     update_data["geocode_data"].update({"steps": steps})
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
 
 
@@ -524,7 +524,7 @@ async def import_area_data(
     update_data["geocode_data"].update({"steps": steps})
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
 
 
@@ -764,7 +764,7 @@ async def import_address_data(
     update_data["point"] = point
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
 
 
@@ -843,5 +843,5 @@ async def import_coordinate_data(
     update_data["point"] = point
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
