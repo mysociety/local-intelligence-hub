@@ -223,16 +223,17 @@ async def geocode_record(
                 update_data["geocode_data"] = generic_data.geocode_data or {}
                 update_data["geocode_data"]["skipped"] = True
                 # Return a complete GeocodeResult to avoid clearing previous data
-                return GeocodeResult(
+                kwargs = {
                     **update_data,
-                    data_type=data_type,
-                    data=id,
-                    geocoder=generic_data.geocoder,
-                    geocode_data=update_data["geocode_data"],
-                    postcode_data=generic_data.postcode_data,
-                    area=generic_data.area,
-                    point=generic_data.point,
-                )
+                    "data_type": data_type,
+                    "data": id,
+                    "geocoder": generic_data.geocoder,
+                    "geocode_data": update_data["geocode_data"],
+                    "postcode_data": generic_data.postcode_data,
+                    "area": generic_data.area,
+                    "point": generic_data.point,
+                }
+                return GeocodeResult(**kwargs)
     except GenericData.DoesNotExist:
         # logger.debug("Generic Data doesn't exist, no equality check to be done", id)
         pass
