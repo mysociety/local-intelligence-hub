@@ -43,29 +43,45 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        requested_worker_count = self.autoscale_render_workers(
+            strategy=options["strategy"],
+            min_worker_count=options["min_worker_count"],
+            max_worker_count=options["max_worker_count"],
+            row_count_per_worker=options["row_count_per_worker"],
+        )
+        self.render_worker_count_monitoring(requested_worker_count)
+        self.procrastinate_job_monitoring()
+
+    def autoscale_render_workers(
+        self,
+        strategy: ScalingStrategy,
+        min_worker_count: int,
+        max_worker_count: int,
+        row_count_per_worker: int,
+    ):
         if not settings.ROW_COUNT_PER_WORKER:
             raise ValueError("settings.ROW_COUNT_PER_WORKER is required")
 
         # Find out how many rows of data need importing, updating, so on, so forth
-        if options["strategy"] == ScalingStrategy.row_count:
+        if strategy == ScalingStrategy.row_count:
             requested_worker_count = self.row_count_strategy(
-                min_worker_count=options["min_worker_count"],
-                max_worker_count=options["max_worker_count"],
-                row_count_per_worker=options["row_count_per_worker"],
+                min_worker_count=min_worker_count,
+                max_worker_count=max_worker_count,
+                row_count_per_worker=row_count_per_worker,
             )
-        elif options["strategy"] == ScalingStrategy.simple_data_source_count:
+        elif strategy == ScalingStrategy.simple_data_source_count:
             requested_worker_count = self.simple_data_source_count_strategy(
-                min_worker_count=options["min_worker_count"],
-                max_worker_count=options["max_worker_count"],
+                min_worker_count=min_worker_count,
+                max_worker_count=max_worker_count,
             )
-        elif options["strategy"] == ScalingStrategy.sources_and_row_count:
+        elif strategy == ScalingStrategy.sources_and_row_count:
             requested_worker_count = self.sources_and_row_count_strategy(
-                min_worker_count=options["min_worker_count"],
-                max_worker_count=options["max_worker_count"],
-                row_count_per_worker=options["row_count_per_worker"],
+                min_worker_count=min_worker_count,
+                max_worker_count=max_worker_count,
+                row_count_per_worker=row_count_per_worker,
             )
         else:
-            raise ValueError(f"Unknown strategy: {options['strategy']}")
+            raise ValueError(f"Unknown strategy: {strategy}")
 
         logger.info(f"Requested worker count: {requested_worker_count}.")
 
@@ -84,9 +100,6 @@ class Command(BaseCommand):
         logger.info(
             f"Render response: {res.status_code}, {render_response_dict[res.status_code]}"
         )
-
-        self.render_worker_count_monitoring(requested_worker_count)
-        self.procrastinate_job_monitoring()
 
     def row_count_strategy(
         self, min_worker_count, max_worker_count, row_count_per_worker
@@ -252,7 +265,6 @@ class Command(BaseCommand):
                             "total_record_backlog": total_record_backlog,
                         },
                     )
-
         except Exception as e:
             logger.error(f"Error reporting to posthog: {e}")
 
