@@ -85,40 +85,7 @@ class Command(BaseCommand):
             f"Render response: {res.status_code}, {render_response_dict[res.status_code]}"
         )
 
-        # report new instance count to posthog
-        try:
-            if settings.POSTHOG_API_KEY:
-                logger.info("Reporting to posthog")
-
-                import posthog
-
-                count_res = render.get(
-                    "/v1/metrics/instance-count",
-                    params={"resource": settings.RENDER_WORKER_SERVICE_ID},
-                )
-
-                count_res_json = count_res.json()
-                logger.info(f"Instance count response: {count_res_json}")
-                actual_worker_count = count_res_json[0]["values"][-1]["value"]
-
-                event_properties = {
-                    "requested_worker_count": requested_worker_count,
-                    "actual_worker_count": actual_worker_count,
-                }
-
-                posthog.identify("commonknowledge-server-worker")
-                res = posthog.capture(
-                    "commonknowledge-server-worker",
-                    event="render_worker_count_changed",
-                    properties=event_properties,
-                )
-                logger.info(f"Posthog response: {res}")
-                logger.info(f"Reported to posthog: {event_properties}")
-            else:
-                logger.info("No POSTHOG_API_KEY, skipping reporting to posthog")
-        except Exception as e:
-            logger.error(f"Error reporting to posthog: {e}")
-
+        self.render_worker_count_monitoring(requested_worker_count)
         self.procrastinate_job_monitoring()
 
     def row_count_strategy(
@@ -147,25 +114,6 @@ class Command(BaseCommand):
                     min_worker_count,
                     math.ceil(count_of_rows_to_process / row_count_per_worker),
                 ),
-            )
-
-            try:
-                if settings.POSTHOG_API_KEY:
-                    import posthog
-
-                    posthog.identify("commonknowledge-server-worker")
-                    posthog.capture(
-                        "commonknowledge-server-worker",
-                        event="job_monitoring",
-                        properties={
-                            "count_of_rows_to_process": count_of_rows_to_process,
-                        },
-                    )
-            except Exception as e:
-                logger.error(f"Error reporting to posthog: {e}")
-
-            logger.info(
-                f"Strategy: Consistent global throughput.\n- Rows to process: {count_of_rows_to_process}."
             )
 
             return requested_worker_count
@@ -215,22 +163,6 @@ class Command(BaseCommand):
             ):
                 count_of_data_sources_with_jobs = 1
 
-            try:
-                if settings.POSTHOG_API_KEY:
-                    import posthog
-
-                    posthog.identify("commonknowledge-server-worker")
-                    posthog.capture(
-                        "commonknowledge-server-worker",
-                        event="job_monitoring",
-                        properties={
-                            "count_of_data_sources_with_jobs": count_of_data_sources_with_jobs,
-                            "count_of_rows_to_process": count_of_rows_to_process,
-                        },
-                    )
-            except Exception as e:
-                logger.error(f"Error reporting to posthog: {e}")
-
             # At the least, we need one worker per source
             # But we also want to make sure we have enough workers to process the rows
             # So we take the max of the two
@@ -248,6 +180,42 @@ class Command(BaseCommand):
             )
 
             return requested_worker_count
+
+    def render_worker_count_monitoring(self, requested_worker_count: int = None):
+        # report new instance count to posthog
+        try:
+            if settings.POSTHOG_API_KEY:
+                logger.info("Reporting to posthog")
+
+                import posthog
+
+                render = get_render_client()
+                count_res = render.get(
+                    "/v1/metrics/instance-count",
+                    params={"resource": settings.RENDER_WORKER_SERVICE_ID},
+                )
+
+                count_res_json = count_res.json()
+                logger.info(f"Instance count response: {count_res_json}")
+                actual_worker_count = count_res_json[0]["values"][-1]["value"]
+
+                event_properties = {
+                    "requested_worker_count": requested_worker_count,
+                    "actual_worker_count": actual_worker_count,
+                }
+
+                posthog.identify("commonknowledge-server-worker")
+                res = posthog.capture(
+                    "commonknowledge-server-worker",
+                    event="render_worker_count_changed",
+                    properties=event_properties,
+                )
+                logger.info(f"Posthog response: {res}")
+                logger.info(f"Reported to posthog: {event_properties}")
+            else:
+                logger.info("No POSTHOG_API_KEY, skipping reporting to posthog")
+        except Exception as e:
+            logger.error(f"Error reporting to posthog: {e}")
 
     def procrastinate_job_monitoring(self):
         try:
