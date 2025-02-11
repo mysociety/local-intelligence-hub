@@ -10,8 +10,6 @@ export default async function Page() {
   return (
     <div className="max-w-7xl space-y-7 w-full">
       <PageHeader />
-      <div className="border-b border-meepGray-700 pt-10" />
-      <h2 className="text-hSm label">Your maps</h2>
       <ReportList />
     </div>
   )
@@ -19,15 +17,10 @@ export default async function Page() {
 
 function PageHeader() {
   return (
-    <header className="grid grid-rows-2 md:grid-rows-1 md:grid-cols-2 gap-8">
+    <header>
       <div>
-        <h1 className="text-hLg mb-7">Maps</h1>
-        <p className="text-meepGray-400 w-[400px]">
-          Make sense of your data with map reports. Create, edit, and share them
-          with your team, your members and the public.
-        </p>
+        <h1 className="text-hLg">Your maps</h1>
       </div>
-      <img src="/reports_page_screenshot.png" alt="Reports page screenshot" />
     </header>
   )
 }

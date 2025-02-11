@@ -22,6 +22,13 @@ export function ReportCard({
     <Link href={`/reports/${report.id}`}>
       <Card className="overflow-hidden">
         <CardHeader>
+          <CardTitle className="mb-1 px-5 pt-4">{report.name}</CardTitle>
+          <CardDescription className="text-sm text-meepGray-400 px-5 pb-5">
+            Edited{' '}
+            <span className="text-meepGray-300">
+              {formatRelative(report.lastUpdate, new Date()).split(' at ')[0]}
+            </span>
+          </CardDescription>
           <CardContent className="relative h-[200px]">
             <Image
               src={
@@ -34,13 +41,6 @@ export function ReportCard({
               objectPosition="center"
             />
           </CardContent>
-          <CardTitle className="mb-1 px-5 pt-4">{report.name}</CardTitle>
-          <CardDescription className="text-sm text-meepGray-400 px-5 pb-5">
-            Last edited{' '}
-            <span className="text-meepGray-300">
-              {formatRelative(report.lastUpdate, new Date())}
-            </span>
-          </CardDescription>
         </CardHeader>
       </Card>
     </Link>
