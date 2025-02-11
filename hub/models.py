@@ -3512,7 +3512,7 @@ class Report(PolymorphicModel):
 
     def report_image_path(instance, filename):
         # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
-        return f"report/{str(instance.organisation.pk)}/{filename}"
+        return f"report/{str(instance.id)}/{filename}"
 
     cover_image = models.ImageField(
         storage=OverwriteStorage(),
