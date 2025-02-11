@@ -119,6 +119,8 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error(f"Error reporting to posthog: {e}")
 
+        self.procrastinate_job_monitoring()
+
     def row_count_strategy(
         self, min_worker_count, max_worker_count, row_count_per_worker
     ):
@@ -246,6 +248,45 @@ class Command(BaseCommand):
             )
 
             return requested_worker_count
+
+    def procrastinate_job_monitoring(self):
+        try:
+            if settings.POSTHOG_API_KEY:
+                import posthog
+
+                query = """
+                    SELECT
+                        count(job.id) as total_job_backlog,
+                        count(distinct job.args->>'external_data_source_id') as total_external_data_source_backlog,
+                        (
+                          count(distinct job.args->>'member') +
+                          COALESCE(sum(jsonb_array_length(job.args->'members')), 0)
+                        ) as total_record_backlog
+                    FROM procrastinate_jobs job
+                    WHERE status in ('doing', 'todo');
+                """
+
+                with connection.cursor() as cursor:
+                    cursor.execute(query)
+                    (
+                        total_job_backlog,
+                        total_external_data_source_backlog,
+                        total_record_backlog,
+                    ) = cursor.fetchone()
+
+                    posthog.identify("commonknowledge-server-worker")
+                    posthog.capture(
+                        "commonknowledge-server-worker",
+                        event="procrastinate_job_monitoring",
+                        properties={
+                            "total_job_backlog": total_job_backlog,
+                            "total_external_data_source_backlog": total_external_data_source_backlog,
+                            "total_record_backlog": total_record_backlog,
+                        },
+                    )
+
+        except Exception as e:
+            logger.error(f"Error reporting to posthog: {e}")
 
 
 render_response_dict = {
