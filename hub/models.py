@@ -45,6 +45,7 @@ from google.oauth2.credentials import Credentials as GoogleCredentials
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
+from procrastinate.contrib.django import app as procrastinate
 from procrastinate.exceptions import AlreadyEnqueued
 from psycopg.errors import UniqueViolation
 from pyairtable import Api as AirtableAPI
@@ -2979,22 +2980,30 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 is_cancelled_by_user=None,
                 **({"type": type.value} if type else {}),
             ).update(is_cancelled_by_user=True)
-            # Cancel all BatchRequests
+
             cancelled_request_ids = BatchRequest.objects.filter(
                 source=self,
                 is_cancelled_by_user=True,
             )
+
             job_filters.update(
                 args__request_id__in=[
                     str(id) for id in cancelled_request_ids.values_list("id", flat=True)
                 ]
             )
 
+        # Cancel all user-requested procrastinate import jobs
+        jobs = ProcrastinateJob.objects.filter(**job_filters)
+
+        # by using the sync method
+        for job in jobs:
+            try:
+                procrastinate.job_manager.cancel_job_by_id(job.id, abort=True)
+            except Exception as e:
+                logger.error(f"Failed to cancel job {job.id}: {e}")
+
         # run command to update worker instances
         call_command("autoscale_render_workers")
-
-        # Cancel all user-requested procrastinate import jobs
-        return ProcrastinateJob.objects.filter(**job_filters).update(status="cancelled")
 
 
 class DatabaseJSONSource(ExternalDataSource):
