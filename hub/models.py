@@ -18,6 +18,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
@@ -3103,8 +3104,9 @@ class UploadedCSVSource(ExternalDataSource):
         return f"user_content/org_{instance.organisation.pk}/data_sources/{filename}"
 
     # User provided
-    spreadsheet_file = SafeFileField(
-        upload_to=org_directory_path, allowed_extensions=("csv",)
+    spreadsheet_file = models.FileField(
+        upload_to=org_directory_path,
+        validators=[FileExtensionValidator(("csv",))],
     )
     id_field = models.TextField()
     delimiter = models.TextField(default=",", blank=True)
