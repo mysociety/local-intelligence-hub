@@ -4,10 +4,10 @@ from urllib.parse import unquote
 
 from django.conf import settings
 from django.contrib.gis.geos import Point
-from asgiref.sync import sync_to_async
 
 import httpx
 import requests
+from asgiref.sync import sync_to_async
 
 from utils.geo import EERs, create_point
 from utils.py import async_batch_and_aggregate, get, get_path
