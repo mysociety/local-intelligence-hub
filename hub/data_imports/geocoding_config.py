@@ -18,7 +18,6 @@ from utils.findthatpostcode import (
     get_example_postcode_from_area_gss,
     get_postcode_from_coords_ftp,
 )
-from utils.postcodesIO import PostcodesIOResult
 from utils.py import are_dicts_equal, ensure_list, find
 
 logger = logging.getLogger(__name__)
