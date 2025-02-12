@@ -23,7 +23,7 @@ import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
 const GET_UPDATE_CONFIG = gql`
   query GetSourceMapping($ID: ID!) {
-    externalDataSource(pk: $ID) {
+    externalDataSource(id: $ID) {
       id
       autoImportEnabled
       autoUpdateEnabled

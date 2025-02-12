@@ -51,7 +51,7 @@ export default async function Page({
             hubHomepages {
               id
             }
-            hubPage(pk: $pageId) {
+            hubPage(id: $pageId) {
               id
               hub {
                 id

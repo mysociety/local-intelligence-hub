@@ -61,7 +61,7 @@ export async function generateMetadata({
 
 const GET_MAP_REPORT_NAME = gql`
   query GetMapReportName($id: ID!) {
-    mapReport(pk: $id) {
+    mapReport(id: $id) {
       id
       name
     }

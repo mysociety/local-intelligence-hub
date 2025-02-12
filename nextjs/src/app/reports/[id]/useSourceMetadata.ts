@@ -18,7 +18,7 @@ export function useSourceMetadata(sourceId?: string) {
 
 const SOURCE_METADATA = gql`
   query SourceMetadata($sourceId: ID!) {
-    externalDataSource(pk: $sourceId) {
+    externalDataSource(id: $sourceId) {
       fieldDefinitions {
         externalId
         value

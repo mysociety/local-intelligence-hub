@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ActionNetworkSourceInput, AggregationDefinition, AggregationOp, AirtableSourceInput, AnalyticalAreaType, AreaQueryMode, CalculatedColumn, CommonDataLoaderFilter, CreateExternalDataSourceInput, CreateOrganisationInput, CrmType, DataSourceType, DatetimeFilterLookup, DjangoModelFilterInput, EditableGoogleSheetsSourceInput, ExternalDataSourceFilter, ExternalDataSourceInput, GeoJsonTypes, GeographyTypes, GroupByColumn, HubPageInput, IdFilterLookup, IdObject, IntFilterLookup, MailChimpSourceInput, MapBounds, MapLayerInput, MapReportInput, OffsetPaginationInput, OneToManyInput, OperationMessageKind, OrganisationFilters, OrganisationInputPartial, PersonFilter, ProcrastinateJobStatus, QueueFilter, ReportFilter, SharingPermissionCudInput, SharingPermissionInput, StatisticsConfig, StrFilterLookup, TicketTailorSourceInput, UpdateMappingItemInput, WebhookType } from './graphql'
+import { ActionNetworkSourceInput, AggregationDefinition, AggregationOp, AirtableSourceInput, AnalyticalAreaType, AreaQueryMode, CalculatedColumn, CommonDataLoaderFilter, CreateExternalDataSourceInput, CreateOrganisationInput, CrmType, DataSourceType, DatetimeDatetimeFilterLookup, DatetimeRangeLookup, EditableGoogleSheetsSourceInput, ExternalDataSourceFilter, ExternalDataSourceInput, GeoJsonTypes, GeographyTypes, GroupByColumn, HubPageInput, IdBaseFilterLookup, IdObject, IntComparisonFilterLookup, IntRangeLookup, MailChimpSourceInput, MapBounds, MapLayerInput, MapReportInput, OffsetPaginationInput, OneToManyInput, OperationMessageKind, OrganisationFilters, OrganisationInputPartial, PersonFilter, ProcrastinateJobStatus, QueueFilter, ReportFilter, SharingPermissionCudInput, SharingPermissionInput, StatisticsConfig, StrFilterLookup, TicketTailorSourceInput, UpdateMappingItemInput, WebhookType } from './graphql'
 
 type Properties<T> = Required<{
   [K in keyof T]: z.ZodType<T[K], any, T[K]>;
@@ -141,31 +141,36 @@ export function CreateOrganisationInputSchema(): z.ZodObject<Properties<CreateOr
   })
 }
 
-export function DatetimeFilterLookupSchema(): z.ZodObject<Properties<DatetimeFilterLookup>> {
+export function DatetimeDatetimeFilterLookupSchema(): z.ZodObject<Properties<DatetimeDatetimeFilterLookup>> {
   return z.object({
-    contains: definedNonNullAnySchema.nullish(),
-    endsWith: definedNonNullAnySchema.nullish(),
+    date: IntComparisonFilterLookupSchema().nullish(),
+    day: IntComparisonFilterLookupSchema().nullish(),
     exact: definedNonNullAnySchema.nullish(),
     gt: definedNonNullAnySchema.nullish(),
     gte: definedNonNullAnySchema.nullish(),
-    iContains: definedNonNullAnySchema.nullish(),
-    iEndsWith: definedNonNullAnySchema.nullish(),
-    iExact: definedNonNullAnySchema.nullish(),
-    iRegex: z.string().nullish(),
-    iStartsWith: definedNonNullAnySchema.nullish(),
+    hour: IntComparisonFilterLookupSchema().nullish(),
     inList: z.array(definedNonNullAnySchema).nullish(),
     isNull: z.boolean().nullish(),
+    isoWeekDay: IntComparisonFilterLookupSchema().nullish(),
+    isoYear: IntComparisonFilterLookupSchema().nullish(),
     lt: definedNonNullAnySchema.nullish(),
     lte: definedNonNullAnySchema.nullish(),
-    range: z.array(definedNonNullAnySchema).nullish(),
-    regex: z.string().nullish(),
-    startsWith: definedNonNullAnySchema.nullish()
+    minute: IntComparisonFilterLookupSchema().nullish(),
+    month: IntComparisonFilterLookupSchema().nullish(),
+    quarter: IntComparisonFilterLookupSchema().nullish(),
+    range: DatetimeRangeLookupSchema().nullish(),
+    second: IntComparisonFilterLookupSchema().nullish(),
+    time: IntComparisonFilterLookupSchema().nullish(),
+    week: IntComparisonFilterLookupSchema().nullish(),
+    weekDay: IntComparisonFilterLookupSchema().nullish(),
+    year: IntComparisonFilterLookupSchema().nullish()
   })
 }
 
-export function DjangoModelFilterInputSchema(): z.ZodObject<Properties<DjangoModelFilterInput>> {
+export function DatetimeRangeLookupSchema(): z.ZodObject<Properties<DatetimeRangeLookup>> {
   return z.object({
-    pk: z.string()
+    end: definedNonNullAnySchema.nullish(),
+    start: definedNonNullAnySchema.nullish()
   })
 }
 
@@ -207,6 +212,7 @@ export function EditableGoogleSheetsSourceInputSchema(): z.ZodObject<Properties<
 export function ExternalDataSourceFilterSchema(): z.ZodObject<Properties<ExternalDataSourceFilter>> {
   return z.object({
     AND: ExternalDataSourceFilterSchema().nullish(),
+    DISTINCT: z.boolean().nullish(),
     NOT: ExternalDataSourceFilterSchema().nullish(),
     OR: ExternalDataSourceFilterSchema().nullish(),
     dataType: DataSourceTypeSchema.nullish(),
@@ -264,25 +270,11 @@ export function HubPageInputSchema(): z.ZodObject<Properties<HubPageInput>> {
   })
 }
 
-export function IdFilterLookupSchema(): z.ZodObject<Properties<IdFilterLookup>> {
+export function IdBaseFilterLookupSchema(): z.ZodObject<Properties<IdBaseFilterLookup>> {
   return z.object({
-    contains: z.string().nullish(),
-    endsWith: z.string().nullish(),
     exact: z.string().nullish(),
-    gt: z.string().nullish(),
-    gte: z.string().nullish(),
-    iContains: z.string().nullish(),
-    iEndsWith: z.string().nullish(),
-    iExact: z.string().nullish(),
-    iRegex: z.string().nullish(),
-    iStartsWith: z.string().nullish(),
     inList: z.array(z.string()).nullish(),
-    isNull: z.boolean().nullish(),
-    lt: z.string().nullish(),
-    lte: z.string().nullish(),
-    range: z.array(z.string()).nullish(),
-    regex: z.string().nullish(),
-    startsWith: z.string().nullish()
+    isNull: z.boolean().nullish()
   })
 }
 
@@ -292,25 +284,23 @@ export function IdObjectSchema(): z.ZodObject<Properties<IdObject>> {
   })
 }
 
-export function IntFilterLookupSchema(): z.ZodObject<Properties<IntFilterLookup>> {
+export function IntComparisonFilterLookupSchema(): z.ZodObject<Properties<IntComparisonFilterLookup>> {
   return z.object({
-    contains: z.number().nullish(),
-    endsWith: z.number().nullish(),
     exact: z.number().nullish(),
     gt: z.number().nullish(),
     gte: z.number().nullish(),
-    iContains: z.number().nullish(),
-    iEndsWith: z.number().nullish(),
-    iExact: z.number().nullish(),
-    iRegex: z.string().nullish(),
-    iStartsWith: z.number().nullish(),
     inList: z.array(z.number()).nullish(),
     isNull: z.boolean().nullish(),
     lt: z.number().nullish(),
     lte: z.number().nullish(),
-    range: z.array(z.number()).nullish(),
-    regex: z.string().nullish(),
-    startsWith: z.number().nullish()
+    range: IntRangeLookupSchema().nullish()
+  })
+}
+
+export function IntRangeLookupSchema(): z.ZodObject<Properties<IntRangeLookup>> {
+  return z.object({
+    end: z.number().nullish(),
+    start: z.number().nullish()
   })
 }
 
@@ -386,7 +376,7 @@ export function MapReportInputSchema(): z.ZodObject<Properties<MapReportInput>> 
 
 export function OffsetPaginationInputSchema(): z.ZodObject<Properties<OffsetPaginationInput>> {
   return z.object({
-    limit: z.number().default(-1),
+    limit: z.number().nullish(),
     offset: z.number().default(0)
   })
 }
@@ -400,6 +390,7 @@ export function OneToManyInputSchema(): z.ZodObject<Properties<OneToManyInput>> 
 export function OrganisationFiltersSchema(): z.ZodObject<Properties<OrganisationFilters>> {
   return z.object({
     AND: OrganisationFiltersSchema().nullish(),
+    DISTINCT: z.boolean().nullish(),
     NOT: OrganisationFiltersSchema().nullish(),
     OR: OrganisationFiltersSchema().nullish(),
     id: z.string().nullish(),
@@ -425,13 +416,14 @@ export function PersonFilterSchema(): z.ZodObject<Properties<PersonFilter>> {
 export function QueueFilterSchema(): z.ZodObject<Properties<QueueFilter>> {
   return z.object({
     AND: QueueFilterSchema().nullish(),
+    DISTINCT: z.boolean().nullish(),
     NOT: QueueFilterSchema().nullish(),
     OR: QueueFilterSchema().nullish(),
-    attempts: IntFilterLookupSchema().nullish(),
+    attempts: IntComparisonFilterLookupSchema().nullish(),
     externalDataSourceId: z.string().nullish(),
-    id: IdFilterLookupSchema().nullish(),
+    id: IdBaseFilterLookupSchema().nullish(),
     queueName: StrFilterLookupSchema().nullish(),
-    scheduledAt: DatetimeFilterLookupSchema().nullish(),
+    scheduledAt: DatetimeDatetimeFilterLookupSchema().nullish(),
     status: ProcrastinateJobStatusSchema,
     taskName: StrFilterLookupSchema().nullish()
   })
@@ -440,19 +432,20 @@ export function QueueFilterSchema(): z.ZodObject<Properties<QueueFilter>> {
 export function ReportFilterSchema(): z.ZodObject<Properties<ReportFilter>> {
   return z.object({
     AND: ReportFilterSchema().nullish(),
+    DISTINCT: z.boolean().nullish(),
     NOT: ReportFilterSchema().nullish(),
     OR: ReportFilterSchema().nullish(),
-    createdAt: DatetimeFilterLookupSchema().nullish(),
-    lastUpdate: DatetimeFilterLookupSchema().nullish(),
-    organisation: z.lazy(() => DjangoModelFilterInputSchema().nullish())
+    createdAt: DatetimeDatetimeFilterLookupSchema().nullish(),
+    lastUpdate: DatetimeDatetimeFilterLookupSchema().nullish(),
+    organisation: OrganisationFiltersSchema()
   })
 }
 
 export function SharingPermissionCudInputSchema(): z.ZodObject<Properties<SharingPermissionCudInput>> {
   return z.object({
-    externalDataSourceId: z.lazy(() => OneToManyInputSchema().nullish()),
+    externalDataSourceId: definedNonNullAnySchema.nullish(),
     id: definedNonNullAnySchema.nullish(),
-    organisationId: z.lazy(() => OneToManyInputSchema().nullish()),
+    organisationId: z.string().nullish(),
     visibilityRecordCoordinates: z.boolean().nullish(),
     visibilityRecordDetails: z.boolean().nullish()
   })
@@ -493,8 +486,6 @@ export function StrFilterLookupSchema(): z.ZodObject<Properties<StrFilterLookup>
     contains: z.string().nullish(),
     endsWith: z.string().nullish(),
     exact: z.string().nullish(),
-    gt: z.string().nullish(),
-    gte: z.string().nullish(),
     iContains: z.string().nullish(),
     iEndsWith: z.string().nullish(),
     iExact: z.string().nullish(),
@@ -502,9 +493,6 @@ export function StrFilterLookupSchema(): z.ZodObject<Properties<StrFilterLookup>
     iStartsWith: z.string().nullish(),
     inList: z.array(z.string()).nullish(),
     isNull: z.boolean().nullish(),
-    lt: z.string().nullish(),
-    lte: z.string().nullish(),
-    range: z.array(z.string()).nullish(),
     regex: z.string().nullish(),
     startsWith: z.string().nullish()
   })

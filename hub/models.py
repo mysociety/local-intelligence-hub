@@ -71,6 +71,7 @@ from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField, EncryptedTextField
 from hub.filters import Filter
 from hub.parsons.action_network.action_network import ActionNetwork
+from hub.storage import OverwriteStorage
 from hub.tasks import (
     import_all,
     import_many,
@@ -3508,6 +3509,17 @@ class Report(PolymorphicModel):
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
     public = models.BooleanField(default=False, blank=True)
+
+    def report_image_path(instance, filename):
+        # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+        return f"report/{str(instance.id)}/{filename}"
+
+    cover_image = models.ImageField(
+        storage=OverwriteStorage(),
+        upload_to=report_image_path,
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return self.name

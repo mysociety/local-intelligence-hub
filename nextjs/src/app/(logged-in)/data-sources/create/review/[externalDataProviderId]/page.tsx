@@ -22,7 +22,7 @@ import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
 const GET_UPDATE_CONFIG = gql`
   query AutoUpdateCreationReview($ID: ID!) {
-    externalDataSource(pk: $ID) {
+    externalDataSource(id: $ID) {
       id
       name
       geographyColumn

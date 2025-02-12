@@ -62,7 +62,7 @@ import importData, { cancelImport } from './importData'
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
-    externalDataSource(pk: $ID) {
+    externalDataSource(id: $ID) {
       id
       name
       dataType

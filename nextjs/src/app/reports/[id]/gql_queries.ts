@@ -41,7 +41,7 @@ export const MAP_REPORT_LAYER_POINT = gql`
 
 export const MAP_REPORT_LAYER_ANALYTICS = gql`
   query MapReportLayerAnalytics($reportID: ID!) {
-    mapReport(pk: $reportID) {
+    mapReport(id: $reportID) {
       id
       layers {
         id
@@ -63,11 +63,12 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
 
 export const GET_MAP_REPORT = gql`
   query GetMapReport($id: ID!) {
-    mapReport(pk: $id) {
+    mapReport(id: $id) {
       id
       name
       slug
       displayOptions
+      coverImageAbsoluteUrl
       organisation {
         id
         slug

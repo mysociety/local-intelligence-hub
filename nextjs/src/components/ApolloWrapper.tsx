@@ -1,12 +1,13 @@
 'use client'
 
-import { ApolloLink, HttpLink } from '@apollo/client'
+import { ApolloLink } from '@apollo/client'
 import { setContext } from '@apollo/client/link/context'
 import {
   ApolloNextAppProvider,
   NextSSRApolloClient,
   NextSSRInMemoryCache,
 } from '@apollo/experimental-nextjs-app-support/ssr'
+import createUploadLink from 'apollo-upload-client/createUploadLink.mjs'
 
 import { StatisticsQuery } from '@/__generated__/graphql'
 import { GRAPHQL_URL } from '@/env'
@@ -37,7 +38,7 @@ import { authenticationHeaders } from '@/lib/auth'
  * see services/apollo-client.ts.
  */
 export function makeFrontEndClient() {
-  const httpLink = new HttpLink({
+  const httpLink = createUploadLink({
     uri: GRAPHQL_URL,
   })
 
