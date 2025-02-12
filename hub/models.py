@@ -92,6 +92,7 @@ from utils.postcodesIO import (
 )
 from utils.procrastinate import ProcrastinateQueuePriority
 from utils.py import batched, ensure_list, get, is_maybe_id
+from utils.statistics import merge_column_types
 
 User = get_user_model()
 
@@ -766,6 +767,7 @@ class CommonData(models.Model):
 class GenericData(CommonData):
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
+    parsed_json = models.JSONField(blank=True, null=True, encoder=DBJSONEncoder)
     point = PointField(srid=4326, blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     area = models.ForeignKey(
@@ -1288,6 +1290,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     class FieldDefinition(TypedDict):
         value: str
+        type: str = "unknown"
         label: Optional[str]
         description: Optional[str]
         external_id: Optional[str]
@@ -1611,10 +1614,25 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         Get the fields for the data source, then save them to the database.
         """
+        # Keep previously derived type information
+        column_types = {}
+        for field in self.field_definitions or []:
+            column_types[field["value"]] = field.get("type", "unknown")
+
         self.field_definitions = self.load_field_definitions()
+
+        # Restore previously derived type information
+        for field in self.field_definitions:
+            field["type"] = column_types.get(field["value"], "unknown")
+
         # Only save the source if it already exists in the database
         if self.created_at:
             self.save()
+
+    async def update_field_definition_types(self, column_types: dict[str, str]) -> None:
+        for field in self.field_definitions:
+            field["type"] = column_types.get(field["value"], "unknown")
+        await self.asave()
 
     def remote_name(self) -> Optional[str]:
         """
@@ -1779,11 +1797,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             update_fields = [
                 field
                 for field in geocode_results[0].__dict__.keys()
-                if field not in unique_fields
+                if field not in unique_fields and field != "column_types"
             ]
-            generic_data = [
-                GenericData(**result.__dict__) for result in geocode_results
-            ]
+
+            generic_data = []
+            column_types = {}
+            for result in geocode_results:
+                # Get the result as a dictionary
+                data_dict = result.__dict__
+                # Remove the column_types key and add it to the overall type dict
+                merge_column_types(column_types, data_dict.pop("column_types"))
+                # Create a GenericData from the dict
+                generic_data.append(GenericData(**data_dict))
+
+            await self.update_field_definition_types(column_types)
+
             logger.info(
                 f"Geocoded {len(members)} records, first data: {generic_data[0].data}"
             )
@@ -1811,6 +1839,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 Used to batch-import data.
                 """
                 structured_data = get_update_data(self, record)
+                column_types = structured_data.pop("column_types")
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
                     self.get_record_field(record, self.geography_column)
                 )
@@ -1832,13 +1861,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     ),
                 }
 
-                return await GenericData.objects.aupdate_or_create(
+                await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
                     defaults=update_data,
                 )
 
-            await asyncio.gather(*[create_import_record(record) for record in data])
+                return column_types
+
+            all_column_types = await asyncio.gather(
+                *[create_import_record(record) for record in data]
+            )
+            combined_column_types = {}
+            for column_types in all_column_types:
+                merge_column_types(combined_column_types, column_types)
+            await self.update_field_definition_types(combined_column_types)
         elif (
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.WARD
@@ -1846,6 +1883,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             async def create_import_record(record):
                 structured_data = get_update_data(self, record)
+                column_types = structured_data.pop("column_types")
                 gss = self.get_record_field(record, self.geography_column)
                 ward = await Area.objects.filter(
                     area_type__code="WD23",
@@ -1869,13 +1907,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     "postcode_data": postcode_data,
                 }
 
-                return await GenericData.objects.aupdate_or_create(
+                await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
                     defaults=update_data,
                 )
 
-            await asyncio.gather(*[create_import_record(record) for record in data])
+                return column_types
+
+            all_column_types = await asyncio.gather(
+                *[create_import_record(record) for record in data]
+            )
+            combined_column_types = {}
+            for column_types in all_column_types:
+                merge_column_types(combined_column_types, column_types)
+            await self.update_field_definition_types(combined_column_types)
+
             logger.info(f"Imported {len(data)} records from {self}")
         elif (
             self.geography_column
@@ -1884,6 +1931,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             async def create_import_record(record):
                 structured_data = get_update_data(self, record)
+                column_types = structured_data.pop("column_types")
                 gss = self.get_record_field(record, self.geography_column)
                 output_area = await Area.objects.filter(
                     area_type__code="OA21",
@@ -1912,13 +1960,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     "postcode_data": postcode_data,
                 }
 
-                return await GenericData.objects.aupdate_or_create(
+                await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
                     defaults=update_data,
                 )
 
-            await asyncio.gather(*[create_import_record(record) for record in data])
+                return column_types
+
+            all_column_types = await asyncio.gather(
+                *[create_import_record(record) for record in data]
+            )
+            combined_column_types = {}
+            for column_types in all_column_types:
+                merge_column_types(combined_column_types, column_types)
+            await self.update_field_definition_types(combined_column_types)
+
             logger.info(f"Imported {len(data)} records from {self}")
 
         elif (
@@ -1934,6 +1991,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 Used to batch-import data.
                 """
                 structured_data = get_update_data(self, record)
+                column_types = structured_data.pop("column_types")
                 address = self.get_record_field(record, self.geography_column)
                 point = None
                 address_data = None
@@ -1983,24 +2041,34 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     "point": point,
                 }
 
-                return await GenericData.objects.aupdate_or_create(
+                await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
                     defaults=update_data,
                 )
 
-            await asyncio.gather(*[create_import_record(record) for record in data])
+                return column_types
+
+            all_column_types = await asyncio.gather(
+                *[create_import_record(record) for record in data]
+            )
+            combined_column_types = {}
+            for column_types in all_column_types:
+                merge_column_types(combined_column_types, column_types)
+            await self.update_field_definition_types(combined_column_types)
         else:
             # To allow us to lean on LIH's geo-analytics features,
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
             # This will require importing other AreaTypes like admin_district, Ward
             for record in data:
                 update_data = get_update_data(self, record)
+                column_types = update_data.pop("column_types")
                 data, created = await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
                     defaults=update_data,
                 )
+                await self.update_field_definition_types(column_types)
 
     async def fetch_one(self, member_id: str):
         """

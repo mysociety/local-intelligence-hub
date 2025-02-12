@@ -56,6 +56,8 @@ class GeocodeResult:
     data_type: "DataType"
     data: str
     json: dict
+    parsed_json: dict
+    column_types: dict
     geocoder: str = None
     geocode_data: dict = None
     postcode_data: dict = None
@@ -124,6 +126,7 @@ async def geocode_record(
 
     id = source.get_record_id(record)
     update_data = get_update_data(source, record)
+
     update_data["geocode_data"] = update_data.get("geocode_data", {})
     update_data["geocode_data"]["config"] = source.geocoding_config
 
@@ -192,6 +195,8 @@ async def geocode_record(
                     data_type=data_type,
                     data=id,
                     json=update_data["json"],
+                    parsed_json=update_data["parsed_json"],
+                    column_types=update_data["column_types"],
                     geocoder=generic_data.geocoder,
                     geocode_data=generic_data.geocode_data,
                     postcode_data=generic_data.postcode_data,

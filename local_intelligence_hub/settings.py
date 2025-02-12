@@ -339,7 +339,6 @@ WSGI_APPLICATION = "local_intelligence_hub.wsgi.application"
 
 DATABASES = {"default": env.db(engine="django.contrib.gis.db.backends.postgis")}
 
-
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 

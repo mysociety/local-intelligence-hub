@@ -1,11 +1,14 @@
+import io
 import logging
 from enum import Enum
 from typing import List, Optional
 
 from django.contrib.gis.db.models import Union as GisUnion
 from django.contrib.gis.geos import Polygon
-from django.db.models import Q
+from django.db import connection
+from django.db.models import F, Q
 
+import msgspec
 import numexpr as ne
 import numpy as np
 import pandas as pd
@@ -15,16 +18,10 @@ from hub import models
 from utils.geo_reference import (
     AnalyticalAreaType,
     area_to_postcode_io_key,
-    lih_to_postcodes_io_key_map,
+    postcodes_io_key_to_lih_map,
 )
 from utils.py import ensure_list
-from utils.statistics import (
-    attempt_interpret_series_as_number,
-    attempt_interpret_series_as_percentage,
-    check_numeric,
-    check_percentage,
-    get_mode,
-)
+from utils.statistics import get_mode, merge_column_types
 
 logger = logging.getLogger(__name__)
 
@@ -250,24 +247,31 @@ def statistics(
         else []
     )
 
-    # --- Get the required data for the source ---
-    qs = (
-        models.GenericData.objects.filter(
-            data_type__data_set__external_data_source_id__in=conf.source_ids
-        )
-        .select_related("area", "area__area_type")
-        .values(
-            "id",
-            "json",
-            "postcode_data",
-            "area__gss",
-            "area__name",
-            "area__area_type__code",
-        )
-    )
+    # --- Get the derived types of the JSON data ---
 
-    # if group_by_area:
-    #     area_type_filter = postcodeIOKeyAreaTypeLookup[group_by_area]
+    column_types = {}
+    field_defs = models.ExternalDataSource.objects.filter(
+        id__in=conf.source_ids
+    ).values_list("field_definitions", flat=True)
+    for defs in field_defs:
+        current_column_types = {}
+        for column in defs:
+            current_column_types[column["value"]] = column["type"]
+            merge_column_types(column_types, current_column_types)
+
+    # --- Build the main data query ---
+
+    qs = models.GenericData.objects.filter(
+        data_type__data_set__external_data_source_id__in=conf.source_ids
+    )
+    values = ["id", "parsed_json"]
+    if conf.group_by_area:
+        qs = qs.annotate(
+            gss=F(f"postcode_data__codes__{conf.group_by_area.value}"),
+            label=F(f"postcode_data__{conf.group_by_area.value}"),
+        )
+        values += ["gss", "label"]
+    qs = qs.values_list(*values)
 
     if map_bounds:
         bbox_coords = (
@@ -300,50 +304,49 @@ def statistics(
             filter_generic_data_using_gss_code(conf.gss_codes, conf.area_query_mode)
         )
 
-    # --- Load the data in to a pandas dataframe ---
-    # TODO: get columns from JSON for returning clean data
-    d = [
-        {
-            **record["json"],
-            "postcode_data": record["postcode_data"],
-            "gss": record.get("area__gss"),
-            "area_type": record.get("area__area_type__code"),
-            "label": record.get("area__name"),
-            "id": str(record["id"]),
-        }
-        for record in qs
-    ]
+    # --- Run the query in export to CSV mode for best performance (of both SQL and Pandas) ---
 
-    df = pd.DataFrame(d)
+    sql, params = qs.query.sql_with_params()
+    with connection.cursor() as cursor:
+        buf = io.BytesIO()
+        sql = cursor.mogrify(sql, params)
+        with cursor.copy(f"COPY ({sql}) TO STDOUT WITH CSV HEADER") as copy:
+            for data in copy:
+                buf.write(data.tobytes())
+        buf.seek(0)
+        df = pd.read_csv(buf, header=0, low_memory=False)
 
     if len(df) <= 0:
         return None
 
     df = df.set_index("id", drop=False)
 
+    # Trim `"` off string columns (Postgres double-wraps strings in `"` when outputting to CSV)
+    df["gss"] = df["gss"].str.strip('"')
+    df["label"] = df["label"].str.strip('"')
+
+    # Manually parse the JSON data (faster than pd.json_normalize)
+    df["parsed_json"] = df["parsed_json"].apply(msgspec.json.decode)
+    for col in column_types.keys():
+        df[col] = df["parsed_json"].apply(lambda x: x[col])
+    df = df.drop(columns=["parsed_json"])
+
+    df["area_type"] = postcodes_io_key_to_lih_map.get(conf.group_by_area)
+
     # Format numerics
     DEFAULT_EXCLUDE_KEYS = ["id"]
-    user_exclude_keys = ensure_list(conf.exclude_columns or [])
+    user_exclude_keys = [c.strip("`") for c in ensure_list(conf.exclude_columns or [])]
     exclude_keys = [*DEFAULT_EXCLUDE_KEYS, *user_exclude_keys]
-    numerical_keys = []
-    percentage_keys = []
-    for column in df:
-        if column not in exclude_keys:
-            if all(df[column].apply(check_percentage)):
-                df[column] = attempt_interpret_series_as_percentage(df[column])
-                if column not in percentage_keys:
-                    percentage_keys += [str(column)]
-                if column not in numerical_keys:
-                    numerical_keys += [str(column)]
-            elif all(df[column].apply(check_numeric)):
-                df[column] = attempt_interpret_series_as_number(df[column])
-                if column not in numerical_keys:
-                    numerical_keys += [str(column)]
-    # Review the attempt to interpret data as numeric, and update numerical_keys where there is in fact numeric data
+
     numerical_keys = [
-        d
-        for d in df.select_dtypes(include="number").columns.tolist()
-        if d not in exclude_keys
+        k
+        for k, t in column_types.items()
+        if (t == "numeric" or t == "percentage") and k not in exclude_keys
+    ]
+    percentage_keys = [
+        k
+        for k, t in column_types.items()
+        if t == "percentage" and k not in exclude_keys
     ]
 
     if len(numerical_keys) > 0:
@@ -369,44 +372,6 @@ def statistics(
     # --- Group by the groupby keys ---
     # respecting aggregation operations
     if conf.group_by_area:
-
-        def get_group_by_area_properties(row):
-            if row is None:
-                return None, None, None
-
-            # Find the key of `lih_to_postcodes_io_key_map` where the value is `group_by_area`:
-            # TODO: check this for admin_county and admin_district. For some admin_districts,
-            # we will return "DIS" when the correct value is "STC".
-            #
-            # admin_county   => MapIt CTY                     => LIH STC
-            # admin_district => MapIt LBO/UTA/COI/LGD/MTD/NMD => LIH STC
-            #                => MapIt DIS                     => LIH DIS
-            area_type = next(
-                (
-                    k
-                    for k, v in lih_to_postcodes_io_key_map.items()
-                    if v == conf.group_by_area
-                ),
-                None,
-            )
-
-            try:
-                return [
-                    row.get("postcode_data", {})
-                    .get("codes", {})
-                    .get(conf.group_by_area.value, None),
-                    row.get("postcode_data", {}).get(conf.group_by_area.value, None),
-                    area_type,
-                ]
-            except Exception:
-                pass
-
-            return None, None, None
-
-        # First, add labels for the group_by_area as an index
-        df["gss"], df["label"], df["area_type"] = zip(
-            *df.apply(get_group_by_area_properties, axis=1)
-        )
         # Make the code an index
         # df = df.set_index("group_by_code")
 
@@ -569,12 +534,7 @@ def statistics(
             )
             aggop = calculated_column_aggop or simple_asserted_aggop or default_aggop
             agg_dict[col] = aggregation_op_to_agg_func(aggop)
-        df_n = (
-            df[[n for n in numerical_keys if n not in exclude_keys]]
-            .reset_index()
-            .drop(columns=[k for k in exclude_keys if k in df.columns])
-        )
-        df_agg = df_n.agg(agg_dict)
+        df_agg = df.agg(agg_dict)
         d = df_agg.to_dict()
         if conf.format_numeric_keys:
             format_dict = {}
