@@ -88,6 +88,7 @@ export function makeFrontEndClient() {
       },
     }),
     link: ApolloLink.from([authLink, httpLink]),
+    connectToDevTools: true,
   })
 }
 

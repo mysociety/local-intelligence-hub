@@ -91,7 +91,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   useHoverOverBoundaryEvents(areasVisible === 'visible' ? activeTileset : null)
 
   // Update map bounds and active tileset on pan/zoom
-  const [, setMapBounds] = useMapBounds()
+  const [mapBounds, setMapBounds] = useMapBounds()
   useEffect(() => {
     const onMoveEnd = debounce(() => {
       const zoom = map.loadedMap?.getZoom() || 0
@@ -142,6 +142,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   >(AREA_QUERY, {
     variables: {
       areaType: activeTileset.analyticalAreaType,
+      // mapBounds,
     },
     errorPolicy: 'all',
   })
@@ -183,37 +184,32 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       // For each area, collect data from the dataByBoundary
       // and return a list of points with label and count
       const features =
-        activeAreasQuery.data?.areaTypes
-          .flatMap((area) => {
-            return area.areas.reduce<GeoJSON.Feature<GeoJSON.Point>[]>(
-              (acc, a) => {
-                if (!a.point) return acc
-                const data = dataByBoundary.find((d) => d.gss === a.gss)
-                return [
-                  ...acc,
-                  {
-                    type: 'Feature',
-                    geometry: a.point.geometry as GeoJSON.Point,
-                    properties: {
-                      ...a,
-                      data,
-                      [CHOROPLETH_LABEL_FIELD]: view.mapOptions.display
-                        .choropleth
-                        ? data
-                          ? labelForArea(data)
-                          : view.mapOptions.display.labelsForAllAreas
-                            ? a.name
-                            : undefined
-                        : boundaryNameVisibility
-                          ? a.name
-                          : undefined,
-                    },
-                  },
-                ]
+        activeAreasQuery.data?.areas
+          .reduce<GeoJSON.Feature<GeoJSON.Point>[]>((acc, a) => {
+            if (!a.point) return acc
+            const data = dataByBoundary.find((d) => d.gss === a.gss)
+            return [
+              ...acc,
+              {
+                type: 'Feature',
+                geometry: a.point.geometry as GeoJSON.Point,
+                properties: {
+                  ...a,
+                  data,
+                  [CHOROPLETH_LABEL_FIELD]: view.mapOptions.display.choropleth
+                    ? data
+                      ? labelForArea(data)
+                      : boundaryNameVisibility &&
+                          view.mapOptions.display.labelsForAllAreas
+                        ? a.name
+                        : undefined
+                    : boundaryNameVisibility
+                      ? a.name
+                      : undefined,
+                },
               },
-              [] as GeoJSON.Feature<GeoJSON.Point>[]
-            )
-          })
+            ]
+          }, [] as GeoJSON.Feature<GeoJSON.Point>[])
           .filter(Boolean) || []
 
       return {
@@ -350,19 +346,19 @@ const getMapBounds = (map: MapLoader['loadedMap']): MapBounds | null => {
 export default PoliticalChoropleths
 
 const AREA_QUERY = gql`
-  query ActiveChoroplethAreas($areaType: AnalyticalAreaType!) {
-    areaTypes(filters: { analyticalAreaType: $areaType }) {
+  query ActiveChoroplethAreas(
+    $areaType: AnalyticalAreaType!
+    $mapBounds: MapBounds
+  ) {
+    areas(filters: { analyticalAreaType: $areaType, mapBounds: $mapBounds }) {
       id
-      areas {
-        id
-        name
-        gss
-        point {
+      name
+      gss
+      point {
+        type
+        geometry {
           type
-          geometry {
-            type
-            coordinates
-          }
+          coordinates
         }
       }
     }

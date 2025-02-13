@@ -548,39 +548,41 @@ export default function ReportMapChoroplethLegend() {
               }}
             />
 
-            {viewManager.currentViewOfType?.mapOptions?.display.choropleth && (
-              <>
-                <EditorSwitch
-                  iconComponent={LucideType}
-                  label="... when no data"
-                  className="ml-2"
-                  value={
-                    viewManager.currentViewOfType?.mapOptions?.display
-                      .labelsForAllAreas
-                  }
-                  onChange={(labelsForAllAreas) => {
-                    viewManager.updateView((draft) => {
-                      draft.mapOptions.display.labelsForAllAreas =
-                        labelsForAllAreas
-                    })
-                  }}
-                />
-                <MapToggleField
-                  iconComponent={HashIcon}
-                  label="Value labels"
-                  value={
-                    viewManager.currentViewOfType?.mapOptions?.display
-                      .choroplethValueLabels
-                  }
-                  onChange={(choroplethValueLabels) => {
-                    viewManager.updateView((draft) => {
-                      draft.mapOptions.display.choroplethValueLabels =
-                        !!choroplethValueLabels
-                    })
-                  }}
-                />
-              </>
-            )}
+            {viewManager.currentViewOfType?.mapOptions?.display.choropleth &&
+              viewManager.currentViewOfType?.mapOptions?.display
+                .boundaryNames && (
+                <>
+                  <EditorSwitch
+                    iconComponent={LucideType}
+                    label="... when no data"
+                    className="ml-2"
+                    value={
+                      viewManager.currentViewOfType?.mapOptions?.display
+                        .labelsForAllAreas
+                    }
+                    onChange={(labelsForAllAreas) => {
+                      viewManager.updateView((draft) => {
+                        draft.mapOptions.display.labelsForAllAreas =
+                          labelsForAllAreas
+                      })
+                    }}
+                  />
+                  <MapToggleField
+                    iconComponent={HashIcon}
+                    label="Value labels"
+                    value={
+                      viewManager.currentViewOfType?.mapOptions?.display
+                        .choroplethValueLabels
+                    }
+                    onChange={(choroplethValueLabels) => {
+                      viewManager.updateView((draft) => {
+                        draft.mapOptions.display.choroplethValueLabels =
+                          !!choroplethValueLabels
+                      })
+                    }}
+                  />
+                </>
+              )}
 
             <MapToggleField
               iconComponent={BorderSolidIcon}

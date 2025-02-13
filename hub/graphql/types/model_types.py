@@ -7,6 +7,7 @@ from typing import List, Optional, Union
 from django.conf import settings
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
+from django.contrib.gis.geos import Polygon
 
 import pandas as pd
 import procrastinate.contrib.django.models
@@ -303,10 +304,41 @@ class AreaFilter:
     name: auto
 
     @strawberry_django.filter_field
-    def area_type(
+    def analytical_area_type(
         self, queryset: QuerySet, value: AnalyticalAreaType, prefix: str
     ) -> tuple[QuerySet, Q]:
-        return queryset, Q(area_type__code__in=postcodes_io_key_to_lih_map[value])
+        qs = queryset.filter(Q(area_type__code__in=postcodes_io_key_to_lih_map[value]))
+
+        area_with_generation = (
+            qs.filter(mapit_generation_high__isnull=False)
+            .order_by("-mapit_generation_high")
+            .first()
+        )
+
+        if area_with_generation:
+            return qs, Q(
+                mapit_generation_high=area_with_generation.mapit_generation_high
+            )
+        else:
+            # Not all data has generation data
+            return qs, Q()
+
+    @strawberry_django.filter_field
+    def map_bounds(
+        self, queryset: QuerySet, value: stats.MapBounds, prefix: str
+    ) -> tuple[QuerySet, Q]:
+        bbox_coords = (
+            (value.west, value.north),  # Top left
+            (value.east, value.north),  # Top right
+            (value.east, value.south),  # Bottom right
+            (value.west, value.south),  # Bottom left
+            (
+                value.west,
+                value.north,
+            ),  # Back to start to close polygon
+        )
+        bbox = Polygon(bbox_coords, srid=4326)
+        return queryset, Q(point__within=bbox)
 
 
 @strawberry_django.type(models.AreaType, filters=AreaTypeFilter)
@@ -321,7 +353,9 @@ class AreaType:
     )
 
     @strawberry_django.field
-    def areas(self) -> List["Area"]:
+    def areas(
+        self, info: Info, map_bounds: Optional[stats.MapBounds] = None
+    ) -> List["Area"]:
         # Some area types have generation data, some don't
         # If they do, return the latest generation
         # If they don't, return all areas
@@ -331,13 +365,29 @@ class AreaType:
             .first()
         )
         if area_with_generation:
-            return models.Area.objects.filter(
+            qs = models.Area.objects.filter(
                 area_type=self,
                 mapit_generation_high=area_with_generation.mapit_generation_high,
             )
         else:
             # Not all data has generation data
-            return models.Area.objects.filter(area_type=self)
+            qs = models.Area.objects.filter(area_type=self)
+
+        if map_bounds:
+            bbox_coords = (
+                (map_bounds.west, map_bounds.north),  # Top left
+                (map_bounds.east, map_bounds.north),  # Top right
+                (map_bounds.east, map_bounds.south),  # Bottom right
+                (map_bounds.west, map_bounds.south),  # Bottom left
+                (
+                    map_bounds.west,
+                    map_bounds.north,
+                ),  # Back to start to close polygon
+            )
+            bbox = Polygon(bbox_coords, srid=4326)
+            qs = qs.filter(point__within=bbox)
+
+        return qs
 
 
 @strawberry_django.filter(models.CommonData, lookups=True)
