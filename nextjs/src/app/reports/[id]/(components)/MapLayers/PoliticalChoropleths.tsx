@@ -174,7 +174,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     [view.mapOptions.choropleth, view.mapOptions.display]
   )
 
-  const pointsForActiveAreas =
+  const labelsForAreas =
     useMemo((): GeoJSON.FeatureCollection<GeoJSON.Point> => {
       // For each area, collect data from the dataByBoundary
       // and return a list of points with label and count
@@ -183,8 +183,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           .flatMap((area) => {
             return area.areas.reduce<GeoJSON.Feature<GeoJSON.Point>[]>(
               (acc, a) => {
-                const data = dataByBoundary.find((d) => d.gss === a.gss)
                 if (!a.point) return acc
+                const data = dataByBoundary.find((d) => d.gss === a.gss)
                 return [
                   ...acc,
                   {
@@ -195,7 +195,9 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
                       data,
                       [CHOROPLETH_LABEL_FIELD]: data
                         ? labelForArea(data)
-                        : undefined,
+                        : boundaryNameVisibility
+                          ? a.name
+                          : undefined,
                     },
                   },
                 ]
@@ -214,6 +216,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       activeTileset.analyticalAreaType,
       dataByBoundary,
       labelForArea,
+      boundaryNameVisibility,
     ])
 
   if (!map.loaded) return null
@@ -280,7 +283,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           <Source
             id={`${tileset.mapboxSourceId}-area-count`}
             type="geojson"
-            data={pointsForActiveAreas}
+            data={labelsForAreas}
             minzoom={tileset.minZoom}
             maxzoom={tileset.maxZoom}
           >
