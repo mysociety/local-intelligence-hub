@@ -1,4 +1,4 @@
-import { DocumentNode, FieldMergeFunction } from '@apollo/client'
+import { FieldMergeFunction } from '@apollo/client'
 import { KeyArgsFunction } from '@apollo/client/cache/inmemory/policies'
 import { omit } from 'lodash'
 
@@ -10,43 +10,34 @@ export function resolverKeyWithoutArguments(argsToOmit: Array<string> = []) {
       const value = (rest as any)[key]
       fullKey += `${key}:${JSON.stringify(value)};`
     }
+    console.log(fullKey)
     return fullKey
   }
   return keyArgs
 }
 
 export function mergeArraysByField<T extends Record<string, any>>(
-  field: keyof T,
-  fragment?: DocumentNode
+  field: keyof T extends string ? keyof T : never
 ) {
-  const merge: FieldMergeFunction<T[], T[]> = (
-    existing,
-    incoming,
-    { isReference, cache }
-  ) => {
-    const dataByField: Record<string, T> = {}
-    const allData = [
-      ...(existing || []),
-      ...(incoming || []).map((x) => {
-        if (!isReference(x)) {
-          return x as T // it's already a data object
-        } else if (fragment) {
-          // convert the Reference to a data object
-          const o = cache.readFragment({
-            fragment, // use a fragment with all properties on todo
-            id: cache.identify(x),
-          }) as T | null
-          return o
+  const merge: FieldMergeFunction<T[], T[]> = (existing, incoming, cache) => {
+    console.log(existing?.length || 0, incoming?.length || 0, {
+      existing,
+      incoming,
+    })
+    const allData = [...(existing || []), ...(incoming || [])]
+    const dataByField = allData.reduce(
+      (acc, x) => {
+        // x will either be a reference or a data object
+        const fieldValue = cache.isReference(x)
+          ? cache.readField<string>(field, x)
+          : x[field]
+        if (fieldValue) {
+          acc[fieldValue] = x
         }
-      }),
-    ].filter((x) => !!x)
-
-    for (const d of allData) {
-      if (d[field]) {
-        dataByField[d[field]] = d
-      }
-    }
-
+        return acc
+      },
+      {} as Record<string, T>
+    )
     return Object.values(dataByField)
   }
 

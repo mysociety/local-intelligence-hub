@@ -1,6 +1,6 @@
 'use client'
 
-import { ApolloLink, gql } from '@apollo/client'
+import { ApolloLink } from '@apollo/client'
 import { setContext } from '@apollo/client/link/context'
 import {
   ApolloNextAppProvider,
@@ -68,22 +68,7 @@ export function makeFrontEndClient() {
               // Use all argument values except mapBounds
               // so results for different areas are merged
               keyArgs: resolverKeyWithoutArguments(['filters.mapBounds']),
-              merge: mergeArraysByField<Area>(
-                'gss',
-                gql`
-                  fragment area on Area {
-                    id
-                    gss
-                    point {
-                      type
-                      geometry {
-                        type
-                        coordinates
-                      }
-                    }
-                  }
-                `
-              ),
+              merge: mergeArraysByField<Area>('gss'),
             },
           },
         },
