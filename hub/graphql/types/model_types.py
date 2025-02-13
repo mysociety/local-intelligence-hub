@@ -47,7 +47,6 @@ from utils.geo_reference import (
     postcodes_io_key_to_lih_map,
 )
 from utils.postcode import get_postcode_data_for_gss
-from utils.py import ensure_list
 
 pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 
@@ -309,12 +308,6 @@ class AreaFilter:
     ) -> tuple[QuerySet, Q]:
         return queryset, Q(area_type__code__in=postcodes_io_key_to_lih_map[value])
 
-    @strawberry_django.filter_field
-    def latest_generation(
-        self, queryset: QuerySet, value: bool, prefix: str
-    ) -> tuple[QuerySet, Q]:
-        return queryset, Q(mapit_generation_high=settings.CURRENT_MAPIT_GENERATION)
-
 
 @strawberry_django.type(models.AreaType, filters=AreaTypeFilter)
 class AreaType:
@@ -338,12 +331,13 @@ class AreaType:
             .first()
         )
         if area_with_generation:
-            return self.areas.filter(
-                mapit_generation_high=area_with_generation.mapit_generation_high
+            return models.Area.objects.filter(
+                area_type=self,
+                mapit_generation_high=area_with_generation.mapit_generation_high,
             )
         else:
             # Not all data has generation data
-            return self.areas
+            return models.Area.objects.filter(area_type=self)
 
 
 @strawberry_django.filter(models.CommonData, lookups=True)

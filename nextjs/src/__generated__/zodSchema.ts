@@ -112,7 +112,7 @@ export function AreaFilterSchema(): z.ZodObject<Properties<AreaFilter>> {
     DISTINCT: z.boolean().nullish(),
     NOT: AreaFilterSchema().nullish(),
     OR: AreaFilterSchema().nullish(),
-    areaType: AnalyticalAreaTypeSchema,
+    areaType: AnalyticalAreaTypeSchema.nullish(),
     gss: StrFilterLookupSchema().nullish(),
     id: IdBaseFilterLookupSchema().nullish(),
     name: StrFilterLookupSchema().nullish()

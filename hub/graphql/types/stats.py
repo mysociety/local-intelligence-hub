@@ -5,20 +5,18 @@ from typing import List, Optional
 
 from django.contrib.gis.db.models import Union as GisUnion
 from django.contrib.gis.geos import Polygon
-from django.db.models import Q, QuerySet
+from django.db.models import Q
 
 import numexpr as ne
 import numpy as np
 import pandas as pd
 import strawberry
-import strawberry_django
 
 from hub import models
 from utils.geo_reference import (
     AnalyticalAreaType,
     area_to_postcode_io_key,
     lih_to_postcodes_io_key_map,
-    postcodes_io_key_to_lih_map,
 )
 from utils.py import ensure_list
 from utils.statistics import (

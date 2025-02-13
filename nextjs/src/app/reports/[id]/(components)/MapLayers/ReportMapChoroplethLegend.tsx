@@ -190,7 +190,7 @@ export default function ReportMapChoroplethLegend() {
             )
           )}
 
-          <section className="flex flex-col gap-2 px-4 py-3">
+          <section className={'flex flex-col gap-2 px-4 py-3'}>
             <p
               className={twMerge(
                 'text-sm font-medium flex flex-row items-center justify-between gap-2',
@@ -203,7 +203,7 @@ export default function ReportMapChoroplethLegend() {
               <Button
                 onClick={() => refetchChoropleth()}
                 variant="ghost"
-                className="p-0 bg-transparent ml-auto hover:bg-transparent group"
+                className="p-0 bg-transparent ml-auto hover:bg-transparent group h-1"
                 disabled={loading}
               >
                 <ReloadIcon className="w-4 h-4 text-meepGray-400 group-hover:text-meepGray-200" />
@@ -535,8 +535,36 @@ export default function ReportMapChoroplethLegend() {
                 />
               ))}
 
+            <MapToggleField
+              iconComponent={LucideType}
+              label="Place labels"
+              value={
+                viewManager.currentViewOfType?.mapOptions?.display.boundaryNames
+              }
+              onChange={(showBoundaryNames) => {
+                viewManager.updateView((draft) => {
+                  draft.mapOptions.display.boundaryNames = !!showBoundaryNames
+                })
+              }}
+            />
+
             {viewManager.currentViewOfType?.mapOptions?.display.choropleth && (
               <>
+                <EditorSwitch
+                  iconComponent={LucideType}
+                  label="... when no data"
+                  className="ml-2"
+                  value={
+                    viewManager.currentViewOfType?.mapOptions?.display
+                      .labelsForAllAreas
+                  }
+                  onChange={(labelsForAllAreas) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.display.labelsForAllAreas =
+                        labelsForAllAreas
+                    })
+                  }}
+                />
                 <MapToggleField
                   iconComponent={HashIcon}
                   label="Value labels"
@@ -548,20 +576,6 @@ export default function ReportMapChoroplethLegend() {
                     viewManager.updateView((draft) => {
                       draft.mapOptions.display.choroplethValueLabels =
                         !!choroplethValueLabels
-                    })
-                  }}
-                />
-                <MapToggleField
-                  iconComponent={LucideType}
-                  label="Place labels"
-                  value={
-                    viewManager.currentViewOfType?.mapOptions?.display
-                      .boundaryNames
-                  }
-                  onChange={(showBoundaryNames) => {
-                    viewManager.updateView((draft) => {
-                      draft.mapOptions.display.boundaryNames =
-                        !!showBoundaryNames
                     })
                   }}
                 />
