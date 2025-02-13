@@ -202,6 +202,8 @@ function getStatsForData(data: DataByBoundary) {
   return { min, max, textScale }
 }
 
+export const CHOROPLETH_LABEL_FIELD = 'choroplethLabel'
+
 export const getAreaCountLayout = (
   data: DataByBoundary
 ): SymbolLayerSpecification['layout'] => {
@@ -209,7 +211,7 @@ export const getAreaCountLayout = (
 
   return {
     'symbol-spacing': 1000,
-    'text-field': ['get', 'formattedCount'],
+    'text-field': ['get', CHOROPLETH_LABEL_FIELD],
     'text-size': [
       'interpolate',
       ['linear'],

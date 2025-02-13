@@ -5,7 +5,7 @@ from enum import Enum
 from typing import List, Optional, Union
 
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 
 import pandas as pd
@@ -19,6 +19,7 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
+from utils.py import ensure_list
 from wagtail.models import Site
 
 from hub import models
@@ -41,7 +42,11 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
-from utils.geo_reference import AnalyticalAreaType, area_to_postcode_io_key
+from utils.geo_reference import (
+    AnalyticalAreaType,
+    area_to_postcode_io_key,
+    postcodes_io_key_to_lih_map,
+)
 from utils.postcode import get_postcode_data_for_gss
 
 pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
@@ -275,16 +280,42 @@ class DataType:
     auto_converted_text: auto
 
 
-@strawberry_django.type(models.AreaType)
+@strawberry_django.filter(models.AreaType, lookups=True)
+class AreaTypeFilter:
+    id: auto
+
+    @strawberry_django.filter_field
+    def analytical_area_type(
+        self, queryset: QuerySet, value: AnalyticalAreaType, prefix: str
+    ) -> tuple[QuerySet, Q]:
+        print(value)
+        queryset = queryset
+        # convert analytical area type to list of mapit types
+        lih_area_types = postcodes_io_key_to_lih_map[value]
+        filters = {"code__in": lih_area_types}
+        print(value, filters)
+        return queryset, Q(**filters)
+
+
+@strawberry_django.filter(models.Area, lookups=True)
+class AreaFilter:
+    id: auto
+    gss: auto
+    name: auto
+    area_type: AnalyticalAreaType
+
+
+@strawberry_django.type(models.AreaType, filters=AreaTypeFilter)
 class AreaType:
+    id: auto
     name: auto
     code: auto
     area_type: auto
     description: auto
-
     data_types: List[DataType] = (
         strawberry_django_dataloaders.fields.auto_dataloader_field()
     )
+    areas: List["Area"]
 
 
 @strawberry_django.filter(models.CommonData, lookups=True)
@@ -386,14 +417,6 @@ class Person:
         single=True,
         # prefetch=["data_type", "data_type__data_set"],
     )
-
-
-@strawberry_django.filter(models.Area, lookups=True)
-class AreaFilter:
-    id: auto
-    gss: auto
-    name: auto
-    area_type: auto
 
 
 @strawberry.type
@@ -591,8 +614,6 @@ class Area:
 @strawberry.type
 class GroupedDataCount:
     label: Optional[str] = None
-    # Provide filter if gss code is not unique (e.g. WMC and WMC23 constituencies)
-    area_type_filter: Optional[stats.AreaTypeFilter] = None
     gss: Optional[str] = None
     # For numerical data
     count: Optional[float] = None
@@ -618,8 +639,6 @@ class GroupedDataCount:
 @strawberry_django.type(models.GenericData, filters=CommonDataFilter)
 class GroupedData:
     label: Optional[str]
-    # Provide filter if gss code is not unique (e.g. WMC and WMC23 constituencies)
-    area_type_filter: Optional[stats.AreaTypeFilter] = None
     gss: Optional[str]
     area_data: Optional[strawberry.Private[Area]] = None
     imported_data: Optional[JSON] = None
