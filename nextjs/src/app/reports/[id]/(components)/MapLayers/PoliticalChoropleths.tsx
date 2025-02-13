@@ -142,7 +142,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   >(AREA_QUERY, {
     variables: {
       areaType: activeTileset.analyticalAreaType,
-      // mapBounds,
+      mapBounds: activeTileset.useBoundsInDataQuery ? mapBounds : undefined,
     },
     errorPolicy: 'all',
   })

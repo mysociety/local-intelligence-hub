@@ -73,6 +73,7 @@ const documents = {
     "\n  query Statistics(\n    $config: StatisticsConfig!\n    $categoryKey: String\n    $countKey: String\n    $mapBounds: MapBounds\n    $isCountKeyPercentage: Boolean\n  ) {\n    statisticsForChoropleth(\n      statsConfig: $config\n      categoryKey: $categoryKey\n      countKey: $countKey\n      mapBounds: $mapBounds\n      isCountKeyPercentage: $isCountKeyPercentage\n    ) {\n      label\n      gss\n      count\n      formattedCount\n      category\n      columns\n    }\n  }\n": types.StatisticsDocument,
     "\n  query StatisticsTable($config: StatisticsConfig!) {\n    statistics(statsConfig: $config)\n  }\n": types.StatisticsTableDocument,
     "\n  query SourceMetadata($sourceId: ID!) {\n    externalDataSource(id: $sourceId) {\n      fieldDefinitions {\n        externalId\n        value\n        label\n      }\n    }\n  }\n": types.SourceMetadataDocument,
+    "\n                  fragment area on Area {\n                    id\n                    gss\n                    point {\n                      type\n                      geometry {\n                        type\n                        coordinates\n                      }\n                    }\n                  }\n                ": types.AreaFragmentDoc,
     "\n  mutation WebhookRefresh($ID: String!) {\n    refreshWebhooks(externalDataSourceId: $ID) {\n      id\n      hasWebhooks\n      automatedWebhooks\n      webhookHealthcheck\n    }\n  }\n": types.WebhookRefreshDocument,
     "\n  fragment DataSourceCard on ExternalDataSource {\n    id\n    name\n    dataType\n    crmType\n    automatedWebhooks\n    autoImportEnabled\n    autoUpdateEnabled\n    updateMapping {\n      source\n      sourcePath\n      destinationColumn\n    }\n    jobs(pagination: { limit: 10 }) {\n      lastEventAt\n      status\n    }\n    sharingPermissions {\n      id\n      organisation {\n        id\n        name\n      }\n    }\n  }\n": types.DataSourceCardFragmentDoc,
     "\n  query ExternalDataSourceExternalDataSourceCard($ID: ID!) {\n    externalDataSource(id: $ID) {\n      ...DataSourceCard\n    }\n  }\n  \n": types.ExternalDataSourceExternalDataSourceCardDocument,
@@ -350,6 +351,10 @@ export function gql(source: "\n  query StatisticsTable($config: StatisticsConfig
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query SourceMetadata($sourceId: ID!) {\n    externalDataSource(id: $sourceId) {\n      fieldDefinitions {\n        externalId\n        value\n        label\n      }\n    }\n  }\n"): (typeof documents)["\n  query SourceMetadata($sourceId: ID!) {\n    externalDataSource(id: $sourceId) {\n      fieldDefinitions {\n        externalId\n        value\n        label\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n                  fragment area on Area {\n                    id\n                    gss\n                    point {\n                      type\n                      geometry {\n                        type\n                        coordinates\n                      }\n                    }\n                  }\n                "): (typeof documents)["\n                  fragment area on Area {\n                    id\n                    gss\n                    point {\n                      type\n                      geometry {\n                        type\n                        coordinates\n                      }\n                    }\n                  }\n                "];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
