@@ -20,7 +20,9 @@ class Setup:
         )
         # Create source
         self.source = models.ExternalDataSource.objects.create(
-            name="testsource", organisation=self.org
+            name="testsource",
+            organisation=self.org,
+            field_definitions=[{"value": "some", "type": "string"}],
         )
         # Some dummy data
         ds = models.DataSet.objects.create(name="xyz", external_data_source=self.source)
@@ -29,6 +31,7 @@ class Setup:
             data="xyz",
             email="xyz@bbc.com",
             json={"some": "thing"},
+            parsed_json={"some": "thing"},
             point=Point(x=0, y=0, srid=4326),
             postcode_data={
                 "european_electoral_region": "XXX",

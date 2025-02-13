@@ -20,6 +20,7 @@ from utils.findthatpostcode import (
 )
 from utils.postcodesIO import PostcodesIOResult
 from utils.py import are_dicts_equal, ensure_list, find
+from utils.statistics import StatisticalDataType
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
@@ -57,7 +58,7 @@ class GeocodeResult:
     data: str
     json: dict
     parsed_json: dict
-    column_types: dict
+    column_types: dict[str, StatisticalDataType]
     geocoder: str = None
     geocode_data: dict = None
     postcode_data: dict = None

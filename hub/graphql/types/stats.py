@@ -6,13 +6,13 @@ from typing import List, Optional
 from django.contrib.gis.db.models import Union as GisUnion
 from django.contrib.gis.geos import Polygon
 from django.db import connection
-from django.db.models import F, Q
+from django.db.models import Q
 
-import msgspec
 import numexpr as ne
 import numpy as np
 import pandas as pd
 import strawberry
+from sqlglot import parse_one
 
 from hub import models
 from utils.geo_reference import (
@@ -21,7 +21,7 @@ from utils.geo_reference import (
     postcodes_io_key_to_lih_map,
 )
 from utils.py import ensure_list
-from utils.statistics import get_mode, merge_column_types
+from utils.statistics import StatisticalDataType, get_mode, merge_column_types
 
 logger = logging.getLogger(__name__)
 
@@ -248,31 +248,25 @@ def statistics(
     )
 
     # --- Get the derived types of the JSON data ---
+    sources: list[models.ExternalDataSource] = models.ExternalDataSource.objects.filter(
+        id__in=conf.source_ids, last_import__isnull=False
+    )
 
-    column_types = {}
-    field_defs = models.ExternalDataSource.objects.filter(
-        id__in=conf.source_ids
-    ).values_list("field_definitions", flat=True)
-    for defs in field_defs:
+    column_types: dict[str, StatisticalDataType] = {}
+    for source in sources:
         current_column_types = {}
-        for column in defs:
-            current_column_types[column["value"]] = column["type"]
+        for column in source.field_definitions:
+            try:
+                data_type = StatisticalDataType(column["type"])
+            except ValueError:
+                data_type = StatisticalDataType.UNKNOWN
+            current_column_types[column["value"]] = data_type
             merge_column_types(column_types, current_column_types)
 
     # --- Build the main data query ---
 
-    qs = models.GenericData.objects.filter(
-        data_type__data_set__external_data_source_id__in=conf.source_ids
-    )
-    values = ["id", "parsed_json"]
-    if conf.group_by_area:
-        qs = qs.annotate(
-            gss=F(f"postcode_data__codes__{conf.group_by_area.value}"),
-            label=F(f"postcode_data__{conf.group_by_area.value}"),
-        )
-        values += ["gss", "label"]
-    qs = qs.values_list(*values)
-
+    # Actual SELECT statement is manually constructed below
+    qs = models.GenericData.objects.values_list("id")
     if map_bounds:
         bbox_coords = (
             (map_bounds.west, map_bounds.north),  # Top left
@@ -306,30 +300,38 @@ def statistics(
 
     # --- Run the query in export to CSV mode for best performance (of both SQL and Pandas) ---
 
+    df = None
+
     sql, params = qs.query.sql_with_params()
-    with connection.cursor() as cursor:
-        buf = io.BytesIO()
-        sql = cursor.mogrify(sql, params)
-        with cursor.copy(f"COPY ({sql}) TO STDOUT WITH CSV HEADER") as copy:
-            for data in copy:
-                buf.write(data.tobytes())
-        buf.seek(0)
-        df = pd.read_csv(buf, header=0, low_memory=False)
+
+    for source in sources:
+        if (
+            not source.last_materialized
+            or source.last_materialized < source.last_import
+        ):
+            source.refresh_materialized_view(column_types)
+
+        view_sql = replace_generic_data_with_materialized_view(
+            sql, column_types, conf, source.id
+        )
+
+        with connection.cursor() as cursor:
+            buf = io.BytesIO()
+            view_sql = cursor.mogrify(view_sql, params)
+            with cursor.copy(f"COPY ({view_sql}) TO STDOUT WITH CSV HEADER") as copy:
+                for data in copy:
+                    buf.write(data.tobytes())
+            buf.seek(0)
+            this_df = pd.read_csv(buf, header=0, low_memory=False)
+            if not df:
+                df = this_df
+            else:
+                df = pd.concat([df, this_df])
 
     if len(df) <= 0:
         return None
 
     df = df.set_index("id", drop=False)
-
-    # Trim `"` off string columns (Postgres double-wraps strings in `"` when outputting to CSV)
-    df["gss"] = df["gss"].str.strip('"')
-    df["label"] = df["label"].str.strip('"')
-
-    # Manually parse the JSON data (faster than pd.json_normalize)
-    df["parsed_json"] = df["parsed_json"].apply(msgspec.json.decode)
-    for col in column_types.keys():
-        df[col] = df["parsed_json"].apply(lambda x: x[col])
-    df = df.drop(columns=["parsed_json"])
 
     df["area_type"] = postcodes_io_key_to_lih_map.get(conf.group_by_area)
 
@@ -339,14 +341,15 @@ def statistics(
     exclude_keys = [*DEFAULT_EXCLUDE_KEYS, *user_exclude_keys]
 
     numerical_keys = [
-        k
+        f"data_{k}"
         for k, t in column_types.items()
-        if (t == "numeric" or t == "percentage") and k not in exclude_keys
+        if t.get_statistical_type() in ("numerical", "percentage")
+        and k not in exclude_keys
     ]
     percentage_keys = [
-        k
+        f"data_{k}"
         for k, t in column_types.items()
-        if t == "percentage" and k not in exclude_keys
+        if t.get_statistical_type() == "percentage" and k not in exclude_keys
     ]
 
     if len(numerical_keys) > 0:
@@ -725,3 +728,46 @@ def filter_generic_data_using_gss_code(
             filters |= Q(area__polygon__contains=search_polygon)
 
     return filters
+
+
+def replace_generic_data_with_materialized_view(
+    sql: str,
+    column_types: dict[str, StatisticalDataType],
+    conf: StatisticsConfig,
+    source_id: str,
+):
+    """
+    Modify the SQL generated by the Django ORM to use the materialized view for the data source,
+    instead of the GenericData table.
+    """
+
+    # Use the GenericData table name as the alias of the materialized view
+    # to avoid breaking any existing expressions
+    table_alias = models.GenericData._meta.db_table
+    parsed_sql = parse_one(sql, dialect="postgres").from_(
+        f'"{source_id}_json" AS {table_alias}'
+    )
+
+    # Add each data column to the SELECT
+    for column in column_types.keys():
+        parsed_sql = parsed_sql.select(f'{table_alias}."data_{column}"', append=True)
+
+    # Add postcode_data columns if necessary
+    if conf.group_by_area:
+        parsed_sql = parsed_sql.select(
+            "postcode_data_label", "postcode_data_gss", append=True
+        )
+
+    # Convert to SQL then fix the postcode_data columns, as sqlglot
+    # mangles the `->` and `->>` operators into slower functions
+    sql = parsed_sql.sql(dialect="postgres")
+    if conf.group_by_area:
+        sql = sql.replace(
+            "postcode_data_label",
+            f"{table_alias}.postcode_data->>'{conf.group_by_area.value}' AS label",
+        ).replace(
+            "postcode_data_gss",
+            f"{table_alias}.postcode_data->'codes'->>'{conf.group_by_area.value}' AS gss",
+        )
+
+    return sql

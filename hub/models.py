@@ -18,7 +18,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-from django.db import models
+from django.db import connection, models
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
 from django.db.utils import IntegrityError
@@ -46,6 +46,7 @@ from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from procrastinate.exceptions import AlreadyEnqueued
+from psycopg import sql as pgsql
 from psycopg.errors import UniqueViolation
 from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
@@ -92,7 +93,7 @@ from utils.postcodesIO import (
 )
 from utils.procrastinate import ProcrastinateQueuePriority
 from utils.py import batched, ensure_list, get, is_maybe_id
-from utils.statistics import merge_column_types
+from utils.statistics import StatisticalDataType, merge_column_types
 
 User = get_user_model()
 
@@ -1081,6 +1082,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
+    last_import = models.DateTimeField(blank=True, null=True)
+    last_materialized = models.DateTimeField(blank=True, null=True)
     # Geocoding data
 
     can_display_points_publicly = models.BooleanField(default=False)
@@ -1290,7 +1293,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     class FieldDefinition(TypedDict):
         value: str
-        type: str = "unknown"
+        type: str = StatisticalDataType.UNKNOWN.value
         label: Optional[str]
         description: Optional[str]
         external_id: Optional[str]
@@ -1617,22 +1620,68 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         # Keep previously derived type information
         column_types = {}
         for field in self.field_definitions or []:
-            column_types[field["value"]] = field.get("type", "unknown")
+            column_types[field["value"]] = field.get(
+                "type", StatisticalDataType.UNKNOWN.value
+            )
 
         self.field_definitions = self.load_field_definitions()
 
         # Restore previously derived type information
         for field in self.field_definitions:
-            field["type"] = column_types.get(field["value"], "unknown")
+            field["type"] = column_types.get(
+                field["value"], StatisticalDataType.UNKNOWN.value
+            )
 
         # Only save the source if it already exists in the database
         if self.created_at:
             self.save()
 
-    async def update_field_definition_types(self, column_types: dict[str, str]) -> None:
+    async def update_field_definition_types(
+        self, column_types: dict[str, StatisticalDataType]
+    ) -> None:
         for field in self.field_definitions:
-            field["type"] = column_types.get(field["value"], "unknown")
+            field["type"] = column_types.get(
+                field["value"], StatisticalDataType.UNKNOWN
+            ).value
         await self.asave()
+
+    def refresh_materialized_view(self, column_types: dict[str, StatisticalDataType]):
+        logger.info(f"Refreshing materialized view for {self} ({self.id})")
+        with connection.cursor() as cursor:
+            # Create a materialized view with the GenericData id and postcode_data columns
+            table_expr = pgsql.SQL(
+                "CREATE MATERIALIZED VIEW IF NOT EXISTS {} AS SELECT id, point, postcode_data, "
+            ).format(pgsql.Identifier(f"{self.id}_json"))
+            # Add all the parsed_json keys as columns
+            column_exprs = []
+            for column, type in column_types.items():
+                column_sql = pgsql.SQL(
+                    "(parsed_json->>{})::" + type.get_database_type() + " as {}"
+                ).format(pgsql.Literal(column), pgsql.Identifier(f"data_{column}"))
+                column_exprs.append(column_sql)
+            # Only include GenericData for the current ExternalDataSource
+            from_expr = pgsql.SQL(
+                f"""
+                FROM {GenericData._meta.db_table}
+                WHERE data_type_id = (SELECT id FROM {DataType._meta.db_table} WHERE name = '{self.id}')
+                """
+            )
+            sql = table_expr + pgsql.SQL(", ").join(column_exprs) + from_expr
+            cursor.execute(sql)
+            cursor.execute(
+                pgsql.SQL("REFRESH MATERIALIZED VIEW {}").format(
+                    pgsql.Identifier(f"{self.id}_json")
+                )
+            )
+        self.last_materialized = datetime.now(pytz.utc)
+        self.save()
+
+    def drop_materialized_view(self):
+        with connection.cursor() as cursor:
+            sql = pgsql.SQL("DROP MATERIALIZED VIEW IF EXISTS {}").format(
+                pgsql.Identifier(f"{self.id}_json")
+            )
+            cursor.execute(sql)
 
     def remote_name(self) -> Optional[str]:
         """
@@ -2069,6 +2118,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     defaults=update_data,
                 )
                 await self.update_field_definition_types(column_types)
+        self.last_import = datetime.now(tz=pytz.UTC)
+        await self.asave()
 
     async def fetch_one(self, member_id: str):
         """
@@ -2665,6 +2716,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             id=external_data_source_id
         )
 
+        # Drop previous materialized view as data may have changed
+        await sync_to_async(external_data_source.drop_materialized_view)()
         members = await external_data_source.fetch_all()
         priority_enum = None
         match len(members):
@@ -3220,9 +3273,6 @@ class UploadedCSVSource(ExternalDataSource):
 
     def get_columns_from_file(self):
         return self.df.columns.tolist()
-
-    async def import_many(self, members):
-        await super().import_many(members)
 
     def load_field_definitions(self):
         return [self.FieldDefinition(label=col, value=col) for col in self.columns]
@@ -4106,6 +4156,11 @@ class ActionNetworkSource(ExternalDataSource):
         """
         Override Action Network import_all behavior to import page-by-page
         """
+        # Drop previous materialized view as data may have changed
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            id=external_data_source_id
+        )
+        await sync_to_async(external_data_source.drop_materialized_view)()
         # TODO: how do we measure number of rows imported with this method?
         # Action Network simply doesn't seem to have a way to get the number of rows imported
         await cls.schedule_import_pages(
