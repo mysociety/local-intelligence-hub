@@ -144,6 +144,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     variables: {
       areaType: activeTileset.analyticalAreaType,
     },
+    errorPolicy: 'all',
   })
 
   const labelForArea = useCallback(
