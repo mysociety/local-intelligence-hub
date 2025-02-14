@@ -1,7 +1,9 @@
+from datetime import datetime
+
 from django.contrib.gis.geos import Point
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-from datetime import datetime
+
 import pytz
 
 from hub import models
