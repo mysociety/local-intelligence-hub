@@ -1,10 +1,12 @@
 from django.contrib.gis.geos import Point
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from datetime import datetime
+import pytz
 
 from hub import models
 from utils import geo
-
+from utils.statistics import StatisticalDataType
 
 class Setup:
     def setUp(self) -> None:
@@ -22,7 +24,8 @@ class Setup:
         self.source = models.ExternalDataSource.objects.create(
             name="testsource",
             organisation=self.org,
-            field_definitions=[{"value": "some", "type": "string"}],
+            field_definitions=[{"value": "some", "type": StatisticalDataType.STRING.value}],
+            last_import=datetime.now(tz=pytz.utc)
         )
         # Some dummy data
         ds = models.DataSet.objects.create(name="xyz", external_data_source=self.source)

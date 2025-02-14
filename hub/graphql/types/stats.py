@@ -328,7 +328,8 @@ def statistics(
             else:
                 df = pd.concat([df, this_df])
 
-    if len(df) <= 0:
+    if df is None or len(df) <= 0:
+        logger.warning(f"Statistics requested for sources {conf.source_ids} but no imported data found.")
         return None
 
     df = df.set_index("id", drop=False)

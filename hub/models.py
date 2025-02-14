@@ -1666,7 +1666,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             from_expr = pgsql.SQL(
                 f"""
                 FROM {GenericData._meta.db_table}
-                WHERE data_type_id = (SELECT id FROM {DataType._meta.db_table} WHERE name = '{self.id}')
+                WHERE data_type_id IN (
+                  SELECT id FROM {DataType._meta.db_table} WHERE data_set_id = (
+                    SELECT id FROM {DataSet._meta.db_table} WHERE external_data_source_id = '{self.id}'
+                  )
+                )
                 """
             )
             sql = table_expr + pgsql.SQL(", ").join(column_exprs) + from_expr
