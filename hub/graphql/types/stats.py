@@ -320,14 +320,13 @@ def statistics(
         ):
             source.refresh_materialized_view(column_types)
 
-        view_sql = replace_generic_data_with_materialized_view(
-            sql, column_types, conf, source.id
-        )
-
         with connection.cursor() as cursor:
+            source_sql = cursor.mogrify(sql, params)
+            source_sql = replace_generic_data_with_materialized_view(
+                source_sql, column_types, conf, source.id
+            )
             buf = io.BytesIO()
-            view_sql = cursor.mogrify(view_sql, params)
-            with cursor.copy(f"COPY ({view_sql}) TO STDOUT WITH CSV HEADER") as copy:
+            with cursor.copy(f"COPY ({source_sql}) TO STDOUT WITH CSV HEADER") as copy:
                 for data in copy:
                     buf.write(data.tobytes())
             buf.seek(0)

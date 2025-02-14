@@ -41,19 +41,19 @@ lih_to_postcodes_io_key_map = {
     "STC": AnalyticalAreaType.admin_county,
     "EER": AnalyticalAreaType.european_electoral_region,
     "CTRY": AnalyticalAreaType.country,
-    "OA21": AnalyticalAreaType.output_area,
     "PC": AnalyticalAreaType.postcode,
     "PCA": AnalyticalAreaType.postcode_area,
     "PCD": AnalyticalAreaType.postcode_district,
     "PCS": AnalyticalAreaType.postcode_sector,
+    "MSOA": AnalyticalAreaType.msoa,
+    "LSOA": AnalyticalAreaType.lsoa,
+    "OA21": AnalyticalAreaType.output_area,
 }
-
-postcodes_io_key_to_lih_map = {v: k for k, v in lih_to_postcodes_io_key_map.items()}
 
 
 def generate_postcodes_io_key_to_lih_map() -> dict[AnalyticalAreaType, list[str]]:
     return {
-        v: [k for k, v2 in lih_to_postcodes_io_key_map.items() if v2 == v]
+        v.value: [k for k, v2 in lih_to_postcodes_io_key_map.items() if v2 == v]
         for v in AnalyticalAreaType
     }
 

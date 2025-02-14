@@ -75,6 +75,21 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   })
   const dataByBoundary = data?.statisticsForChoropleth || []
 
+  const activeAreasQuery = useQuery<
+    ActiveChoroplethAreasQuery,
+    ActiveChoroplethAreasQueryVariables
+  >(AREA_QUERY, {
+    variables: {
+      areaType: activeTileset.analyticalAreaType,
+      // Pass dummy mapBounds variable, and actual bounds in fetchMore() call
+      // Passing the real mapBounds every time resets the query result, which we don't want
+      mapBounds: activeTileset.useBoundsInDataQuery
+        ? { east: 0, west: 0, north: 0, south: 0 }
+        : null,
+    },
+    errorPolicy: 'all',
+  })
+
   const boundaryNameVisibility = view.mapOptions.display.boundaryNames
 
   const choroplethValueLabelsVisibility =
@@ -91,12 +106,16 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   useHoverOverBoundaryEvents(areasVisible === 'visible' ? activeTileset : null)
 
   // Update map bounds and active tileset on pan/zoom
-  const [mapBounds, setMapBounds] = useMapBounds()
+  const [, setMapBounds] = useMapBounds()
   useEffect(() => {
     const onMoveEnd = debounce(() => {
       const zoom = map.loadedMap?.getZoom() || 0
       setMapZoom(zoom)
-      setMapBounds(getMapBounds(map.loadedMap))
+      const mapBounds = getMapBounds(map.loadedMap)
+      setMapBounds(mapBounds)
+      if (activeTileset.useBoundsInDataQuery) {
+        activeAreasQuery.fetchMore({ variables: { mapBounds } })
+      }
     }, 500)
     if (map.loadedMap) {
       map.loadedMap.on('moveend', onMoveEnd)
@@ -135,17 +154,6 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     view.mapOptions,
     shaderVisibility,
   ])
-
-  const activeAreasQuery = useQuery<
-    ActiveChoroplethAreasQuery,
-    ActiveChoroplethAreasQueryVariables
-  >(AREA_QUERY, {
-    variables: {
-      areaType: activeTileset.analyticalAreaType,
-      mapBounds: activeTileset.useBoundsInDataQuery ? mapBounds : undefined,
-    },
-    errorPolicy: 'all',
-  })
 
   const labelForArea = useCallback(
     (d: (typeof dataByBoundary)[0]) => {
