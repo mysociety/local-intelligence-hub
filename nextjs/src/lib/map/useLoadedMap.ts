@@ -26,11 +26,15 @@ export function useLoadedMap() {
     }
 
     const onLoad = () => {
-      updateLoaded()
+      if (!loaded) {
+        updateLoaded()
+      }
     }
 
     const onStyleLoad = () => {
-      updateLoaded()
+      if (!loaded) {
+        updateLoaded()
+      }
     }
 
     // Handle style changes after the initial map load.
@@ -42,9 +46,11 @@ export function useLoadedMap() {
     const onStyleDataLoading = () => {
       setLoaded(false)
       const intervalId = setInterval((): void => {
-        if (map.default?.isStyleLoaded()) {
-          setLoaded(true)
-          clearInterval(intervalId)
+        if (!loaded) {
+          if (map.default?.isStyleLoaded()) {
+            setLoaded(true)
+            clearInterval(intervalId)
+          }
         }
       }, MAPBOX_LOAD_INTERVAL)
     }
@@ -58,7 +64,7 @@ export function useLoadedMap() {
       map.default?.off('style.load', onStyleLoad)
       map.default?.off('styledataloading', onStyleDataLoading)
     }
-  }, [map, setLoaded])
+  }, [map, setLoaded, loaded])
 
   function getImageDataURL() {
     // Implementation informed by https://github.com/mapbox/mapbox-gl-js/issues/2766
@@ -67,6 +73,25 @@ export function useLoadedMap() {
       map.default.once('render', function () {
         if (!map.default) return reject('Map not loaded')
         resolve(map.default.getCanvas().toDataURL())
+      })
+      /* trigger render */
+      map.default.triggerRepaint()
+    })
+  }
+
+  function getImageFile(nameWithoutExtension: string = 'map') {
+    return new Promise<File>((resolve, reject) => {
+      if (!map.default) return reject('Map not loaded')
+      map.default.once('render', function () {
+        if (!map.default) return reject('Map not loaded')
+        const canvas = map.default.getCanvas()
+        canvas.toBlob((blob) => {
+          if (!blob) return reject('No blob')
+          let file = new File([blob], `${nameWithoutExtension}.jpeg`, {
+            type: 'image/jpeg',
+          })
+          resolve(file)
+        }, 'image/jpeg')
       })
       /* trigger render */
       map.default.triggerRepaint()
@@ -88,8 +113,12 @@ export function useLoadedMap() {
   // Handle subsequent map loads
   return {
     ...map,
-    loadedMap: loaded ? map.default : null,
+    defaultMap: map.default,
+    currentMap: map.current,
+    loadedMap: loaded ? map.default || map.current : null,
     loaded,
+    getImageDataURL,
+    getImageFile,
     downloadScreenshot,
   }
 }

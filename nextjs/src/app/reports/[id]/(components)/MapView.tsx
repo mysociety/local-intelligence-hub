@@ -1,9 +1,17 @@
 'use client'
 
+import {
+  UploadCoverImageToReportMutation,
+  UploadCoverImageToReportMutationVariables,
+} from '@/__generated__/graphql'
 import LocalisedMap from '@/components/LocalisedMap'
 import { PlaceholderLayer } from '@/components/PlaceholderLayer'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
-import { useActiveTileset, useMapBounds } from '@/lib/map'
+import { SECONDS_BETWEEN_SCREENSHOT_UPDATES } from '@/env'
+import { useActiveTileset, useLoadedMap, useMapBounds } from '@/lib/map'
+import { useReport } from '@/lib/map/useReport'
+import { useInterval } from '@/lib/useInterval'
+import { gql, useMutation } from '@apollo/client'
 import { useEffect } from 'react'
 import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import { SpecificViewConfig, ViewType } from '../reportContext'
@@ -33,6 +41,29 @@ export default function MapView({
   })
 
   const [mapBounds] = useMapBounds()
+  const map = useLoadedMap()
+  const report = useReport()
+  const [uploadCoverImage, coverImageMutation] = useMutation<
+    UploadCoverImageToReportMutation,
+    UploadCoverImageToReportMutationVariables
+  >(UPLOAD_COVER_IMAGE_TO_REPORT_MUTATION)
+
+  // Regularly update the report's cover image using a screenshot of the map
+  useInterval(async function updateReportCoverImage() {
+    try {
+      const file = await map.getImageFile('automatic_screenshot')
+      if (file) {
+        await uploadCoverImage({
+          variables: {
+            reportId: report.report.id,
+            file,
+          },
+        })
+      }
+    } catch (error) {
+      console.error('Error updating report cover image', error)
+    }
+  }, SECONDS_BETWEEN_SCREENSHOT_UPDATES * 1000)
 
   // Fetch more data when the map bounds change
   // This has to be here for the loading indicator to work
@@ -79,3 +110,12 @@ export default function MapView({
     </>
   )
 }
+
+const UPLOAD_COVER_IMAGE_TO_REPORT_MUTATION = gql`
+  mutation UploadCoverImageToReport($reportId: String!, $file: Upload!) {
+    uploadCoverImageToReport(reportId: $reportId, file: $file) {
+      id
+      coverImageAbsoluteUrl
+    }
+  }
+`

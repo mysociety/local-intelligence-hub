@@ -25,6 +25,7 @@ from hub.management.commands.autoscale_render_workers import ScalingStrategy
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
+    DATABASE_CONNECTION_POOLER_HOSTPORT=(str, None),
     MINIO_STORAGE_ENDPOINT=(str, False),
     MINIO_STORAGE_ACCESS_KEY=(str, ""),
     MINIO_STORAGE_SECRET_KEY=(str, ""),
@@ -119,6 +120,7 @@ env = environ.Env(
     SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD=(int, 2000),
     MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD=(int, 7000),
     LARGE_IMPORT_ROW_COUNT_THRESHOLD=(int, 20000),
+    RUNNING_JOBS_MAX_SECONDS=(int, 60 * 5),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -339,6 +341,12 @@ WSGI_APPLICATION = "local_intelligence_hub.wsgi.application"
 
 DATABASES = {"default": env.db(engine="django.contrib.gis.db.backends.postgis")}
 
+if env("DATABASE_CONNECTION_POOLER_HOSTPORT"):
+    # Replace the hostport in the DATABASE_URL with the connection pooler hostport
+    host, port = env("DATABASE_CONNECTION_POOLER_HOSTPORT").split(":")
+    DATABASES["default"]["HOST"] = host
+    DATABASES["default"]["PORT"] = port
+
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
@@ -539,29 +547,35 @@ STRAWBERRY_DJANGO = {
     "TYPE_DESCRIPTION_FROM_MODEL_DOCSTRING": True,
     "FIELD_DESCRIPTION_FROM_HELP_TEXT": True,
     "MAP_AUTO_ID_AS_GLOBAL_ID": False,
+    "DEFAULT_PK_FIELD_NAME": "id",
+    "USE_DEPRECATED_FILTERS": False,
 }
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 SENTRY_TRACE_SAMPLE_RATE = env("SENTRY_TRACE_SAMPLE_RATE")
 
-posthog.disabled = True
-if env("POSTHOG_API_KEY") is not False:
-    posthog.project_api_key = env("POSTHOG_API_KEY")
-if env("POSTHOG_HOST") is not False:
-    posthog.host = env("POSTHOG_HOST")
+POSTHOG_API_KEY = env("POSTHOG_API_KEY")
+POSTHOG_HOST = env("POSTHOG_HOST")
+if POSTHOG_API_KEY is not False:
+    posthog.project_api_key = POSTHOG_API_KEY
+if POSTHOG_HOST is not False:
+    posthog.host = POSTHOG_HOST
+posthog_config_valid = POSTHOG_API_KEY is not False and POSTHOG_HOST is not False
+posthog.disabled = not posthog_config_valid and not (ENVIRONMENT == "production")
 
 # Configure Sentry and HSTS headers only if in production
+SENTRY_DSN = env("SENTRY_DSN")
 if ENVIRONMENT == "production":
     SECURE_HSTS_SECONDS = 600
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    if env("SENTRY_DSN") is not False:
+    if SENTRY_DSN is not False:
         import sentry_sdk
         from sentry_sdk.integrations.django import DjangoIntegration
         from sentry_sdk.integrations.strawberry import StrawberryIntegration
 
         sentry_sdk.init(
-            dsn=env("SENTRY_DSN"),
+            dsn=SENTRY_DSN,
             environment=ENVIRONMENT,
             integrations=[
                 DjangoIntegration(),
@@ -570,9 +584,6 @@ if ENVIRONMENT == "production":
             # Optionally, you can adjust the logging level
             traces_sample_rate=1.0,  # Adjust sample rate as needed
         )
-
-    if env("POSTHOG_API_KEY") is not False and env("POSTHOG_HOST") is not False:
-        posthog.disabled = False
 
 
 MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
@@ -650,3 +661,4 @@ MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD = env(
     "MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD"
 )
 LARGE_IMPORT_ROW_COUNT_THRESHOLD = env("LARGE_IMPORT_ROW_COUNT_THRESHOLD")
+RUNNING_JOBS_MAX_SECONDS = env("RUNNING_JOBS_MAX_SECONDS")

@@ -14,6 +14,7 @@ from graphql import GraphQLError
 from procrastinate.contrib.django.models import ProcrastinateJob
 from strawberry import auto
 from strawberry.field_extensions import InputMutationExtension
+from strawberry.file_uploads import Upload
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
@@ -639,5 +640,19 @@ def patch_map_report_display_options(
     # Apply the patch
     new_display_options = jsonpatch.apply_patch(map_report.display_options, patch)
     map_report.display_options = new_display_options
+    map_report.save()
+    return map_report
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def upload_cover_image_to_report(
+    info: Info, report_id: str, file: Upload
+) -> models.MapReport:
+    if not file:
+        raise ValueError("No file provided")
+    map_report = models.Report.objects.get(id=report_id)
+    if not map_report.organisation.members.filter(user=get_current_user(info)).exists():
+        raise PermissionError("You do not have permission to update this data source.")
+    map_report.cover_image = file
     map_report.save()
     return map_report

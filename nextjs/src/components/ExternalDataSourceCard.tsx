@@ -325,7 +325,7 @@ export const DATA_SOURCE_FRAGMENT = gql`
 
 export const GET_UPDATE_CONFIG_CARD = gql`
   query ExternalDataSourceExternalDataSourceCard($ID: ID!) {
-    externalDataSource(pk: $ID) {
+    externalDataSource(id: $ID) {
       ...DataSourceCard
     }
   }

@@ -1,10 +1,11 @@
-import { ApolloLink, HttpLink } from '@apollo/client'
+import { ApolloLink } from '@apollo/client'
 import { setContext } from '@apollo/client/link/context'
 import { registerApolloClient } from '@apollo/experimental-nextjs-app-support/rsc'
 import {
   NextSSRApolloClient,
   NextSSRInMemoryCache,
 } from '@apollo/experimental-nextjs-app-support/ssr'
+import createUploadLink from 'apollo-upload-client/createUploadLink.mjs'
 import { cookies } from 'next/headers'
 
 import { GRAPHQL_URL } from '@/env'
@@ -41,7 +42,7 @@ const getJwt = (): string | undefined => {
  * use the useQuery() hook (see components/ApolloWrapper.tsx).
  */
 const makeBackEndClient = (token: string = '') => {
-  const httpLink = new HttpLink({
+  const httpLink = createUploadLink({
     uri: GRAPHQL_URL,
   })
 

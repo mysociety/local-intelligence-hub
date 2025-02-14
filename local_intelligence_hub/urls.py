@@ -125,7 +125,13 @@ urlpatterns = [
         {"sitemaps": hub_sitemap},
         name="django.contrib.sitemaps.views.sitemap",
     ),
-    path("graphql", CustomSchemaView.as_view(schema=schema), name="graphql"),
+    path(
+        "graphql",
+        csrf_exempt(
+            CustomSchemaView.as_view(schema=schema, multipart_uploads_enabled=True)
+        ),
+        name="graphql",
+    ),
     path(
         f"{ExternalDataSourceWebhook.base_path}/<str:external_data_source_id>",
         csrf_exempt(ExternalDataSourceWebhook.as_view()),

@@ -40,7 +40,7 @@ export default async function Page({
 
 const EXTERNAL_DATA_SOURCE_NAME = gql`
   query ExternalDataSourceName($externalDataSourceId: ID!) {
-    externalDataSource(pk: $externalDataSourceId) {
+    externalDataSource(id: $externalDataSourceId) {
       name
       crmType
       dataType

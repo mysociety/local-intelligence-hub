@@ -318,7 +318,7 @@ export default function HubPageEditor({
 
 const GET_HUB_PAGES = gql`
   query GetHubPages($hubId: ID!) {
-    hubHomepage(pk: $hubId) {
+    hubHomepage(id: $hubId) {
       hostname
       descendants(inclusive: true) {
         id
@@ -340,7 +340,7 @@ const GET_HUB_PAGES = gql`
 
 const GET_PAGE_EDITOR_DATA = gql`
   query GetPageEditorData($pageId: ID!) {
-    hubPage(pk: $pageId) {
+    hubPage(id: $pageId) {
       id
       title
       path

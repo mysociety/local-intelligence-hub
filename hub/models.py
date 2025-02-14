@@ -18,6 +18,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.core.validators import FileExtensionValidator
 from django.db import connection, models
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
@@ -44,6 +45,7 @@ from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2.credentials import Credentials as GoogleCredentials
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
+from procrastinate.contrib.django import app as procrastinate
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from procrastinate.exceptions import AlreadyEnqueued
 from psycopg import sql as pgsql
@@ -70,7 +72,7 @@ from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField, EncryptedTextField
 from hub.filters import Filter
 from hub.parsons.action_network.action_network import ActionNetwork
-from hub.restricted_file_field.fields import SafeFileField
+from hub.storage import OverwriteStorage
 from hub.tasks import (
     import_all,
     import_many,
@@ -795,7 +797,7 @@ class GenericData(CommonData):
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
     image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
-    can_display_point = models.BooleanField(default=True)
+    can_display_point = models.BooleanField(default=True, null=True, blank=True)
 
     class Meta:
         unique_together = ["data_type", "data"]
@@ -997,11 +999,12 @@ def cast_data(sender, instance, *args, **kwargs):
 
 
 class Loaders(TypedDict):
-    postcodesIO: DataLoader
-    postcodesIOFromPoint: DataLoader
-    mapbox_geocoder: DataLoader
-    fetch_record: DataLoader
-    source_loaders: dict[str, DataLoader]
+    postcodesIO: DataLoader[str, PostcodesIOResult | None]
+    postcodesIOFromPoint: DataLoader[Point, PostcodesIOResult | None]
+    fetch_record: DataLoader[str, dict | None]
+    source_loaders: dict[str, DataLoader["EnrichmentLookup", str | None]]
+    generic_data: DataLoader[str, GenericData | None]
+    postgis_geocoder: DataLoader[Point, PostcodesIOResult | None]
 
 
 class EnrichmentLookup(TypedDict):
@@ -1838,7 +1841,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
 
             geocode_results = [r for r in geocode_results if r]
-            if not geocode_results:
+            if not geocode_results or len(geocode_results) == 0:
                 return
 
             unique_fields = ["data_type", "data"]
@@ -1940,9 +1943,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 ).afirst()
                 if ward:
                     coord = ward.point.centroid
-                    postcode_data: PostcodesIOResult = await loaders[
-                        "postcodesIOFromPoint"
-                    ].load(coord)
+                    postcode_data = await loaders["postcodesIOFromPoint"].load(coord)
                 else:
                     logger.warning(
                         f"Could not find ward for record {self.get_record_id(record)} and gss {gss}"
@@ -1987,10 +1988,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     gss=gss,
                 ).afirst()
                 if output_area:
-                    postcode_data: PostcodesIOResult = (
-                        await geocoding_config.get_postcode_data_for_area(
-                            output_area, loaders, []
-                        )
+                    postcode_data = await geocoding_config.get_postcode_data_for_area(
+                        output_area, loaders, []
                     )
                     if postcode_data:
                         # override lat/lng based output_area with known output area
@@ -2076,9 +2075,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             # (e.g. for analytical queries that aggregate on region)
                             # even if the address is not postcode-specific (e.g. "London").
                             # this can be gleaned from geocode_data__types, e.g. [ "administrative_area_level_1", "political" ]
-                            postcode_data: PostcodesIOResult = await loaders[
-                                "postcodesIOFromPoint"
-                            ].load(point)
+                            postcode_data = await loaders["postcodesIOFromPoint"].load(
+                                point
+                            )
 
                 update_data = {
                     **structured_data,
@@ -2397,9 +2396,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # Get postcode from member
                 postcode = self.get_record_field(member, self.geography_column)
                 # Get relevant config data for that postcode
-                postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
-                    postcode
-                )
+                postcode_data = await loaders["postcodesIO"].load(postcode)
             # Map the fields
             for mapping_dict in mapping:
                 source = mapping_dict["source"]
@@ -3105,22 +3102,30 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 is_cancelled_by_user=None,
                 **({"type": type.value} if type else {}),
             ).update(is_cancelled_by_user=True)
-            # Cancel all BatchRequests
+
             cancelled_request_ids = BatchRequest.objects.filter(
                 source=self,
                 is_cancelled_by_user=True,
             )
+
             job_filters.update(
                 args__request_id__in=[
                     str(id) for id in cancelled_request_ids.values_list("id", flat=True)
                 ]
             )
 
+        # Cancel all user-requested procrastinate import jobs
+        jobs = ProcrastinateJob.objects.filter(**job_filters)
+
+        # by using the sync method
+        for job in jobs:
+            try:
+                procrastinate.job_manager.cancel_job_by_id(job.id, abort=True)
+            except Exception as e:
+                logger.error(f"Failed to cancel job {job.id}: {e}")
+
         # run command to update worker instances
         call_command("autoscale_render_workers")
-
-        # Cancel all user-requested procrastinate import jobs
-        return ProcrastinateJob.objects.filter(**job_filters).update(status="cancelled")
 
 
 class DatabaseJSONSource(ExternalDataSource):
@@ -3220,8 +3225,9 @@ class UploadedCSVSource(ExternalDataSource):
         return f"user_content/org_{instance.organisation.pk}/data_sources/{filename}"
 
     # User provided
-    spreadsheet_file = SafeFileField(
-        upload_to=org_directory_path, allowed_extensions=("csv",)
+    spreadsheet_file = models.FileField(
+        upload_to=org_directory_path,
+        validators=[FileExtensionValidator(("csv",))],
     )
     id_field = models.TextField()
     delimiter = models.TextField(default=",", blank=True)
@@ -3621,6 +3627,17 @@ class Report(PolymorphicModel):
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
     public = models.BooleanField(default=False, blank=True)
+
+    def report_image_path(instance, filename):
+        # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+        return f"report/{str(instance.id)}/{filename}"
+
+    cover_image = models.ImageField(
+        storage=OverwriteStorage(),
+        upload_to=report_image_path,
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return self.name

@@ -30,7 +30,7 @@ export function ManageSourceSharing({
   >(
     gql`
       query ManageSourceSharing($externalDataSourceId: ID!) {
-        externalDataSource(pk: $externalDataSourceId) {
+        externalDataSource(id: $externalDataSourceId) {
           sharingPermissions {
             id
             organisationId
@@ -94,13 +94,13 @@ export function ManageSourceSharing({
         DeleteSourceSharingObjectMutationVariables
       >({
         mutation: gql`
-          mutation DeleteSourceSharingObject($pk: String!) {
-            deleteSharingPermission(data: { id: $pk }) {
+          mutation DeleteSourceSharingObject($id: String!) {
+            deleteSharingPermission(data: { id: $id }) {
               id
             }
           }
         `,
-        variables: { pk: id },
+        variables: { id: id },
       }),
       {
         success: () => {

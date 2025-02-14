@@ -2,6 +2,7 @@ import logging
 import re
 import traceback
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -18,7 +19,6 @@ from utils.findthatpostcode import (
     get_example_postcode_from_area_gss,
     get_postcode_from_coords_ftp,
 )
-from utils.postcodesIO import PostcodesIOResult
 from utils.py import are_dicts_equal, ensure_list, find
 from utils.statistics import StatisticalDataType
 
@@ -64,6 +64,41 @@ class GeocodeResult:
     postcode_data: dict = None
     area: "Area" = None
     point: Point = None
+    # and all the other columns of GenericData:
+    postcode: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    first_name: str = None
+    # models.CharField(max_length=300, blank=True, null=True)
+    last_name: str = None
+    # models.CharField(max_length=300, blank=True, null=True)
+    full_name: str = None
+    # models.CharField(max_length=300, blank=True, null=True)
+    email: str = None
+    # models.EmailField(max_length=300, blank=True, null=True)
+    phone: str = None
+    # models.CharField(max_length=100, blank=True, null=True)
+    start_time: datetime = None
+    # models.DateTimeField(blank=True, null=True)
+    end_time: datetime = None
+    # models.DateTimeField(blank=True, null=True)
+    public_url: str = None
+    # models.URLField(max_length=2000, blank=True, null=True)
+    social_url: str = None
+    # models.URLField(max_length=2000, blank=True, null=True)
+    geocode_data: dict = None
+    # models.JSONField(blank=True, null=True)
+    geocoder: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    address: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    title: str = None
+    # models.CharField(max_length=1000, blank=True, null=True)
+    description: str = None
+    # models.TextField(max_length=3000, blank=True, null=True)
+    image: str = None
+    # models.ImageField(null=True, max_length=1000, upload_to="generic_data")
+    can_display_point: bool = None
+    # models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.data_type.name}: {self.data}"
@@ -155,7 +190,7 @@ async def geocode_record(
 
     # check if geocoding_config and dependent fields are the same; if so, skip geocoding
     try:
-        generic_data: GenericData = await loaders["generic_data"].load(id)
+        generic_data = await loaders["generic_data"].load(id)
         # First check if the configs are the same
         if (
             generic_data is not None
@@ -304,7 +339,7 @@ async def import_area_code_data(
     update_data["geocode_data"].update({"steps": steps})
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
 
 
@@ -495,25 +530,24 @@ async def import_area_data(
     update_data["geocode_data"].update({"steps": steps})
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
 
 
-async def get_postcode_data_for_area(area, loaders, steps):
+async def get_postcode_data_for_area(area: "Area", loaders: "Loaders", steps: list):
     sample_point = area.polygon.centroid
 
     # get postcodeIO result for area.coordinates
+    postcode_data = None
     try:
-        postcode_data: PostcodesIOResult = await loaders["postgis_geocoder"].load(
-            sample_point
-        )
+        postcode_data = await loaders["postgis_geocoder"].load(sample_point)
     except Exception as e:
         print(
             traceback.format_exc()
         )  # Keep for now to track tricky database errors with bad error messages
-
-        logger.error(f"Failed to get postcode data for {sample_point}: {e}")
-        postcode_data = None
+        logger.error(
+            f"Failed to get postcode data from postgis_geocoder for {sample_point}: {e}"
+        )
 
     steps.append(
         {
@@ -527,11 +561,9 @@ async def get_postcode_data_for_area(area, loaders, steps):
     # to get postcodes.io data
     if postcode_data is None:
         try:
-            postcode_data: PostcodesIOResult = await loaders[
-                "postcodesIOFromPoint"
-            ].load(sample_point)
+            postcode_data = await loaders["postcodesIOFromPoint"].load(sample_point)
         except Exception as e:
-            logger.error(f"Failed to get postcode data for {sample_point}: {e}")
+            logger.warning(f"Failed to get postcode data for {sample_point}: {e}")
 
         steps.append(
             {
@@ -545,7 +577,7 @@ async def get_postcode_data_for_area(area, loaders, steps):
         try:
             postcode = await get_example_postcode_from_area_gss(area.gss)
         except Exception as e:
-            logger.error(f"Failed to get example postcode for {area.gss}: {e}")
+            logger.warning(f"Failed to get example postcode for {area.gss}: {e}")
             postcode = None
 
         steps.append(
@@ -703,9 +735,7 @@ async def import_address_data(
                 # (e.g. for analytical queries that aggregate on region)
                 # even if the address is not postcode-specific (e.g. "London").
                 # this can be gleaned from geocode_data__types, e.g. [ "administrative_area_level_1", "political" ]
-                postcode_data: PostcodesIOResult = await loaders[
-                    "postcodesIOFromPoint"
-                ].load(point)
+                postcode_data = await loaders["postcodesIOFromPoint"].load(point)
 
                 steps.append(
                     {
@@ -742,7 +772,7 @@ async def import_address_data(
     update_data["point"] = point
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )
 
 
@@ -773,15 +803,25 @@ async def import_coordinate_data(
                 x=float(raw_lng),
                 y=float(raw_lat),
             )
-            postcode_data = await loaders["postcodesIOFromPoint"].load(point)
-
+            postcode_data = await loaders["postgis_geocoder"].load(point)
             steps.append(
                 {
                     "task": "postcode_from_coordinates",
-                    "service": Geocoder.POSTCODES_IO.value,
+                    "service": Geocoder.POSTGIS.value,
                     "result": "failed" if postcode_data is None else "success",
                 }
             )
+
+            if postcode_data is None:
+                postcode_data = await loaders["postcodesIOFromPoint"].load(point)
+
+                steps.append(
+                    {
+                        "task": "postcode_from_coordinates",
+                        "service": Geocoder.POSTCODES_IO.value,
+                        "result": "failed" if postcode_data is None else "success",
+                    }
+                )
         except ValueError:
             # If the coordinates are invalid, let it go.
             pass
@@ -811,5 +851,5 @@ async def import_coordinate_data(
     update_data["point"] = point
 
     return GeocodeResult(
-        data_type=data_type, data=source.get_record_id(record), **update_data
+        **update_data, data_type=data_type, data=source.get_record_id(record)
     )

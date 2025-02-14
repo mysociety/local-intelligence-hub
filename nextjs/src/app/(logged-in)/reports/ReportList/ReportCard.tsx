@@ -20,24 +20,27 @@ export function ReportCard({
 }) {
   return (
     <Link href={`/reports/${report.id}`}>
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
-          <CardContent>
-            <Image
-              src="/reports_page_card_image.png"
-              alt="Description of the image"
-              width={300}
-              height={300}
-              className="w-auto"
-            />
-          </CardContent>
           <CardTitle className="mb-1 px-5 pt-4">{report.name}</CardTitle>
           <CardDescription className="text-sm text-meepGray-400 px-5 pb-5">
-            Last edited{' '}
+            Edited{' '}
             <span className="text-meepGray-300">
-              {formatRelative(report.lastUpdate, new Date())}
+              {formatRelative(report.lastUpdate, new Date()).split(' at ')[0]}
             </span>
           </CardDescription>
+          <CardContent className="relative h-[200px]">
+            <Image
+              src={
+                report.coverImageAbsoluteUrl ?? '/reports_page_card_image.png'
+              }
+              alt="Description of the image"
+              fill
+              className="w-full"
+              objectFit="cover"
+              objectPosition="center"
+            />
+          </CardContent>
         </CardHeader>
       </Card>
     </Link>
