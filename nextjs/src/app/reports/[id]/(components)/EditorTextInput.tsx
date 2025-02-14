@@ -14,7 +14,7 @@ export function EditorTextInput({
 }: {
   value?: string | null
   onChange: ChangeEventHandler<HTMLInputElement>
-  onBlur: FocusEventHandler<HTMLInputElement>
+  onBlur?: FocusEventHandler<HTMLInputElement>
   disabled?: boolean
   disabledMessage?: string
   valueClassName?: string
