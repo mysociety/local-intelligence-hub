@@ -47,7 +47,7 @@ class Command(BaseCommand):
                 merge_column_types(source_column_types, column_types)
                 d.parsed_json = parsed_json
 
-            print(f"--> Saving processed data...")
+            print("--> Saving processed data...")
 
             GenericData.objects.bulk_update(
                 data, fields=["parsed_json"], batch_size=100
@@ -57,4 +57,4 @@ class Command(BaseCommand):
             source.last_import = datetime.now(tz=pytz.UTC)
             source.save()
 
-            print(f"--> Done\n")
+            print("--> Done\n")

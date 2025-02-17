@@ -10,7 +10,6 @@ export function resolverKeyWithoutArguments(argsToOmit: Array<string> = []) {
       const value = (rest as any)[key]
       fullKey += `${key}:${JSON.stringify(value)};`
     }
-    console.log(fullKey)
     return fullKey
   }
   return keyArgs
@@ -20,10 +19,6 @@ export function mergeArraysByField<T extends Record<string, any>>(
   field: keyof T extends string ? keyof T : never
 ) {
   const merge: FieldMergeFunction<T[], T[]> = (existing, incoming, cache) => {
-    console.log(existing?.length || 0, incoming?.length || 0, {
-      existing,
-      incoming,
-    })
     const allData = [...(existing || []), ...(incoming || [])]
     const dataByField = allData.reduce(
       (acc, x) => {

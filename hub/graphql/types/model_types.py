@@ -288,12 +288,10 @@ class AreaTypeFilter:
     def analytical_area_type(
         self, queryset: QuerySet, value: AnalyticalAreaType, prefix: str
     ) -> tuple[QuerySet, Q]:
-        print(value)
         queryset = queryset
         # convert analytical area type to list of mapit types
         lih_area_types = postcodes_io_key_to_lih_map[value.value]
         filters = {"code__in": lih_area_types}
-        print(value, filters)
         return queryset, Q(**filters)
 
 
@@ -1212,7 +1210,6 @@ class Report:
         url = self.cover_image.url
         if url.startswith("http"):
             return url
-        print(settings.BACKEND_URL)
         return urllib.parse.urljoin(settings.BACKEND_URL, url)
 
     @classmethod
