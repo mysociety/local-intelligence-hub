@@ -22,7 +22,12 @@ from utils.geo_reference import (
     postcodes_io_key_to_lih_map,
 )
 from utils.py import ensure_list
-from utils.statistics import StatisticalDataType, get_mode, merge_column_types
+from utils.statistics import (
+    StatisticalDataType,
+    get_materialized_view_column_name,
+    get_mode,
+    merge_column_types,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -313,6 +318,12 @@ def statistics(
 
     sql, params = qs.query.sql_with_params()
 
+    # Create a map from database column name to original column name (for human readability)
+    df_rename_map = {
+        get_materialized_view_column_name(column): column for column in column_types
+    }
+    db_columns = df_rename_map.keys()
+
     for source in sources:
         if (
             not source.last_materialized
@@ -323,7 +334,7 @@ def statistics(
         with connection.cursor() as cursor:
             source_sql = cursor.mogrify(sql, params)
             source_sql = replace_generic_data_with_materialized_view(
-                source_sql, column_types, conf, source.id
+                source_sql, db_columns, conf, source.id
             )
             buf = io.BytesIO()
             with cursor.copy(f"COPY ({source_sql}) TO STDOUT WITH CSV HEADER") as copy:
@@ -346,19 +357,21 @@ def statistics(
 
     df["area_type"] = postcodes_io_key_to_lih_map.get(conf.group_by_area)
 
+    df = df.rename(columns=df_rename_map)
+
     # Format numerics
     DEFAULT_EXCLUDE_KEYS = ["id"]
     user_exclude_keys = [c.strip("`") for c in ensure_list(conf.exclude_columns or [])]
     exclude_keys = [*DEFAULT_EXCLUDE_KEYS, *user_exclude_keys]
 
     numerical_keys = [
-        f"data_{k}"
+        k
         for k, t in column_types.items()
         if t.get_statistical_type() in ("numerical", "percentage")
         and k not in exclude_keys
     ]
     percentage_keys = [
-        f"data_{k}"
+        k
         for k, t in column_types.items()
         if t.get_statistical_type() == "percentage" and k not in exclude_keys
     ]
@@ -743,7 +756,7 @@ def filter_generic_data_using_gss_code(
 
 def replace_generic_data_with_materialized_view(
     sql: str,
-    column_types: dict[str, StatisticalDataType],
+    db_columns: list[str],
     conf: StatisticsConfig,
     source_id: str,
 ):
@@ -760,8 +773,8 @@ def replace_generic_data_with_materialized_view(
     )
 
     # Add each data column to the SELECT
-    for column in column_types.keys():
-        parsed_sql = parsed_sql.select(f'{table_alias}."data_{column}"', append=True)
+    for db_column in db_columns:
+        parsed_sql = parsed_sql.select(f'{table_alias}."{db_column}"', append=True)
 
     # Add postcode_data columns if necessary
     if conf.group_by_area:

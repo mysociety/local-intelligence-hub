@@ -1,3 +1,4 @@
+import hashlib
 import re
 import unicodedata
 from enum import Enum
@@ -143,6 +144,26 @@ def parse_str_as_number(x: str) -> int | float | None:
         except ValueError:
             pass
     return None
+
+
+def get_materialized_view_column_name(x: str) -> str:
+    """
+    Max Postgres column name length is 59. For longer
+    JSON keys than this, truncate it and add a hash.
+    """
+    # Prepend with data_ to avoid clashes with other columns (e.g. "id")
+    x = f"data_{x}"
+    if len(x) < 60:
+        return x
+
+    return f"{x[0:51]}_{generate_hash(x)}"
+
+
+def generate_hash(input_string: str) -> str:
+    """Generate an 8-character hash from the input string."""
+    hash_object = hashlib.sha256(input_string.encode())  # Use SHA-256 for hashing
+    hash_hex = hash_object.hexdigest()[:8]  # Take the first 8 characters
+    return hash_hex
 
 
 def get_mode(series: Series):
