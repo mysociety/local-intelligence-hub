@@ -10,6 +10,7 @@ import {
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
+import { MapReportInputSchema } from '@/__generated__/zodSchema'
 import { useSidebarLeftState } from '@/lib/map'
 import { cleanUpLayerReferences } from '@/lib/map/displayOptionsMigrations'
 import { migrateDisplayOptions } from '@/lib/map/displayOptionsMigrations/migrate'
@@ -273,13 +274,19 @@ const ReportProvider = ({ query, children }: ReportProviderProps) => {
     variables: UpdateMapReportMutationVariables,
     client: ApolloClient<object>
   ) {
-    return client.mutate<
-      UpdateMapReportMutation,
-      UpdateMapReportMutationVariables
-    >({
-      mutation: UPDATE_MAP_REPORT,
-      variables,
-    })
+    const parseResult = MapReportInputSchema().safeParse(variables)
+    if (parseResult.success) {
+      return client.mutate<
+        UpdateMapReportMutation,
+        UpdateMapReportMutationVariables
+      >({
+        mutation: UPDATE_MAP_REPORT,
+        variables: { input: parseResult.data },
+      })
+    } else {
+      console.error('Invalid input for updateMapReport', parseResult.error)
+      return Promise.reject(parseResult.error)
+    }
   }
 }
 
