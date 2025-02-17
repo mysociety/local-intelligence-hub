@@ -95,7 +95,11 @@ from utils.postcodesIO import (
 )
 from utils.procrastinate import ProcrastinateQueuePriority
 from utils.py import batched, ensure_list, get, is_maybe_id
-from utils.statistics import StatisticalDataType, merge_column_types
+from utils.statistics import (
+    StatisticalDataType,
+    get_materialized_view_column_name,
+    merge_column_types,
+)
 
 User = get_user_model()
 
@@ -1673,9 +1677,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             # Add all the parsed_json keys as columns
             column_exprs = []
             for column, type in column_types.items():
+                db_safe_column = get_materialized_view_column_name(column)
                 column_sql = pgsql.SQL(
                     "(parsed_json->>{})::" + type.get_database_type() + " as {}"
-                ).format(pgsql.Literal(column), pgsql.Identifier(f"data_{column}"))
+                ).format(pgsql.Literal(column), pgsql.Identifier(db_safe_column))
                 column_exprs.append(column_sql)
             # Only include GenericData for the current ExternalDataSource
             from_expr = pgsql.SQL(
