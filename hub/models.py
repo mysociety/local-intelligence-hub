@@ -1642,10 +1642,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def update_field_definition_types(
         self, column_types: dict[str, StatisticalDataType]
     ) -> None:
+        processed_fields = []
         for field in self.field_definitions:
             field["type"] = column_types.get(
                 field["value"], StatisticalDataType.UNKNOWN
             ).value
+            processed_fields.append(field["value"])
+        for column, type in column_types.items():
+            if column not in processed_fields:
+                self.field_definitions.append(
+                    {"value": column, "label": column, "type": type.value}
+                )
         await self.asave()
 
     def refresh_materialized_view(self, column_types: dict[str, StatisticalDataType]):

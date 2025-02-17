@@ -136,7 +136,10 @@ def parse_str_as_number(x: str) -> int | float | None:
         return int(x)
     except ValueError:
         try:
-            return float(x)
+            v = float(x)
+            # Don't allow Infinity – can't do stats with it anyway
+            if v < float("inf") and v > float("-inf"):
+                return v
         except ValueError:
             pass
     return None
