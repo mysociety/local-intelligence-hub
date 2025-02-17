@@ -1656,6 +1656,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         await self.asave()
 
     def refresh_materialized_view(self, column_types: dict[str, StatisticalDataType]):
+        """
+        Creates and refreshes a materialized view for this dataset that creates columns
+        for each key of the .json field, typed by statistics.parse_json_and_types
+        (these types are also stored on the source's field definitions).
+
+        The view is dropped at the start of the import_all() process in case the data
+        types or our implementation has changed.
+        """
         logger.info(f"Refreshing materialized view for {self} ({self.id})")
         with connection.cursor() as cursor:
             # Create a materialized view with the GenericData id and postcode_data columns
