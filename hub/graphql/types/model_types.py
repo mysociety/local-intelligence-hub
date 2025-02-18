@@ -5,9 +5,9 @@ from enum import Enum
 from typing import List, Optional, Union
 
 from django.conf import settings
+from django.contrib.gis.geos import Polygon
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
-from django.contrib.gis.geos import Polygon
 
 import pandas as pd
 import procrastinate.contrib.django.models
@@ -20,6 +20,7 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.queryset import CONFIG_KEY, StrawberryDjangoQuerySetConfig
 from wagtail.models import Site
 
 from hub import models
@@ -30,7 +31,6 @@ from hub.enrichment.sources.electoral_commission_postcode_lookup import (
 )
 from hub.graphql.context import HubDataLoaderContext
 from hub.graphql.dataloaders import (
-    FieldDataLoaderFactory,
     FieldReturningListDataLoaderFactory,
     ReverseFKWithFiltersDataLoaderFactory,
     filterable_dataloader_resolver,
@@ -290,7 +290,7 @@ class AreaTypeFilter:
     ) -> tuple[QuerySet, Q]:
         queryset = queryset
         # convert analytical area type to list of mapit types
-        lih_area_types = postcodes_io_key_to_lih_map[value]
+        lih_area_types = postcodes_io_key_to_lih_map[value.value]
         filters = {"code__in": lih_area_types}
         return queryset, Q(**filters)
 
@@ -305,13 +305,19 @@ class AreaFilter:
     def analytical_area_type(
         self, queryset: QuerySet, value: AnalyticalAreaType, prefix: str
     ) -> tuple[QuerySet, Q]:
-        qs = queryset.filter(Q(area_type__code__in=postcodes_io_key_to_lih_map[value]))
+        qs = queryset.filter(
+            Q(area_type__code__in=postcodes_io_key_to_lih_map[value.value])
+        )
 
         area_with_generation = (
             qs.filter(mapit_generation_high__isnull=False)
             .order_by("-mapit_generation_high")
             .first()
         )
+
+        # Mark query as already optimized, to avoid removing Geometry fields from the select
+        # which then need to be refetched from the database
+        setattr(qs, CONFIG_KEY, StrawberryDjangoQuerySetConfig(optimized=True))
 
         if area_with_generation:
             return qs, Q(
@@ -695,16 +701,6 @@ class GroupedDataCount:
     area_data: Optional[strawberry.Private[Area]] = None
     is_percentage: bool = False
 
-    @strawberry_django.field
-    async def gss_area(self, info: Info) -> Optional[Area]:
-        if self.area_data is not None:
-            return self.area_data
-        filters = self.area_type_filter.query_filter if self.area_type_filter else {}
-        loader = FieldDataLoaderFactory.get_loader_class(
-            models.Area, field="gss", filters=filters
-        )
-        return await loader(context=info.context).load(self.gss)
-
 
 @strawberry_django.type(models.GenericData, filters=CommonDataFilter)
 class GroupedData:
@@ -712,16 +708,6 @@ class GroupedData:
     gss: Optional[str]
     area_data: Optional[strawberry.Private[Area]] = None
     imported_data: Optional[JSON] = None
-
-    @strawberry_django.field
-    async def gss_area(self, info: Info) -> Optional[Area]:
-        if self.area_data is not None:
-            return self.area_data
-        filters = self.area_type_filter.query_filter if self.area_type_filter else {}
-        loader = FieldDataLoaderFactory.get_loader_class(
-            models.Area, field="gss", filters=filters
-        )
-        return await loader(context=info.context).load(self.gss)
 
 
 class GroupedDataCountForSource(GroupedDataCount):
@@ -823,11 +809,7 @@ class Analytics:
             postcode_io_key=analytical_area_type.value,
             layer_ids=layer_ids,
         )
-        area_type_filter = stats.postcodeIOKeyAreaTypeLookup[analytical_area_type]
-        return [
-            GroupedDataCount(**datum, area_type_filter=area_type_filter)
-            for datum in data
-        ]
+        return [GroupedDataCount(**datum) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_of_areas(
@@ -863,10 +845,7 @@ class Analytics:
             postcode_io_key=analytical_area_type.value,
             layer_ids=layer_ids,
         )
-        area_type_filter = stats.postcodeIOKeyAreaTypeLookup[analytical_area_type]
-        return [
-            GroupedData(**datum, area_type_filter=area_type_filter) for datum in data
-        ]
+        return [GroupedData(**datum) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_for_area(
@@ -877,8 +856,7 @@ class Analytics:
         )
         if len(res) == 0:
             return None
-        area_type_filter = stats.postcodeIOKeyAreaTypeLookup[analytical_area_type]
-        return GroupedDataCount(**res[0], area_type_filter=area_type_filter)
+        return GroupedDataCount(**res[0])
 
 
 @strawberry.type
@@ -1261,7 +1239,9 @@ class MapLayer:
     icon_image: Optional[str] = dict_key_field()
     mapbox_paint: Optional[JSON] = dict_key_field()
     mapbox_layout: Optional[JSON] = dict_key_field()
-    inspector_type: Optional[str] = dict_key_field(default=InspectorDisplayType.Table)
+    inspector_type: Optional[str] = dict_key_field(
+        default=InspectorDisplayType.Table.value
+    )
     inspector_config: Optional[JSON] = dict_key_field()
 
     @strawberry_django.field
