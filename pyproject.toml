@@ -36,7 +36,7 @@ strawberry-graphql = "0.258.0"
 pandas = "^2.2.1"
 django-choices-field = "^2.3.0"
 httpx = "^0.27.0"
-strawberry-django-dataloaders = "^0.2.0"
+strawberry-django-dataloaders = { git = "https://github.com/commonknowledge/strawberry-django-dataloaders.git", rev = "aad2b441f4f6258248695f3d9d49948121355edf" }
 sentry-sdk = {extras = [], version = "^2.20.0"}
 mailchimp3 = "^3.0.21"
 scalene = "^1.5.38"
