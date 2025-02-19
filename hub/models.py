@@ -2805,6 +2805,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             member_ids = members
         else:
             member_ids = [self.get_record_id(member) for member in members]
+        member_ids = [str(x) for x in member_ids if x is not None]
 
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
@@ -2847,6 +2848,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             member_ids = members
         else:
             member_ids = [self.get_record_id(member) for member in members]
+        member_ids = [str(x) for x in member_ids if x is not None]
 
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
