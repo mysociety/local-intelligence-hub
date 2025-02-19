@@ -1312,6 +1312,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "type": "object",
             "properties": {
                 "value": {"type": "string", "required": True},
+                "type": {"type": "string"},
                 "label": {"type": "string"},
                 "description": {"type": "string"},
                 "external_id": {"type": "string"},
