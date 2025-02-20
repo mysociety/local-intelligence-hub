@@ -14,6 +14,7 @@ from django.test import TestCase
 from asgiref.sync import sync_to_async
 
 from hub import models
+from hub.tests.fixtures.regional_health_data_for_tests import regional_health_data
 
 
 class TestExternalDataSource:
@@ -982,4 +983,151 @@ class TestUploadedCSVSource(TestExternalDataSource, TestCase):
                     "General Health: Very bad health",
                 ]
             ),
+        )
+
+
+class TestUploadedCSVSourceUsingRowNumberAsID(TestExternalDataSource, TestCase):
+    fixtures = ["regions"]
+    file_path_from_root = "hub/fixtures/regional_health_data_for_tests.csv"
+
+    def create_test_source(self, name="My test CSV file"):
+        path = Path(os.path.join(settings.BASE_DIR, self.file_path_from_root))
+
+        with path.open(mode="rb") as f:
+            file = File(f, name=path.name)
+
+            self.source: models.UploadedCSVSource = (
+                models.UploadedCSVSource.objects.create(
+                    name=name,
+                    data_type=models.EditableGoogleSheetsSource.DataSourceType.AREA_STATS,
+                    organisation=self.organisation,
+                    # !!!
+                    use_row_number_as_id=True,
+                    # !!!
+                    geocoding_config={
+                        "type": models.UploadedCSVSource.GeographyTypes.AREA,
+                        "components": [
+                            {
+                                "field": "geography",
+                                "metadata": {"lih_area_type__code": "EER"},
+                            }
+                        ],
+                    },
+                    spreadsheet_file=file,
+                )
+            )
+            return self.source
+
+    async def test_fetch_one(self):
+        # Get a single ID from the freshly read CSV
+        # Test this functionality
+        record = await self.source.fetch_one(1)
+        # Check
+        self.assertEqual(
+            self.source.get_record_field(record, "geography"),
+            "North East",
+        )
+
+    async def test_fetch_many(self):
+        rows = await self.source.fetch_many([1, 2])
+
+        # 10 rows
+        self.assertEqual(len(rows), 2)
+        # Find data matching
+        expected_rows = [
+            {"geography": "North East", "geography code": "E12000001"},
+            {"geography": "North West", "geography code": "E12000002"},
+        ]
+        for expected in expected_rows:
+            record = next(
+                filter(
+                    lambda r: self.source.get_record_field(r, "geography code")
+                    == expected["geography code"],
+                    rows,
+                ),
+                None,
+            )
+            self.assertIsNotNone(record)
+            self.assertEqual(
+                self.source.get_record_field(record, "geography"),
+                expected["geography"],
+            )
+
+    async def test_fetch_all(self):
+        rows = await self.source.fetch_all()
+
+        # 10 rows
+        self.assertEqual(len(rows), 10)
+        # Check fetch generates valid dictionaries (via DF ingest)
+        for record in rows:
+            self.assertEqual(
+                self.source.get_record_id(record),
+                record.get("geography code", None),
+            )
+
+    async def test_import_async(self):
+        self.skipTest("Not implemented")
+
+    async def test_import_many(self):
+        # Confirm the database is empty
+        original_count = await self.source.get_import_data().acount()
+        self.assertEqual(original_count, 0)
+
+        # Add some test data
+        records = list(await self.source.fetch_all())
+        fetch_count = len(records)
+        self.assertGreaterEqual(fetch_count, 10)
+
+        # Check that the import is storing it all
+        await self.source.import_many(
+            [self.source.get_record_id(record) for record in records]
+        )
+
+        # Test GenericData queryset
+        import_data = self.source.get_import_data()
+        import_count = await import_data.acount()
+        self.assertEqual(import_count, fetch_count)
+        data = await sync_to_async(list)(import_data.select_related("area"))
+
+        # Check the data has been geocoded
+        west_midlands = next(
+            filter(
+                lambda r: r.json.get("geography code") == "E12000005",
+                data,
+            ),
+            None,
+        )
+        self.assertEqual(5, west_midlands.data)
+        self.assertIsNotNone(west_midlands.postcode_data)
+        self.assertIsNotNone(west_midlands.area.name)
+
+        # Test dataframe
+        df = await sync_to_async(self.source.get_imported_dataframe)()
+        self.assertEqual(len(df.index), import_count)
+        self.assertEqual(len(df.index), import_count)
+        self.assertIn("geography", list(df.columns.values))
+
+    async def test_analytics_counts(self):
+        self.skipTest("Not implemented")
+
+
+class TestDatabaseJSONSource(TestUploadedCSVSource, TestCase):
+    def create_test_source(self, name="My test DB JSON file"):
+        self.source = models.DatabaseJSONSource.objects.create(
+            name=name,
+            organisation=self.organisation,
+            data=regional_health_data.copy(),
+            id_field="geography code",
+        )
+
+
+class TestDatabaseJSONSourceUsingRowNumberAsID(
+    TestUploadedCSVSourceUsingRowNumberAsID, TestCase
+):
+    def create_test_source(self, name="My test DB JSON file"):
+        self.source = models.DatabaseJSONSource.objects.create(
+            name=name,
+            organisation=self.organisation,
+            data=regional_health_data.copy(),
+            use_row_number_as_id=True,
         )

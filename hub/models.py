@@ -3176,7 +3176,16 @@ class DatabaseJSONSource(ExternalDataSource):
 
     @cached_property
     def df(self):
-        return pd.DataFrame(self.data).set_index(self.id_field, drop=False)
+        df = pd.DataFrame(self.data).set_index(self.id_field, drop=False)
+        if self.use_row_number_as_id:
+            if self.id_field != self.internal_id_key:
+                self.id_field = self.internal_id_key
+                self.save()
+                self.refresh_from_db()
+            df.index.name = self.internal_id_key
+        else:
+            df = df.set_index(self.id_field, drop=False)
+        return df
 
     def load_field_definitions(self):
         # get all keys from self.data
@@ -3258,6 +3267,8 @@ class UploadedCSVSource(ExternalDataSource):
     )
     id_field = models.TextField()
     delimiter = models.TextField(default=",", blank=True)
+    use_row_number_as_id = models.BooleanField(default=False)
+    internal_id_key = "__mapped__row_index"
 
     # Pandas report on columns
     # TODO: replace this with DataTypes: https://linear.app/commonknowledge/issue/MAP-871/design-for-describing-data-source-data-types-entities
@@ -3265,6 +3276,11 @@ class UploadedCSVSource(ExternalDataSource):
 
     class Meta:
         verbose_name = "Uploaded CSV file"
+
+    def save(self, *args, **kwargs):
+        if self.use_row_number_as_id:
+            self.id_field = self.internal_id_key
+        return super().save(*args, **kwargs)
 
     @classmethod
     def get_deduplication_field_names(self) -> list[str]:
@@ -3302,7 +3318,15 @@ class UploadedCSVSource(ExternalDataSource):
             )
         if df is None:
             raise ValueError("Could not load CSV file")
-        return df.set_index(self.id_field, drop=False)
+        if self.use_row_number_as_id:
+            if self.id_field != self.internal_id_key:
+                self.id_field = self.internal_id_key
+                self.save()
+                self.refresh_from_db()
+            df.index.name = self.internal_id_key
+        else:
+            df = df.set_index(self.id_field, drop=False)
+        return df
 
     def get_columns_from_file(self):
         return self.df.columns.tolist()
