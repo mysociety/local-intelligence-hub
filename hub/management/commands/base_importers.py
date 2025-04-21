@@ -299,7 +299,7 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
             self.stdout.write(self.message)
 
         for index, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
-            if type(self.cons_row) is int:
+            if isinstance(self.cons_row, int):
                 cons = row.iloc[self.cons_row]
             else:
                 cons = row[self.cons_row]
@@ -404,7 +404,6 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
     do_not_convert = True
 
     def process_data(self, df: pd.DataFrame):
-
         if not self._quiet:
             self.stdout.write(f"{self.message} ({self.area_type})")
 
@@ -464,7 +463,6 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
         self.data_type = list(self.data_types.values())[0]
 
     def get_dataframe(self):
-
         if not self.data_file.exists():
             return None
 

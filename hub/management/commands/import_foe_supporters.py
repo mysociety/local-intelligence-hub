@@ -56,7 +56,6 @@ class Command(BaseImportFromDataFrameCommand):
     }
 
     def get_dataframe(self):
-
         if self.data_file.exists() is False:
             return None
 

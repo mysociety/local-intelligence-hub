@@ -39,7 +39,6 @@ class Command(BaseConstituencyGroupListImportCommand):
     group_data_type = "wildlife_trusts_regions"
 
     def get_df(self):
-
         if not self.data_file.exists():
             return None
 

@@ -53,7 +53,6 @@ class Command(BaseImportFromDataFrameCommand):
     del data_sets["constituency_cc_high"]["defaults"]["subcategory"]
 
     def get_dataframe(self):
-
         if not self.data_file.exists():
             return None
 
