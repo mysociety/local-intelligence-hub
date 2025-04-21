@@ -182,7 +182,7 @@ class Command(BaseImportFromDataFrameCommand):
             self.stderr.write(f"Unknown file type: {self.file_type}")
             return None
 
-        if type(self.get_cons_col()) != int:
+        if not isinstance(self.get_cons_col(), int):
             df = df.astype({self.get_cons_col(): "str"})
         return df
 
@@ -207,7 +207,6 @@ class Command(BaseImportFromDataFrameCommand):
         *args,
         **options,
     ):
-
         if list_imports:
             self.list_all_imports()
         elif import_name is None:
