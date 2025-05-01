@@ -324,7 +324,7 @@ class TestAreaPage(TestCase):
         self.assertEqual(context["area"].name, "South Borsetshire")
 
         mp = context["mp"]
-        self.assertEqual(len(mp.keys()), 9)
+        self.assertEqual(len(mp.keys()), 10)
         self.assertEqual(mp["person"].name, "James Madeupname")
         self.assertEqual(mp["parlid"], "1")
         self.assertEqual(mp["mp_election_majority"], 1234)
@@ -369,7 +369,7 @@ class TestAreaPage(TestCase):
         self.assertEqual(context["area"].name, "South Borsetshire")
 
         mp = context["mp"]
-        self.assertEqual(len(mp.keys()), 5)
+        self.assertEqual(len(mp.keys()), 6)
         self.assertEqual(mp["person"].name, "James Madeupname")
         self.assertIsNone(mp.get("parlid", None))
         self.assertEqual(mp["mp_election_majority"], 1234)
@@ -451,7 +451,7 @@ class TestAreaPage(TestCase):
 
         context = response.context
         mp = context["mp"]
-        self.assertEqual(len(mp.keys()), 8)
+        self.assertEqual(len(mp.keys()), 9)
         self.assertIsNone(mp.get("mp_election_majority"))
 
         places = context["categories"]["place"]

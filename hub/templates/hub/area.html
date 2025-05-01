@@ -257,7 +257,41 @@
                   {% endif %}
                 </div>
 
-                <div class="card dataset-card area-data--md area-data--featured">
+              {% if mp.stances %}
+                <div class="card dataset-card area-data--lg area-data--featured">
+                    <div class="card-header">
+                        <h3 class="h5">Stances</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Topic</th>
+                                    <th scope="col">Position</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                              {% for stance in mp.stances %}
+                                <tr>
+                                    <td><a href="{{ stance.url }}">{{ stance.name }}</a></td>
+                                    <td>{{ stance.vote }}</td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                        </table>
+                   </div>
+                   <div class="card-footer">
+                       <p class="card-text">
+                          Data from <a href="https://votes.theyworkforyou.com{% if mp.twfyid %}/person/{{ mp.twfyid }}{% endif %}">TheyWorkForYou Votes</a>.
+                        {% if mp.twfyid %}
+                          <a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid }}">See this MP’s full voting record on TheyWorkForYou.</a>
+                        {% endif %}
+                        </p>
+                   </div>
+                </div>
+              {% endif %}
+
+                <div class="card dataset-card area-data--lg {% if not mp.stances %}area-data--featured{% endif %}">
                     <div class="card-header">
                         <h3 class="h5">Votes and EDMs</h3>
                     </div>
@@ -287,7 +321,7 @@
                    </div>
                    <div class="card-footer">
                        <p class="card-text">
-                          Data from UK Parliament. Votes and EDMs selected for indicating support for climate/nature movement. 
+                          Data from <a href="https://members-api.parliament.uk/api/Members/{{ mp.parlid }}/">UK Parliament</a> and <a href="https://www.theyworkforyou.com/{% if mp.twfyid %}/mp/{{ mp.twfyid }}{% endif %}">TheyWorkForYou</a>. Votes and EDMs selected for indicating support for climate/nature movement.
                         {% if mp.twfyid %}
                           <a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid }}">See this MP’s full voting record on TheyWorkForYou.</a>
                         {% endif %}
@@ -322,7 +356,7 @@
                    </div>
                    <div class="card-footer">
                        <p class="card-text">
-                          Data from TheyWorkForYou. Recent Written Answers to questions submitted by the MP to departments relevant to climate and nature.
+                          Data from <a href="https://www.theyworkforyou.com/{% if mp.twfyid %}/mp/{{ mp.twfyid }}{% endif %}">TheyWorkForYou</a>. Recent Written Answers to questions submitted by the MP to departments relevant to climate and nature.
                         {% if mp.twfyid %}
                           <a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid }}">See this MP’s full record on TheyWorkForYou.</a>
                         {% endif %}
@@ -332,7 +366,7 @@
                 {% endif %}
               {% endif %}
 
-                <div class="card dataset-card area-data--sm {% comment %} TODO: dataset-card--favourite? {% endcomment %} area-data--featured">
+                <div class="card dataset-card area-data--sm area-data--featured">
                     <div class="card-header">
                         <h3 class="h5">{{ mp.mp_last_elected|date:"Y"}} majority</h3>
                         {% comment %} TODO: "Favourite" button {% endcomment %}
@@ -346,7 +380,7 @@
                         <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.parlid }}/LatestElectionResult">Data from UK Parliament.</a> This information is provided because in the UK electoral system, political parties and the media will be paying more attention to marginal seats and therefore the voices of the people within them can have greater national impact.</p>
                     </div>
                 </div>
-                <div class="card dataset-card area-data--sm {% comment %} TODO: dataset-card--favourite? {% endcomment %}">
+                <div class="card dataset-card area-data--sm">
                     <div class="card-header">
                         <h3 class="h5">Date elected</h3>
                         {% comment %} TODO: "Favourite" button {% endcomment %}

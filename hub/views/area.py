@@ -282,6 +282,18 @@ class AreaView(BaseAreaView):
                 for item in votes
             ]
 
+            stances = data.filter(data_type__data_set__subcategory="stance")
+            if is_non_member:
+                stances = stances.exclude(data_type__data_set__is_public=False)
+            context["mp"]["stances"] = [
+                {
+                    "name": item.data_type.data_set.label,
+                    "vote": item.value(),
+                    "url": "https://www.theyworkforyou.com/",
+                }
+                for item in stances
+            ]
+
             support = data.filter(data_type__data_set__subcategory="supporter")
             if is_non_member:
                 support = support.exclude(data_type__data_set__is_public=False)
