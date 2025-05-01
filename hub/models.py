@@ -124,6 +124,11 @@ class ShaderMixin:
         "purple-500": "#6F42C1",
         "gray-500": "#ADB5BD",
         "gray-300": "#DEE2E6",
+        "green-500": "#4CAF50",
+        "green-400": "#66BB6A",
+        "green-300": "#81C784",
+        "orange-400": "#FFA726",
+        "orange-300": "#FFB74D",
     }
 
     @property
