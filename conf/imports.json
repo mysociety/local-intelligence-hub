@@ -1122,5 +1122,133 @@
         "replace_columns": ["Seat ID", "Seat name", "Winner", "blank", "labour", "conservative", "reform", "lib-dem", "green", "snp", "plaid", "other", "max_other"]
       }
     ]
+  },
+  {
+    "name":"persuasion_onshore_wind_farm_polling",
+    "label":"Persuasion Onshore wind farm support",
+    "description":"MRP polling for Persuasion",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"opinion",
+    "subcategory":null,
+    "release_date":"July 2024",
+    "source_label":"FocalData for Persuasion",
+    "source":"https://persuasionuk.org/opinion-maps/net-zero",
+    "source_type":"csv",
+    "data_url":"https://docs.google.com/spreadsheets/d/1JTqXelwMTWTsiAVf-O-JXCJK5VsaXK5C/edit?gid=1838289050#gid=1838289050",
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":null,
+    "fill_blanks":true,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_persuasion_uk_polling.xlsx",
+    "uses_gss":true,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": true,
+    "gss_map": {
+      "S14000006": "S14000107",
+      "S14000008": "S14000108",
+      "S14000010": "S14000109",
+      "S14000058": "S14000111",
+      "S14000040": "S14000110"
+    },
+    "data_types": [
+      {
+        "name":"persuasion_onshore_wind_support",
+        "label":"Support Onshore Wind",
+        "order": 1,
+        "sheet":"onshore_wind_farm",
+        "constituency_col":"ons_code",
+        "data_col":"support"
+      },
+      {
+        "name":"persuasion_onshore_wind_neither",
+        "label":"Neither support nor oppose Onshore Wind",
+        "order": 1,
+        "sheet":"onshore_wind_farm",
+        "constituency_col":"ons_code",
+        "data_col":"neither"
+      },
+      {
+        "name":"persuasion_onshore_wind_oppose",
+        "label":"Oppose Onshore Wind",
+        "order": 1,
+        "sheet":"onshore_wind_farm",
+        "constituency_col":"ons_code",
+        "data_col":"oppose"
+      }
+    ]
+  },
+  {
+    "name":"persuasion_net_zero_polling",
+    "label":"Persuasion Net Zero speed",
+    "description":"MRP polling for Persuasion",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"opinion",
+    "subcategory":null,
+    "release_date":"July 2024",
+    "source_label":"FocalData for Persuasion",
+    "source":"https://persuasionuk.org/opinion-maps/net-zero",
+    "source_type":"csv",
+    "data_url":"https://docs.google.com/spreadsheets/d/1JTqXelwMTWTsiAVf-O-JXCJK5VsaXK5C/edit?gid=1838289050#gid=1838289050",
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":null,
+    "fill_blanks":true,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_persuasion_uk_polling.xlsx",
+    "uses_gss":true,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": true,
+    "gss_map": {
+      "S14000006": "S14000107",
+      "S14000008": "S14000108",
+      "S14000010": "S14000109",
+      "S14000058": "S14000111",
+      "S14000040": "S14000110"
+    },
+    "data_types": [
+      {
+        "name":"persuasion_net_zero_speed_faster",
+        "label":"Go Faster",
+        "order": 1,
+        "sheet":"climate_speed",
+        "constituency_col":"ons_code",
+        "data_col":"Go faster"
+      },
+      {
+        "name":"persuasion_net_zero_speed_neither",
+        "label":"Neither Faster nor Slower",
+        "order": 1,
+        "sheet":"climate_speed",
+        "constituency_col":"ons_code",
+        "data_col":"neither"
+      },
+      {
+        "name":"persuasion_net_zero_speed_slower",
+        "label":"Go Slower",
+        "order": 1,
+        "sheet":"climate_speed",
+        "constituency_col":"ons_code",
+        "data_col":"Go slower"
+      }
+    ]
   }
 ]
