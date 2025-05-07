@@ -6,7 +6,7 @@ import pandas as pd
 
 from hub.models import AreaData, DataSet
 
-from .base_importers import BaseImportFromDataFrameCommand
+from .base_importers import BaseImportFromDataFrameCommand, party_shades
 
 YELLOW = "\033[33m"
 RED = "\033[31m"
@@ -108,6 +108,10 @@ class Command(BaseImportFromDataFrameCommand):
         self.header_row = row.get("header_row")
         self.sheet = row.get("sheet")
         self.data_types = {}
+        self.replace_columns = row.get("replace_columns")
+        self.data_type = row["data_type"]
+        self.data_col = row["data_col"]
+        self.party_data = row.get("party_data")
 
         if row["uses_gss"]:
             self.uses_gss = True
@@ -166,11 +170,20 @@ class Command(BaseImportFromDataFrameCommand):
             if row.get("order"):
                 defaults["order"] = row["order"]
 
+        if self.party_data:
+            defaults["options"] = [
+                {"title": party, "shader": shade}
+                for party, shade in party_shades.items()
+            ]
+
         self.data_sets = {import_name: {"defaults": defaults, "col": row["data_col"]}}
 
     def get_dataframe(self):
         if self.file_type == "csv":
-            df = pd.read_csv(self.data_file)
+            kwargs = {}
+            if self.header_row:
+                kwargs["header"] = int(self.header_row)
+            df = pd.read_csv(self.data_file, **kwargs)
         elif self.file_type == "excel":
             kwargs = {}
             if self.sheet:
@@ -182,8 +195,23 @@ class Command(BaseImportFromDataFrameCommand):
             self.stderr.write(f"Unknown file type: {self.file_type}")
             return None
 
-        if type(self.get_cons_col()) != int:
+        if self.replace_columns:
+            if len(df.columns) > len(self.replace_columns):
+                df = df.iloc[:, 0 : len(self.replace_columns)]
+            df.columns = self.replace_columns
+
+        if not isinstance(self.get_cons_col(), int):
             df = df.astype({self.get_cons_col(): "str"})
+        if self.data_type == "percent":
+            if isinstance(df.dtypes[[self.data_col]], (str, object)):
+                df[self.data_col] = (
+                    df[self.data_col].astype(str).str.strip("%").astype(float)
+                )
+        elif self.data_type == "integer":
+            df = df.astype({self.data_col: "int"})
+
+        if self.party_data:
+            df[self.data_col] = df[self.data_col].map(lambda x: self.party_data[x])
         return df
 
     def get_row_data(self, row, conf):
