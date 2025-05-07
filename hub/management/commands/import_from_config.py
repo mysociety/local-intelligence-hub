@@ -112,6 +112,7 @@ class Command(BaseImportFromDataFrameCommand):
         self.data_type = row["data_type"]
         self.data_col = row["data_col"]
         self.party_data = row.get("party_data")
+        self.gss_map = row.get("gss_map")
 
         if row["uses_gss"]:
             self.uses_gss = True
@@ -212,6 +213,9 @@ class Command(BaseImportFromDataFrameCommand):
 
         if self.party_data:
             df[self.data_col] = df[self.data_col].map(lambda x: self.party_data[x])
+
+        if self.gss_map:
+            df[self.cons_col] = df[self.cons_col].map(lambda x: self.gss_map.get(x, x))
         return df
 
     def get_row_data(self, row, conf):
