@@ -365,6 +365,7 @@ class AreaView(BaseAreaView):
             "rspb_reserves_count": "rspb_reserves",
             "council_net_zero_date": "council_net_zero_details",
             "council_action_scorecard_total": "council_action_scorecard_sections",
+            "hope_not_hate_winner_mrp_jan_2025": "hope_not_hate_cons_mrp_jan_2025",
         }
 
         context["is_related_category"] = context["related_categories"].values()

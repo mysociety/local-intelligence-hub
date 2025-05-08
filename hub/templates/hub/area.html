@@ -419,6 +419,8 @@
               {% for dataset in categories.opinion %}
                 {% if dataset.is_range and dataset.data|length > 9 %}
                 <div class="card dataset-card area-data--lg {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %}area-data--featured{% endif %}">
+                {% elif dataset.related_category and dataset.related_category.is_range %}
+                <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
                 {% elif dataset.is_range and dataset.data|length > 2 or dataset.data_type == "json" %}
                 <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %}area-data--featured{% endif %}">
                 {% else %}
@@ -457,6 +459,9 @@
                       {% else %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}%</p>
                         <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
+                      {% endif %}
+                      {% if dataset.related_category and dataset.related_category.is_range %}
+                        {% include 'hub/area/_range_data.html' with dataset=dataset.related_category %}
                       {% endif %}
                     </div>
                     <div class="card-footer">
