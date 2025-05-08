@@ -113,6 +113,7 @@ class Command(BaseImportFromDataFrameCommand):
         self.data_col = row["data_col"]
         self.party_data = row.get("party_data")
         self.gss_map = row.get("gss_map")
+        self.fill_blanks = row.get("fill_blanks", False)
 
         if row["uses_gss"]:
             self.uses_gss = True
@@ -204,12 +205,16 @@ class Command(BaseImportFromDataFrameCommand):
         if not isinstance(self.get_cons_col(), int):
             df = df.astype({self.get_cons_col(): "str"})
         if self.data_type == "percent":
+            if self.fill_blanks:
+                df[self.data_col] = df[self.data_col].fillna(0)
             if isinstance(df.dtypes[[self.data_col]], (str, object)):
                 df[self.data_col] = (
                     df[self.data_col].astype(str).str.strip("%").astype(float)
                 )
         elif self.data_type == "integer":
             df = df.astype({self.data_col: "int"})
+            if self.fill_blanks:
+                df[self.data_col] = df[self.data_col].fillna(0)
 
         if self.party_data:
             df[self.data_col] = df[self.data_col].map(lambda x: self.party_data[x])
