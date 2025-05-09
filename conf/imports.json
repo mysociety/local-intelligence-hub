@@ -1124,7 +1124,7 @@
     ]
   },
   {
-    "name":"persuasion_onshore_wind_farm_polling",
+    "name":"persuasion_jul_2024_onshore_wind",
     "label":"Would you support or oppose the building of onshore wind farms in your area?",
     "description":"",
     "data_type":"percent",
@@ -1162,7 +1162,7 @@
     },
     "data_types": [
       {
-        "name":"persuasion_onshore_wind_support",
+        "name":"persuasion_jul_2024_onshore_wind_support",
         "label":"Support",
         "order": 1,
         "sheet":"onshore_wind_farm",
@@ -1170,15 +1170,15 @@
         "data_col":"support"
       },
       {
-        "name":"persuasion_onshore_wind_neither",
-        "label":"Neither support nor oppose",
+        "name":"persuasion_jul_2024_onshore_wind_neither",
+        "label":"Neither",
         "order": 1,
         "sheet":"onshore_wind_farm",
         "constituency_col":"ons_code",
         "data_col":"neither"
       },
       {
-        "name":"persuasion_onshore_wind_oppose",
+        "name":"persuasion_jul_2024_onshore_wind_oppose",
         "label":"Oppose",
         "order": 1,
         "sheet":"onshore_wind_farm",
@@ -1188,7 +1188,7 @@
     ]
   },
   {
-    "name":"persuasion_net_zero_polling",
+    "name":"persuasion_jul_2024_net_zero_speed",
     "label":"Should government policy on climate change be going faster or slower?",
     "description":"",
     "data_type":"percent",
@@ -1226,7 +1226,7 @@
     },
     "data_types": [
       {
-        "name":"persuasion_net_zero_speed_faster",
+        "name":"persuasion_jul_2024_net_zero_speed_faster",
         "label":"Go faster",
         "order": 1,
         "sheet":"climate_speed",
@@ -1234,20 +1234,404 @@
         "data_col":"Go faster"
       },
       {
-        "name":"persuasion_net_zero_speed_neither",
-        "label":"Neither faster nor slower",
+        "name":"persuasion_jul_2024_net_zero_speed_neither",
+        "label":"Neither",
         "order": 1,
         "sheet":"climate_speed",
         "constituency_col":"ons_code",
         "data_col":"neither"
       },
       {
-        "name":"persuasion_net_zero_speed_slower",
+        "name":"persuasion_jul_2024_net_zero_speed_slower",
         "label":"Go slower",
         "order": 1,
         "sheet":"climate_speed",
         "constituency_col":"ons_code",
         "data_col":"Go slower"
+      }
+    ]
+  },
+  {
+    "name":"persuasion_jul_2024_borrowing",
+    "label":"Would you be comfortable with government debt going up, provided that money were invested in the economy and local services?",
+    "description":"",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"opinion",
+    "subcategory":null,
+    "release_date":"July 2024",
+    "source_label":"FocalData MRP polling for Persuasion UK.",
+    "source":"https://persuasionuk.org/opinion-maps/borrow-to-invest",
+    "source_type":"csv",
+    "data_url":"https://docs.google.com/spreadsheets/d/1JTqXelwMTWTsiAVf-O-JXCJK5VsaXK5C/edit?gid=1838289050#gid=1838289050",
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":null,
+    "fill_blanks":true,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_persuasion_uk_polling.xlsx",
+    "uses_gss":true,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": true,
+    "gss_map": {
+      "S14000006": "S14000107",
+      "S14000008": "S14000108",
+      "S14000010": "S14000109",
+      "S14000058": "S14000111",
+      "S14000040": "S14000110"
+    },
+    "data_types": [
+      {
+        "name":"persuasion_jul_2024_borrowing_comfortable",
+        "label":"Comfortable",
+        "order": 1,
+        "sheet":"borrowing",
+        "constituency_col":"ons_code",
+        "data_col":"comfortable"
+      },
+      {
+        "name":"persuasion_jul_2024_borrowing_neither",
+        "label":"Neither",
+        "order": 1,
+        "sheet":"borrowing",
+        "constituency_col":"ons_code",
+        "data_col":"neither"
+      },
+      {
+        "name":"persuasion_jul_2024_borrowing_not_comfortable",
+        "label":"Uncomfortable",
+        "order": 1,
+        "sheet":"borrowing",
+        "constituency_col":"ons_code",
+        "data_col":"not_comfortable"
+      }
+    ]
+  },
+  {
+    "name":"persuasion_jul_2024_taxes",
+    "label":"Would you be comfortable paying more tax, if it meant more money were invested in public services like the NHS and education?",
+    "description":"",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"opinion",
+    "subcategory":null,
+    "release_date":"July 2024",
+    "source_label":"FocalData MRP polling for Persuasion UK.",
+    "source":"https://persuasionuk.org/opinion-maps/taxation",
+    "source_type":"csv",
+    "data_url":"https://docs.google.com/spreadsheets/d/1JTqXelwMTWTsiAVf-O-JXCJK5VsaXK5C/edit?gid=1838289050#gid=1838289050",
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":null,
+    "fill_blanks":true,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_persuasion_uk_polling.xlsx",
+    "uses_gss":true,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": true,
+    "gss_map": {
+      "S14000006": "S14000107",
+      "S14000008": "S14000108",
+      "S14000010": "S14000109",
+      "S14000058": "S14000111",
+      "S14000040": "S14000110"
+    },
+    "data_types": [
+      {
+        "name":"persuasion_jul_2024_taxes_comfortable",
+        "label":"Comfortable",
+        "order": 1,
+        "sheet":"taxes",
+        "constituency_col":"ons_code",
+        "data_col":"comfortable"
+      },
+      {
+        "name":"persuasion_jul_2024_taxes_neither",
+        "label":"Neither",
+        "order": 1,
+        "sheet":"taxes",
+        "constituency_col":"ons_code",
+        "data_col":"neither"
+      },
+      {
+        "name":"persuasion_jul_2024_taxes_not_comfortable",
+        "label":"Uncomfortable",
+        "order": 1,
+        "sheet":"taxes",
+        "constituency_col":"ons_code",
+        "data_col":"not_comfortable"
+      }
+    ]
+  },
+  {
+    "name":"persuasion_jul_2024_immigration",
+    "label":"Do you think immigration has generally enriched or undermined society?",
+    "description":"",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"opinion",
+    "subcategory":null,
+    "release_date":"July 2024",
+    "source_label":"FocalData MRP polling for Persuasion UK.",
+    "source":"https://persuasionuk.org/opinion-maps/borrow-to-invest",
+    "source_type":"csv",
+    "data_url":"https://docs.google.com/spreadsheets/d/1JTqXelwMTWTsiAVf-O-JXCJK5VsaXK5C/edit?gid=1838289050#gid=1838289050",
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":null,
+    "fill_blanks":true,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_persuasion_uk_polling.xlsx",
+    "uses_gss":true,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": true,
+    "gss_map": {
+      "S14000006": "S14000107",
+      "S14000008": "S14000108",
+      "S14000010": "S14000109",
+      "S14000058": "S14000111",
+      "S14000040": "S14000110"
+    },
+    "data_types": [
+      {
+        "name":"persuasion_jul_2024_immigration_enriched",
+        "label":"Enriched",
+        "order": 1,
+        "sheet":"immigration",
+        "constituency_col":"ons_code",
+        "data_col":"enriched"
+      },
+      {
+        "name":"persuasion_jul_2024_immigration_neither",
+        "label":"Neither",
+        "order": 1,
+        "sheet":"immigration",
+        "constituency_col":"ons_code",
+        "data_col":"neither"
+      },
+      {
+        "name":"persuasion_jul_2024_immigration_undermined",
+        "label":"Undermined",
+        "order": 1,
+        "sheet":"immigration",
+        "constituency_col":"ons_code",
+        "data_col":"undermined"
+      }
+    ]
+  },
+  {
+    "name":"persuasion_jul_2024_eu",
+    "label":"Should the UK have closer economic ties with the EU, even if that means giving up some sovereignty?",
+    "description":"",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"opinion",
+    "subcategory":null,
+    "release_date":"July 2024",
+    "source_label":"FocalData MRP polling for Persuasion UK.",
+    "source":"https://persuasionuk.org/opinion-maps/uk-eu",
+    "source_type":"csv",
+    "data_url":"https://docs.google.com/spreadsheets/d/1JTqXelwMTWTsiAVf-O-JXCJK5VsaXK5C/edit?gid=1838289050#gid=1838289050",
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":null,
+    "fill_blanks":true,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_persuasion_uk_polling.xlsx",
+    "uses_gss":true,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": true,
+    "gss_map": {
+      "S14000006": "S14000107",
+      "S14000008": "S14000108",
+      "S14000010": "S14000109",
+      "S14000058": "S14000111",
+      "S14000040": "S14000110"
+    },
+    "data_types": [
+      {
+        "name":"persuasion_jul_2024_eu_closer",
+        "label":"Closer ties with the EU",
+        "order": 1,
+        "sheet":"eu_sovereignty_economy",
+        "constituency_col":"ons_code",
+        "data_col":"should"
+      },
+      {
+        "name":"persuasion_jul_2024_eu_neither",
+        "label":"Neither",
+        "order": 1,
+        "sheet":"eu_sovereignty_economy",
+        "constituency_col":"ons_code",
+        "data_col":"neither"
+      },
+      {
+        "name":"persuasion_jul_2024_eu_not_closer",
+        "label":"No closer with the EU",
+        "order": 1,
+        "sheet":"eu_sovereignty_economy",
+        "constituency_col":"ons_code",
+        "data_col":"should_not"
+      }
+    ]
+  },
+  {
+    "name":"persuasion_jul_2024_housebuilding",
+    "label":"Would you support or oppose the building of new housing in your area?",
+    "description":"",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"opinion",
+    "subcategory":null,
+    "release_date":"July 2024",
+    "source_label":"FocalData MRP polling for Persuasion UK.",
+    "source":"https://persuasionuk.org/opinion-maps/housebuilding",
+    "source_type":"csv",
+    "data_url":"https://docs.google.com/spreadsheets/d/1JTqXelwMTWTsiAVf-O-JXCJK5VsaXK5C/edit?gid=1838289050#gid=1838289050",
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":null,
+    "fill_blanks":true,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_persuasion_uk_polling.xlsx",
+    "uses_gss":true,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": true,
+    "gss_map": {
+      "S14000006": "S14000107",
+      "S14000008": "S14000108",
+      "S14000010": "S14000109",
+      "S14000058": "S14000111",
+      "S14000040": "S14000110"
+    },
+    "data_types": [
+      {
+        "name":"persuasion_jul_2024_housebuilding_support",
+        "label":"Support",
+        "order": 1,
+        "sheet":"new_housing",
+        "constituency_col":"ons_code",
+        "data_col":"support"
+      },
+      {
+        "name":"persuasion_jul_2024_housebuilding_neither",
+        "label":"Neither",
+        "order": 1,
+        "sheet":"new_housing",
+        "constituency_col":"ons_code",
+        "data_col":"neither"
+      },
+      {
+        "name":"persuasion_jul_2024_housebuilding_oppose",
+        "label":"Oppose",
+        "order": 1,
+        "sheet":"new_housing",
+        "constituency_col":"ons_code",
+        "data_col":"oppose"
+      }
+    ]
+  },
+  {
+    "name":"persuasion_jul_2024_welfare",
+    "label":"Should the welfare system be expanded to help more people, or reduced to make benefits harder to get?",
+    "description":"",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"opinion",
+    "subcategory":null,
+    "release_date":"July 2024",
+    "source_label":"FocalData MRP polling for Persuasion UK.",
+    "source":"https://persuasionuk.org/opinion-maps/welfare",
+    "source_type":"csv",
+    "data_url":"https://docs.google.com/spreadsheets/d/1JTqXelwMTWTsiAVf-O-JXCJK5VsaXK5C/edit?gid=1838289050#gid=1838289050",
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":null,
+    "fill_blanks":true,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_persuasion_uk_polling.xlsx",
+    "uses_gss":true,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": true,
+    "gss_map": {
+      "S14000006": "S14000107",
+      "S14000008": "S14000108",
+      "S14000010": "S14000109",
+      "S14000058": "S14000111",
+      "S14000040": "S14000110"
+    },
+    "data_types": [
+      {
+        "name":"persuasion_jul_2024_welfare_expanded",
+        "label":"Expanded",
+        "order": 1,
+        "sheet":"welfare",
+        "constituency_col":"ons_code",
+        "data_col":"Welfare is too ungenerous"
+      },
+      {
+        "name":"persuasion_jul_2024_welfare_neither",
+        "label":"Neither",
+        "order": 1,
+        "sheet":"welfare",
+        "constituency_col":"ons_code",
+        "data_col":"Neither"
+      },
+      {
+        "name":"persuasion_jul_2024_welfare_reduced",
+        "label":"Reduced",
+        "order": 1,
+        "sheet":"welfare",
+        "constituency_col":"ons_code",
+        "data_col":"Welfare is too generous"
       }
     ]
   }
