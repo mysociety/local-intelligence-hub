@@ -2,6 +2,8 @@ from django.contrib import admin
 
 from hub.models import (
     Area,
+    AreaAction,
+    AreaActionData,
     AreaData,
     DataSet,
     DataType,
@@ -162,6 +164,24 @@ class AreaAdmin(admin.ModelAdmin):
         "gss",
         "mapit_id",
     )
+
+
+@admin.register(AreaAction)
+class AreaActionAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "label",
+    )
+    search_fields = ("name",)
+
+
+@admin.register(AreaActionData)
+class AreaActionDataAdmin(admin.ModelAdmin):
+    list_display = (
+        "area",
+        "action",
+    )
+    search_fields = ("area__name",)
 
 
 @admin.register(Person)

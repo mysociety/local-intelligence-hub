@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timezone
 from operator import itemgetter
 
@@ -6,6 +7,8 @@ from django.db import models
 from django.db.models import Avg, FloatField, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
 from django.dispatch import receiver
+from django.template import TemplateDoesNotExist
+from django.template.loader import get_template
 
 from django_jsonform.models.fields import JSONField
 
@@ -701,6 +704,36 @@ class AreaOverlap(models.Model):
 
 class AreaData(CommonData):
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
+
+
+class AreaAction(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    label = models.CharField(max_length=200, blank=True, null=True)
+    last_update = models.DateTimeField(auto_now=True)
+    start_date = models.DateTimeField(blank=True, null=True)
+    end_date = models.DateTimeField(blank=True, null=True)
+    is_public = models.BooleanField(default=False)
+    visible = models.BooleanField(default=False)
+    template = models.CharField(max_length=200, blank=True, null=True)
+
+    def get_template(self):
+        template = "hub/area/_base_action.html"
+        if self.template and re.fullmatch(r"^_[a-z0-9_\-]*\.html$", self.template):
+            try:
+                template = f"hub/area/action_templates/{self.template}"
+                get_template(template)
+            except TemplateDoesNotExist:
+                template = "hub/area/_base_action.html"
+
+        return template
+
+
+class AreaActionData(models.Model):
+    action = models.ForeignKey(AreaAction, on_delete=models.CASCADE)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    data = models.JSONField(blank=True, null=True)
+    markdown = models.TextField(blank=True, null=True)
 
 
 class PersonArea(models.Model):
