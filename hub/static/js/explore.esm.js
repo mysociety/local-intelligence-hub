@@ -24,14 +24,14 @@ const app = createApp({
       area_type_changed: false, // so we know to reload the map
       area_types: [{
         slug: "WMC23",
-        label: "New constituencies",
+        label: "Westminster constituencies",
         short_label: "constituencies",
-        description: "These are the constituencies in which parliamentary candidates are currently standing for election."
+        description: "These are the areas currently represented by MPs in the UK Parliament, since the July 2024 general election."
       }, {
         slug: "WMC",
-        label: "Old constituencies",
+        label: "Old (pre-2024) Westminster constituencies",
         short_label: "constituencies",
-        description: "These are the constituencies that were represented by MPs in UK Parliament until May 2024."
+        description: "These constituencies were represented by MPs in UK Parliament up until the July 2024 general election."
       }, {
         slug: "STC",
         label: "Single Tier councils",
