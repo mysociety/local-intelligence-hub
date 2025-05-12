@@ -80,6 +80,10 @@
     </div>
 </div>
 
+{% for action in actions %}
+  {% include action.action.get_template with action=action%}
+{% endfor %}
+
 <div class="area-tabs">
     <div class="container">
         <ul class="nav nav-tabs">

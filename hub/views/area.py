@@ -10,6 +10,7 @@ from django.views.generic import DetailView, TemplateView, View
 from hub.mixins import TitleMixin
 from hub.models import (
     Area,
+    AreaActionData,
     AreaData,
     AreaType,
     DataSet,
@@ -401,6 +402,12 @@ class AreaView(BaseAreaView):
         context["categories"] = categories
         context["indexed_categories"] = indexed_categories
         context["user_is_member"] = not is_non_member
+
+        actions = AreaActionData.objects.filter(
+            area=context["area"], action__visible=True
+        ).select_related("action")
+        if actions:
+            context["actions"] = actions
 
         return context
 
