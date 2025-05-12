@@ -968,7 +968,7 @@
   },
   {
     "name":"hope_not_hate_winner_mrp_jan_2025",
-    "label":"Predicted winner at next general election",
+    "label":"Predicted winning party at next general election",
     "description":"",
     "data_type":"text",
     "is_range":false,
@@ -1009,7 +1009,7 @@
     "data_types": [
       {
         "name":"hope_not_hate_winner_mrp_jan_2025",
-        "label":"HOPE not hate January 2025 MRP predicted winner",
+        "label":"Predicted winning party at next general election",
         "order": 1,
         "header_row":2,
         "constituency_col":"Seat ID",
