@@ -48,6 +48,10 @@ class MapIt(object):
     geometry_url = "%s/area/%s.geojson?simplify_tolerance=0.001&api_key=%s"
     cache = {}
 
+    type_map = {
+        "WMC23": "WMC",
+    }
+
     def __init__(self, disable_cache=False):
         self.disable_cache = disable_cache
         self.base = settings.MAPIT_URL

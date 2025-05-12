@@ -424,7 +424,14 @@ class AreaSearchView(TemplateView):
             if kwargs.get("lon") and kwargs.get("lat"):
                 gss_codes = mapit.wgs84_point_to_gss_codes(kwargs["lon"], kwargs["lat"])
             elif kwargs.get("pc"):
-                gss_codes = mapit.postcode_point_to_gss_codes(kwargs["pc"])
+                if kwargs.get("area_type"):
+                    area_type = kwargs.get("area_type")
+                    gss_codes = mapit.postcode_point_to_gss_codes_with_type(
+                        kwargs["pc"]
+                    )
+                    gss_codes = [gss_codes[mapit.type_map.get(area_type, area_type)]]
+                else:
+                    gss_codes = mapit.postcode_point_to_gss_codes(kwargs["pc"])
 
             areas = Area.objects.filter(
                 gss__in=gss_codes, area_type__code__in=settings.AREA_SEARCH_AREA_CODES
@@ -445,6 +452,7 @@ class AreaSearchView(TemplateView):
         search = self.request.GET.get("search")
         lon = self.request.GET.get("lon")
         lat = self.request.GET.get("lat")
+        area_type = self.request.GET.get("area_type")
 
         if search is None and lat is None and lon is None:
             return context
@@ -459,7 +467,7 @@ class AreaSearchView(TemplateView):
             context["areas"] = areas
             context["error"] = error
         elif is_valid_postcode(search):
-            areas, error = self.get_areas_from_mapit(pc=search)
+            areas, error = self.get_areas_from_mapit(pc=search, area_type=area_type)
             context["areas"] = areas
             context["error"] = error
         elif search == "":

@@ -494,6 +494,22 @@ class TestAreaSearchPage(TestCase):
         self.assertContains(response, "Borsetshire East District Council")
         self.assertNotContains(response, "Borsetshire West")
 
+    @patch("utils.mapit.MapIt.postcode_point_to_gss_codes_with_type")
+    def test_postcode_lookup_with_area_type(self, mapit_areas):
+        mapit_areas.return_value = {
+            "WMC": "E10000005",
+            "DIS": "E10000101",
+            "CTY": "E10000002",
+        }
+
+        url = reverse("area_search")
+        response = self.client.get(
+            url, {"search": "SE17 3HE", "area_type": "WMC23"}, follow=True
+        )
+
+        self.assertRedirects(response, "/area/WMC23/New%20South%20Borsetshire")
+        self.assertTemplateUsed(response, "hub/area.html")
+
     @patch("utils.mapit.session.get")
     def test_bad_postcode(self, mapit_get):
         mock_response = MagicMock()
