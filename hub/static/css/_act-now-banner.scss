@@ -1,0 +1,66 @@
+.act-now-banner {
+    position: relative;
+    background: #ffc9ef;
+
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    a {
+        color: inherit; // pass WCAG AA contrast with pink
+    }
+
+    & > a {
+        display: block;
+        order: 1;
+
+        img {
+            max-width: 66%;
+            height: auto;
+        }
+    }
+
+    & > div {
+        padding: 1rem;
+    }
+
+    @include media-breakpoint-up(sm) {
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 0;
+
+        & > a {
+            order: 0;
+            flex: 0 0 auto;
+            width: 25%;
+
+            img {
+                max-width: 100%;
+            }
+        }
+
+        & > div {
+            flex: 1 1 auto;
+            padding-left: 0;
+        }
+
+        dl {
+            display: grid;
+            grid-template-columns: auto 1fr;  // First column shrinks to fit content, second column expands
+            gap: 0 1rem;
+        }
+    }
+
+    @include media-breakpoint-up(md) {
+        & > div {
+            padding: 1.5rem;
+            max-width: 42rem;
+        }
+    }
+
+    @include media-breakpoint-up(lg) {
+        & > div {
+            padding: 2rem;
+        }
+    }
+}

@@ -1,16 +1,24 @@
-<div class="py-4 py-lg-5">
+{% load static %}
+
+<div class="pb-4 pb-lg-5">
     <div class="container">
-        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div class="act-now-banner">
+            <a href="https://www.theclimatecoalition.org/act-now-change-forever"><img src="{% static 'img/act-now-change-forever.svg' %}" alt="Act Now Change Forever" loading="lazy"></a>
             <div>
-                <h3>{{ action.action.label }}</h3>
-
-
-                <ul>
-                    <li>Time: {{ action.data.time_slot }}</li>
-                    <li>Venue: {{ action.data.venue }}</li>
-                    <li>Address: {{ action.data.address }}</li>
-                    <li>Directions: {{ action.data.directions }}</li>
-                </ul>
+                <p class="fs-6 fw-bold">Get ready to join thousands of others on 9th July who will be meeting their MP to tell them to Act Now, and Change Forever.</p>
+                <p class="fs-7"><a href="https://www.theclimatecoalition.org/act-now-change-forever">Register your interest</a>, then write to your MP to ask them to meet you at this time and venue:</p>
+                <dl class="fs-6">
+                    <dt>Time</dt>
+                    <dd>{{ action.data.time_slot }} (arrive 30 minutes before!)</dd>
+                    <dt>Venue</dt>
+                    <dd>{{ action.data.venue }}</dd>
+                    <dt>Address</dt>
+                    <dd>{{ action.data.address }}</dd>
+                    <dt>Directions</dt>
+                    <dd>{{ action.data.directions }}</dd>
+                </dl>
+                <p class="fs-7">If for any reason we need to change the time or venue due to a request from the MP, we will let you know. You will not be able to meet with your MP <a href="https://www.theclimatecoalition.org/act-now-change-forever">unless you have registered</a>.</p>
+                <p class="fs-7 mb-0">You can <a href="https://www.theclimatecoalition.org/act-now-change-forever">visit the Act Now, Change Forever hub</a> for resources, guidance and training to help secure a meeting with your MP.</p>
             </div>
         </div>
     </div>
