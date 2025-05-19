@@ -719,6 +719,8 @@ class AreaAction(models.Model):
     start_date = models.DateTimeField(blank=True, null=True)
     end_date = models.DateTimeField(blank=True, null=True)
     is_public = models.BooleanField(default=False)
+    require_session = models.BooleanField(default=False)
+    passphrase = models.CharField(max_length=100, blank=True, null=True)
     visible = models.BooleanField(default=False)
     template = models.CharField(max_length=200, blank=True, null=True)
 
