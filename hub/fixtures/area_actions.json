@@ -1,0 +1,25 @@
+[
+  {
+    "model": "hub.areaaction",
+    "pk": 1,
+    "fields": {
+      "name": "action_one",
+      "description": "An Action",
+      "last_update": "2022-10-10T13:20:30+00:00",
+      "is_public": "True",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "hub.areaactiondata",
+    "pk": 1,
+    "fields": {
+      "action": 1,
+      "area": 1,
+      "data": {
+        "part": 1
+      }
+    }
+  }
+]
+

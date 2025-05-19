@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from hub.models import Area, DataSet, Person, PersonArea, UserDataSets
+from hub.models import Area, AreaAction, DataSet, Person, PersonArea, UserDataSets
 
 
 class Test404Page(TestCase):
@@ -456,6 +456,108 @@ class TestAreaPage(TestCase):
 
         places = context["categories"]["place"]
         self.assertEqual(len(places), 1)
+
+
+class TestAreaPageActions(TestCase):
+    fixtures = [
+        "areas.json",
+        "areas_23.json",
+        "mps.json",
+        "elections.json",
+        "area_data.json",
+        "area_actions.json",
+    ]
+
+    def test_area_page_actions(self):
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        self.assertEqual(len(context["actions"]), 1)
+
+    def test_area_page_action_non_visible(self):
+        action = AreaAction.objects.get(name="action_one")
+        action.visible = False
+        action.save()
+
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        self.assertIsNone(context.get("actions"))
+
+    def test_area_page_action_non_public(self):
+        action = AreaAction.objects.get(name="action_one")
+        action.is_public = False
+        action.save()
+
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        self.assertIsNone(context.get("actions"))
+
+        self.u = User.objects.create(username="user@example.com")
+        self.client.force_login(self.u)
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        self.assertEqual(len(context["actions"]), 1)
+
+    def test_area_page_action_override_non_public(self):
+        action = AreaAction.objects.get(name="action_one")
+        action.require_session = True
+        action.passphrase = "letmein"
+        action.is_public = False
+        action.save()
+
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        self.assertIsNone(context.get("actions"))
+
+        self.u = User.objects.create(username="user@example.com")
+        self.client.force_login(self.u)
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        self.assertIsNone(context.get("actions"))
+
+        response = self.client.get(f"{url}?area_action=letmein")
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        self.assertEqual(len(context["actions"]), 1)
+
+        self.client.logout()
+
+        response = self.client.get(f"{url}?area_action=letmein")
+        self.assertEqual(response.status_code, 200)
+        context = response.context
+        self.assertEqual(len(context["actions"]), 1)
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        context = response.context
+        self.assertEqual(len(context["actions"]), 1)
+
+        action.passphrase = None
+        action.save()
+
+        response = self.client.get(f"{url}?area_action=letmein")
+        self.assertEqual(response.status_code, 200)
+        context = response.context
+        self.assertIsNone(context.get("actions"))
 
 
 class TestAreaSearchPage(TestCase):

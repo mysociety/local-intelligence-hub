@@ -418,6 +418,19 @@ class AreaView(BaseAreaView):
         actions = AreaActionData.objects.filter(
             area=context["area"], action__visible=True
         ).select_related("action")
+
+        if self.request.session.get("area_action"):
+            actions = actions.filter(
+                action__require_session=True,
+                action__passphrase=self.request.session["area_action"],
+            )
+        elif is_non_member:
+            actions = actions.filter(
+                action__require_session=False, action__is_public=True
+            )
+        else:
+            actions = actions.filter(action__require_session=False)
+
         if actions:
             context["actions"] = actions
 
