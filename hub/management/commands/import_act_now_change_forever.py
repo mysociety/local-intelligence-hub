@@ -54,7 +54,8 @@ class Command(BaseCommand):
             name="2025_tcc_act_now",
             defaults={
                 "label": "Act Now, Change Forever",
-                "is_public": True,
+                "require_session": True,
+                "is_public": False,
                 "visible": False,
                 "template": "_act_now.html",
             },
