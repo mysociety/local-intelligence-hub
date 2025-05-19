@@ -12,6 +12,9 @@ class RecordLastSeenMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        if request.GET.get("area_action"):
+            request.session["area_action"] = request.GET["area_action"]
+
         if request.user.is_authenticated:
             user = request.user
             if not hasattr(user, "userproperties"):
