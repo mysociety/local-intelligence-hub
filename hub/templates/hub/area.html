@@ -168,10 +168,16 @@
 
                 <div class="card dataset-card area-data--md">
                     <div class="card-header">
-                        <h3 class="h5">MP profiles</h3>
+                        <h3 class="h5">MP contact details</h3>
                     </div>
                     <div class="card-body">
                         <ul class="list-unstyled mb-0">
+                          {% if mp.mp_email %}
+                            <li class="mb-2 text-truncate">Email: <a href="mailto:{{ mp.mp_email }}">{{ mp.mp_email }}</a></li>
+                          {% endif %}
+                          {% if mp.mp_phone %}
+                            <li class="mb-2 text-truncate">Phone: <a href="tel:{{ mp.mp_phone }}">{{ mp.mp_phone }}</a></li>
+                          {% endif %}
                           {% if mp.twitter %}
                             <li class="mb-2 text-truncate">Twitter: <a href="https://twitter.com/{{ mp.twitter }}">@{{ mp.twitter }}</a></li>
                           {% endif %}
@@ -182,7 +188,7 @@
                             <li class="mb-2 text-truncate"><a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid}}">TheyWorkForYou voting record</a></li>
                           {% endif %}
                           {% if mp.parlid %}
-                            <li class="mb-2 text-truncate"><a href="https://members.parliament.uk/member/{{ mp.parlid }}/contact">Parliament contact info</a></li>
+                            <li class="mb-2 text-truncate"><a href="https://members.parliament.uk/member/{{ mp.parlid }}/contact">Parliament profile</a></li>
                           {% endif %}
                           {% if mp.wikipedia %}
                             <li class="mb-2 text-truncate"><a href="{{ mp.wikipedia }}">Wikipedia page</a></li>
@@ -190,7 +196,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                        <p class="card-text">Data collated by The Climate Coalition.</p>
+                        <p class="card-text">Data from <a href="https://members-api.parliament.uk/">UK Parliament</a>, <a href="https://www.theyworkforyou.com">TheyWorkForYou</a>, and <a href="https://en.wikipedia.org/">Wikipedia</a>.</p>
                     </div>
                 </div>
 

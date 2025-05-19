@@ -332,6 +332,8 @@ class AreaView(BaseAreaView):
                     "parlid",
                     "twfyid",
                     "wikipedia",
+                    "mp_email",
+                    "mp_phone",
                 ],
             ).select_related("data_type")
 
