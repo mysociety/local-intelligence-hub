@@ -29,7 +29,7 @@ class Command(BaseCommand):
                 "Venue",
                 "Address",
                 "Where to go",
-                "Room",
+                "Arrival time",
             ],
         )
         df.columns = [
@@ -38,7 +38,7 @@ class Command(BaseCommand):
             "venue",
             "address",
             "directions",
-            "room",
+            "arrival_time",
         ]
         df = df.fillna("")
         return df
@@ -72,6 +72,7 @@ class Command(BaseCommand):
                         "venue": row["venue"],
                         "address": row["address"],
                         "directions": row["directions"],
+                        "arrival_time": row["arrival_time"],
                     },
                 },
             )

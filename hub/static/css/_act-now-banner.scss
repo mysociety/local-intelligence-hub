@@ -46,7 +46,7 @@
 
         dl {
             display: grid;
-            grid-template-columns: auto 1fr;  // First column shrinks to fit content, second column expands
+            grid-template-columns: 7em 1fr;
             gap: 0 1rem;
         }
     }
@@ -54,7 +54,7 @@
     @include media-breakpoint-up(md) {
         & > div {
             padding: 1.5rem;
-            max-width: 42rem;
+            max-width: 44rem;
         }
     }
 
