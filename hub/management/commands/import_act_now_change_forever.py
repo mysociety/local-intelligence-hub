@@ -25,7 +25,7 @@ class Command(BaseCommand):
             self.data_file,
             usecols=[
                 "gss_code",
-                "Constituency Time Slot",
+                "MP Meeting Time",
                 "Venue",
                 "Address",
                 "Where to go",
