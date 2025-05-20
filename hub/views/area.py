@@ -486,6 +486,8 @@ class AreaSearchView(TemplateView):
         lat = self.request.GET.get("lat")
         area_type = self.request.GET.get("area_type")
 
+        context["area_type"] = area_type
+
         if search is None and lat is None and lon is None:
             return context
 

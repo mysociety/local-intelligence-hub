@@ -15,6 +15,7 @@
                     {% include 'hub/includes/icons/search.html' %}
                     <input name="search" value="{{ search|default_if_none:"" }}" type="search" id="search" class="form-control form-control-lg {% if error %}is-invalid{% endif %}">
                 </div>
+                <input name="area_type" value="{{ area_type|default_if_none:""}}" type="hidden" id="area_type">
               {% if error %}
                 <div class="invalid-feedback d-block fs-6 mt-2">
                     {{ error }}
