@@ -56,7 +56,7 @@ class Command(BaseCommand):
                 "label": "Act Now, Change Forever",
                 "require_session": True,
                 "is_public": False,
-                "visible": False,
+                "visible": True,
                 "template": "_act_now.html",
             },
         )
