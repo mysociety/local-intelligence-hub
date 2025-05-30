@@ -11,18 +11,34 @@ class Command(BaseCommand):
     help = "Import Act Now Change Forever data"
     data_file = settings.BASE_DIR / "data" / "act_now.csv"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-q", "--quiet", action="store_true", help="Silence progress bars."
+        )
+
+        parser.add_argument(
+            "-u", "--url", action="store", help="URL to Google Sheets CSV export."
+        )
+
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
+        self.csv_url = options.get("url")
         self.import_results()
 
     def get_df(self):
-
-        if not self.data_file.exists():
-            self.stderr.write(f"Data file {self.data_file} does not exist")
+        if self.csv_url:
+            dataframe_source_filepath = self.csv_url
+        elif self.data_file.exists():
+            dataframe_source_filepath = self.data_file
+        else:
+            self.stderr.write(f"No URL provided, and data file {self.data_file} does not exist")
             return None
 
+        if not self._quiet:
+            self.stdout.write(f"Reading Mass Lobby details from {dataframe_source_filepath}")
+
         df = pd.read_csv(
-            self.data_file,
+            dataframe_source_filepath,
             usecols=[
                 "gss_code",
                 "MP Meeting Time",
@@ -60,7 +76,7 @@ class Command(BaseCommand):
                 "template": "_act_now.html",
             },
         )
-        for _, row in tqdm(df.iterrows()):
+        for _, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
             a = Area.objects.get(gss=row["gss_code"], area_type__code="WMC23")
 
             AreaActionData.objects.update_or_create(
