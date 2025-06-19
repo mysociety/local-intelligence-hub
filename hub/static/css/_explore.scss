@@ -142,6 +142,10 @@ $osm-sea-blue: rgb(168, 212, 243);
             top: 0;
             box-shadow: 0 0 10px rgba($black, 0.1), 0 1px 0 $border-color;
         }
+
+        td {
+            white-space: pre-line; // show linebreaks in multi-line values (eg: MP job_titles)
+        }
     }
 }
 
