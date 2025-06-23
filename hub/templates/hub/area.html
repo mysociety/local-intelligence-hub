@@ -104,10 +104,10 @@
               </li>
             {% endif %}
             <li class="nav-item">
-                <a class="nav-link" href="#opinion">Public opinion</a>
+                <a class="nav-link" href="#place">Place</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#place">Place</a>
+                <a class="nav-link" href="#opinion">Public opinion</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="#movement">Movement</a>
@@ -427,90 +427,6 @@
         </section>
         {% endif %}
 
-        {% if categories.opinion %}
-        <section class="mb-5 mb-lg-6 area-section" id="opinion">
-            <h2 class="mb-3 text-primary">Public opinion</h2>
-            <div class="area-data-grid">
-
-              {% for dataset in categories.opinion %}
-                {% if dataset.is_range and dataset.data|length > 9 %}
-                <div class="card dataset-card area-data--lg {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %}area-data--featured{% endif %}">
-                {% elif dataset.related_category and dataset.related_category.is_range %}
-                <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
-                {% elif dataset.is_range and dataset.data|length > 2 or dataset.data_type == "json" %}
-                <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %}area-data--featured{% endif %}">
-                {% else %}
-                <div class="card dataset-card area-data--sm {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %}area-data--featured{% endif %}">
-                {% endif %}
-                    <div class="card-header">
-                        <h3 class="h5">{{ dataset.label }}</h3>
-                      {% if user.is_authenticated %}
-                        {% include "hub/area/_favourite.html" with dataset=dataset %}
-                      {% endif %}
-                    </div>
-                    <div class="card-body">
-                      {% if dataset.data_type == "json" %}
-                        {% include 'hub/area/_json_data.html' with dataset=dataset %}
-                      {% elif dataset.data_type == "text" %}
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|safe }}</p>
-                      {% elif dataset.is_range and dataset.data|length > 0 %}
-                        <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
-                          <thead>
-                              <tr>
-                                  <th scope="col"></th>
-                                  <th scope="col" data-color="#068670">This area</th>
-                                  <th scope="col" data-color="#ced4da">National average</th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                            {% for row in dataset.data %}
-                              <tr>
-                                <th>{{ row.label }}</th>
-                                <td>{{ row.value|floatformat }}%</td>
-                                <td>{{ row.average|floatformat }}%</td>
-                              </tr>
-                              {% endfor %}
-                          </tbody>
-                        </table>
-                      {% else %}
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}%</p>
-                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
-                      {% endif %}
-                      {% if dataset.related_category and dataset.related_category.is_range %}
-                        {% include 'hub/area/_range_data.html' with dataset=dataset.related_category %}
-                      {% endif %}
-                    </div>
-                    <div class="card-footer">
-                      <p class="card-text">
-                          <a href="{{ dataset.source_url }}">{{ dataset.source_name }}</a>
-                        {% if dataset.auto_conversion_disclaimer %}
-                          <a href="{% url 'future_constituencies' %}">{{ dataset.auto_conversion_disclaimer|safe }}</a>
-                        {% endif %}
-                        {% if dataset.description %}
-                          {{ dataset.description }}
-                        {% endif %}
-                        {% if dataset.release_date %}
-                          Updated {{ dataset.release_date }}.
-                        {% endif %}
-                        {% if not dataset.is_public %}
-                          <strong class="text-danger">Not to be publicly shared.</strong>
-                        {% endif %}
-                     </p>
-
-                    </div>
-                </div>
-              {% endfor %}
-            </div>
-
-            <div class="area-data-more">
-                <a href="#opinion">
-                    More public opinion data
-                    {% include "hub/includes/icons/chevron-right.html" %}
-                </a>
-            </div>
-        </section>
-        {% endif %}
-
         {% if categories.place %}
         <section class="mb-5 mb-lg-6 area-section" id="place">
             <h2 class="mb-3 text-primary">Place</h2>
@@ -648,6 +564,89 @@
         </section>
         {% endif %}
 
+        {% if categories.opinion %}
+        <section class="mb-5 mb-lg-6 area-section" id="opinion">
+            <h2 class="mb-3 text-primary">Public opinion</h2>
+            <div class="area-data-grid">
+
+              {% for dataset in categories.opinion %}
+                {% if dataset.is_range and dataset.data|length > 9 %}
+                <div class="card dataset-card area-data--lg {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %}area-data--featured{% endif %}">
+                {% elif dataset.related_category and dataset.related_category.is_range %}
+                <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
+                {% elif dataset.is_range and dataset.data|length > 2 or dataset.data_type == "json" %}
+                <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %}area-data--featured{% endif %}">
+                {% else %}
+                <div class="card dataset-card area-data--sm {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %}area-data--featured{% endif %}">
+                {% endif %}
+                    <div class="card-header">
+                        <h3 class="h5">{{ dataset.label }}</h3>
+                      {% if user.is_authenticated %}
+                        {% include "hub/area/_favourite.html" with dataset=dataset %}
+                      {% endif %}
+                    </div>
+                    <div class="card-body">
+                      {% if dataset.data_type == "json" %}
+                        {% include 'hub/area/_json_data.html' with dataset=dataset %}
+                      {% elif dataset.data_type == "text" %}
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|safe }}</p>
+                      {% elif dataset.is_range and dataset.data|length > 0 %}
+                        <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
+                          <thead>
+                              <tr>
+                                  <th scope="col"></th>
+                                  <th scope="col" data-color="#068670">This area</th>
+                                  <th scope="col" data-color="#ced4da">National average</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                            {% for row in dataset.data %}
+                              <tr>
+                                <th>{{ row.label }}</th>
+                                <td>{{ row.value|floatformat }}%</td>
+                                <td>{{ row.average|floatformat }}%</td>
+                              </tr>
+                              {% endfor %}
+                          </tbody>
+                        </table>
+                      {% else %}
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}%</p>
+                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
+                      {% endif %}
+                      {% if dataset.related_category and dataset.related_category.is_range %}
+                        {% include 'hub/area/_range_data.html' with dataset=dataset.related_category %}
+                      {% endif %}
+                    </div>
+                    <div class="card-footer">
+                      <p class="card-text">
+                          <a href="{{ dataset.source_url }}">{{ dataset.source_name }}</a>
+                        {% if dataset.auto_conversion_disclaimer %}
+                          <a href="{% url 'future_constituencies' %}">{{ dataset.auto_conversion_disclaimer|safe }}</a>
+                        {% endif %}
+                        {% if dataset.description %}
+                          {{ dataset.description }}
+                        {% endif %}
+                        {% if dataset.release_date %}
+                          Updated {{ dataset.release_date }}.
+                        {% endif %}
+                        {% if not dataset.is_public %}
+                          <strong class="text-danger">Not to be publicly shared.</strong>
+                        {% endif %}
+                     </p>
+
+                    </div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="area-data-more">
+                <a href="#opinion">
+                    More public opinion data
+                    {% include "hub/includes/icons/chevron-right.html" %}
+                </a>
+            </div>
+        </section>
+        {% endif %}
 
         <section class="mb-5 mb-lg-6 area-section" id="movement">
             <h2 class="mb-3 text-primary">Movement</h2>
