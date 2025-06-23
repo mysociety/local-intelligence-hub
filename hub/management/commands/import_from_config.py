@@ -114,6 +114,8 @@ class Command(BaseImportFromDataFrameCommand):
         self.party_data = row.get("party_data")
         self.gss_map = row.get("gss_map")
         self.fill_blanks = row.get("fill_blanks", False)
+        self.url_prefix = row.get("url_prefix", False)
+        self.url_label = row.get("url_label", False)
 
         if row["uses_gss"]:
             self.uses_gss = True
@@ -225,6 +227,14 @@ class Command(BaseImportFromDataFrameCommand):
 
     def get_row_data(self, row, conf):
         value = super().get_row_data(row, conf)
+        if conf["defaults"]["data_type"] == "url":
+            label = conf["defaults"]["label"]
+            if self.url_prefix:
+                value = f"{self.url_prefix}{value}"
+            if self.url_label:
+                label = self.url_label
+
+            value = {"url": value, "link_text": label}
         if self.multiply_percentage:
             value = value * 100
 
