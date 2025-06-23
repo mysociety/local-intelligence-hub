@@ -85,3 +85,35 @@
         display: none;
     }
 }
+
+.area-data--act-now {
+    --bs-card-bg: #ffc9ef;
+    --bs-card-cap-bg: #ffc9ef;
+    --bs-link-color: var(--bs-body-color);
+
+    .card-body {
+        overflow: hidden;
+
+        & > a {
+            position: relative;
+            display: block;
+            padding: 1rem 0 1rem 45%;
+            text-decoration: none;
+
+            strong {
+                text-decoration: underline; // fake link
+            }
+        }
+
+        img {
+            position: absolute;
+            top: 0;
+            left: 1%;
+            width: 40%;
+            height: auto;
+            rotate: -2deg;
+            border: 1px solid #999;
+            box-shadow: $box-shadow;
+        }
+    }
+}

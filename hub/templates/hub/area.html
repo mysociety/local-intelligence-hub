@@ -540,15 +540,26 @@
               {% endif %}
 
               {% for dataset in categories.place %}
-                {% if dataset.is_range and dataset.data|length > 9 %}
-                <div class="card dataset-card area-data--lg {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
-                {% elif dataset.related_category and dataset.related_category.is_range %}
-                <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
-                {% elif dataset.is_range or dataset.data_type == "json" %}
-                <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
-                {% else %}
-                <div class="card dataset-card area-data--sm {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
-                {% endif %}
+                <div class="card dataset-card
+                  {% if dataset.is_range and dataset.data|length > 9 %}
+                    area-data--lg
+                  {% elif dataset.related_category and dataset.related_category.is_range %}
+                    area-data--md
+                  {% elif dataset.is_range or dataset.data_type == "json" %}
+                    area-data--md
+                  {% else %}
+                    area-data--sm
+                  {% endif %}
+                  {% if dataset.is_favourite or dataset.data.is_favourite %}
+                    dataset-card--favourite
+                  {% endif %}
+                  {% if dataset.featured %}
+                    area-data--featured
+                  {% endif %}
+                  {% if dataset.db_name == "foe_act_now" %}
+                    area-data--act-now
+                  {% endif %}
+                  ">
                     <div class="card-header">
                         <h3 class="h5">{{ dataset.label }}</h3>
                       {% if user.is_authenticated %}
@@ -560,6 +571,15 @@
                         {% include 'hub/area/_json_data.html' with dataset=dataset %}
                       {% elif dataset.data_type == "text" %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|safe }}</p>
+                      {% elif dataset.db_name == "foe_act_now" %}
+                        <a href="{{ dataset.data.value.url|safe }}" class="lh-sm" target="_blank">
+                            Find out what matters in {{ area.name }}
+                            <strong class="d-flex align-items-center gap-2 mt-3">
+                                {% include 'hub/includes/icons/download.html' with classes="flex-grow-0 flex-shrink-0" %}
+                                Download PDF
+                            </strong>
+                            <img src="{% static 'img/foe_act_now_briefing_preview.png' %}" alt="" loading="lazy">
+                        </a>
                       {% elif dataset.data_type == "url" %}
                         <a href="{{ dataset.data.value.url|safe }}" class="card-text lh-sm d-flex align-items-center">
                             {% include 'hub/includes/icons/document.html' with classes='flex-grow-0 flex-shrink-0 me-3' %}
