@@ -1634,5 +1634,47 @@
         "data_col":"Welfare is too generous"
       }
     ]
+  },
+  {
+    "name":"foe_act_now",
+    "label":"Act Now Change Forever constituency briefing",
+    "description":"",
+    "data_type":"url",
+    "is_range":false,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"June 2025",
+    "source_label":"Prepared by Friends of the Earth, for The Climate Coalition’s 2025 Act Now Change Forever campaign.",
+    "source":"https://www.theclimatecoalition.org/act-now-change-forever",
+    "source_type":"csv",
+    "data_url":"",
+    "table":"areadata",
+    "default_value":"",
+    "comparators":"default",
+    "exclude_countries":["scotland", "northern ireland"],
+    "unit_type":"raw",
+    "unit_distribution":null,
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":false,
+    "is_shadeable":false,
+    "data_file":"foe-act-now-filename-lookup.csv",
+    "uses_gss":true,
+    "do_not_delete":true,
+    "file_type":"csv",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "url_prefix": "/media/foe_act_now/",
+    "url_label": "Act Now Change Forever constituency briefing",
+    "multiply_percentage": false,
+    "data_types": [
+      {
+        "name":"foe_act_now",
+        "label":"Act Now Change Forever constituency briefing",
+        "order": 1,
+        "constituency_col":"pcon24",
+        "data_col":"FileName"
+      }
+    ]
   }
 ]
