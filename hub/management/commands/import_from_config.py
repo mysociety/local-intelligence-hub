@@ -167,6 +167,10 @@ class Command(BaseImportFromDataFrameCommand):
         if defaults["exclude_countries"] is None:
             defaults["exclude_countries"] = []
 
+        # don't use blank descriptions
+        if row.get("description") and row["description"] != "":
+            defaults["description"] = row["description"]
+
         if row["is_range"]:
             defaults["is_range"] = True
             defaults["data_set_name"] = row["data_set_name"]
