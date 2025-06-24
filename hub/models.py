@@ -167,7 +167,12 @@ class ShaderMixin:
 
         values, mininimum, maximum = self.shader_value(areas)
         legend = {}
-        if hasattr(self, "options"):
+        if self.is_boolean:
+            legend = {
+                "Yes": self.COLOUR_NAMES["green-500"],
+                "No": self.COLOUR_NAMES["red-500"],
+            }
+        elif hasattr(self, "options"):
             for option in self.options:
                 if option.get("shader", None) is not None:
                     legend[option["title"]] = self.COLOUR_NAMES.get(
@@ -196,7 +201,15 @@ class ShaderMixin:
         colours = {}
         for value in values:
             data = value.value()
-            if hasattr(self, "options"):
+            if self.is_boolean:
+                val = "Yes" if data else "No"
+                colours[value.gss] = {
+                    "colour": legend[val],
+                    "opacity": value.opacity(mininimum, maximum) or 0.7,
+                    "value": val,
+                    "label": self.label,
+                }
+            elif hasattr(self, "options"):
                 for option in self.options:
                     if option["title"] == data:
                         colours[value.gss] = {
@@ -229,12 +242,18 @@ class ShaderMixin:
 
     def shader_value(self, area):
         if self.shader_table == "areadata":
-            min_max = AreaData.objects.filter(
-                area__in=area, **self.shader_filter
-            ).aggregate(
-                max=models.Max(self.value_col),
-                min=models.Min(self.value_col),
-            )
+            if self.is_boolean:
+                shader_min = None
+                shader_max = None
+            else:
+                min_max = AreaData.objects.filter(
+                    area__in=area, **self.shader_filter
+                ).aggregate(
+                    max=models.Max(self.value_col),
+                    min=models.Min(self.value_col),
+                )
+                shader_min = min_max["min"]
+                shader_max = min_max["max"]
 
             data = (
                 AreaData.objects.filter(area__in=area, **self.shader_filter)
@@ -243,7 +262,7 @@ class ShaderMixin:
                     gss=models.F("area__gss"),
                 )
             )
-            return data, min_max["min"], min_max["max"]
+            return data, shader_min, shader_max
         else:
             pd = PersonData.objects.filter(
                 person__areas__in=area,
