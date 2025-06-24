@@ -10,14 +10,20 @@ class Filter:
             return "float"
         elif self.dataset.is_number:
             return "int"
+        elif self.dataset.is_boolean:
+            return "bool"
         else:
             return "data"
 
     def run(self, name, comparator, value):
+        format_string = "{0}__{1}__{2}"
+        if comparator is None:
+            comparator = ""
+            format_string = "{0}__{1}"
         exclude = comparator.startswith("not_")
         kwargs = {
             "{0}__data_type__name".format(self.dataset.table): name,
-            "{0}__{1}__{2}".format(
+            format_string.format(
                 self.dataset.table, self.column(), comparator.removeprefix("not_")
             ): value,
         }

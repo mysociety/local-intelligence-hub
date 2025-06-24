@@ -41,6 +41,14 @@ class FilterMixin:
             if "__in" in param:
                 value = value.split(",")
 
+            if "__true" in param:
+                comparator = None
+                value = True
+
+            if "__false" in param:
+                comparator = None
+                value = False
+
             try:
                 dataset = DataSet.objects.get(
                     name=name, areas_available=area_type, visible=True
@@ -152,7 +160,7 @@ class FilterMixin:
             query = f["dataset"].filter(
                 query,
                 name=f["name"],
-                comparator=f["comparator"],
+                comparator=f.get("comparator", None),
                 value=f["value"],
             )
 

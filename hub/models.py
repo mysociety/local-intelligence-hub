@@ -354,6 +354,12 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
             dict(field_lookup="not_in", title="is not one of"),
         ]
 
+    def boolean_comparators():
+        return [
+            dict(field_lookup="true", title="Yes"),
+            dict(field_lookup="false", title="No"),
+        ]
+
     OPTIONS_SCHEMA = {
         "type": "array",
         "items": {
