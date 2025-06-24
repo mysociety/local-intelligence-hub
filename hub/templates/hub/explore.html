@@ -73,7 +73,7 @@
                             <summary class="text-muted fs-8 fw-bold lh-1">About this dataset</summary>
                             <p class="text-muted fs-7 mb-0 mt-3">
                                 <template v-if="filter.description">${ filter.description }&nbsp;</template>
-                                <a href="${ filter.source }">${ filter.source_label }</a>
+                                <a :href="filter.source" target="_blank" title="Opens in a new window">${ filter.source_label }</a>
                                 <template v-if="filter.release_date"> Updated ${ filter.release_date }.</template>
                             </p>
                             <table v-if="filter.stats && Number.isFinite(filter.stats.min)" class="table table-sm table-bordered table-fixed text-center mb-0 mt-3 fs-7">
