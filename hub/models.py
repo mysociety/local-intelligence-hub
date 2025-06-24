@@ -87,6 +87,13 @@ class TypeMixin:
         return False
 
     @property
+    def is_boolean(self):
+        if self.data_type == "boolean":
+            return True
+
+        return False
+
+    @property
     def value_col(self):
         if self.is_date:
             return "date"
@@ -98,6 +105,8 @@ class TypeMixin:
             return "json"
         elif self.is_json:
             return "json"
+        elif self.is_boolean:
+            return "bool"
         else:
             return "data"
 
@@ -564,6 +573,7 @@ class CommonData(models.Model):
     float = models.FloatField(blank=True, null=True)
     int = models.IntegerField(blank=True, null=True)
     json = models.JSONField(blank=True, null=True)
+    bool = models.BooleanField(blank=True, null=True)
 
     def value(self):
         try:
@@ -579,6 +589,8 @@ class CommonData(models.Model):
                 return self.int
             elif self.is_json or self.is_url:
                 return self.json
+            elif self.is_boolean:
+                return self.bool
         except ValueError:
             return self.data
 
@@ -627,6 +639,10 @@ class CommonData(models.Model):
     @property
     def is_url(self):
         return self.data_type.is_url
+
+    @property
+    def is_boolean(self):
+        return self.data_type.is_boolean
 
     def _sorted_json(self, key):
         if not self.is_json:
