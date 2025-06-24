@@ -206,18 +206,23 @@ class BaseAreaImportCommand(BaseCommand):
                     "integer",
                     "float",
                     "percent",
+                    "boolean",
                 ]
                 and data_type.data_set.table == "areadata"
                 and data_type.data_set.fill_blanks
                 and datum_example is not None
             ):
+                value = 0
                 if datum_example.float:
                     key = "float"
                 elif datum_example.int:
                     key = "int"
+                elif datum_example.is_boolean:
+                    key = "bool"
+                    value = False
                 else:
                     key = "data"
-                defaults = {key: 0}
+                defaults = {key: value}
                 areas_with_values = [
                     areadata.area.name
                     for areadata in AreaData.objects.filter(data_type=data_type)
@@ -323,6 +328,8 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
                 for name, conf in self.data_sets.items():
                     if self.data_types[name].data_type in ["json", "url"]:
                         defaults = {"json": self.get_row_data(row, conf)}
+                    elif self.data_types[name].data_type == "boolean":
+                        defaults = {"bool": self.get_row_data(row, conf)}
                     else:
                         defaults = {"data": self.get_row_data(row, conf)}
 
