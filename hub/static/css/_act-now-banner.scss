@@ -1,6 +1,8 @@
 .act-now-banner {
     position: relative;
     background: #ffc9ef;
+    border-radius: $border-radius;
+    overflow: hidden;
 
     display: flex;
     flex-direction: column;
