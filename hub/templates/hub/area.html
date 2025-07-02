@@ -13,6 +13,10 @@
 
 {% block content %}
 
+{% if foe_act_now_dataset %}
+{% include "hub/area/action_templates/_act_now_bar.html" with foe_act_now_dataset=foe_act_now_dataset %}
+{% endif %}
+
 <div class="py-4 py-lg-5">
     <div class="container">
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
