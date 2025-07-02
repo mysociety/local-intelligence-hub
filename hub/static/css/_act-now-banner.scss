@@ -66,3 +66,31 @@
         }
     }
 }
+
+.act-now-cta-bar {
+    // Colours come from https://assets.nationbuilder.com/tcc/pages/2383/features/original/3_New.png?1750238318%27)
+    --bs-primary-rgb: 22, 15, 61; // Navy Blue
+    --bs-secondary-rgb: 0, 167, 125; // Green
+    --bs-warning-rgb: 252, 235, 0; // Yellow
+    
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    &__heading {
+        text-transform: uppercase;
+        margin-bottom: 0;
+    }
+    
+    @include media-breakpoint-up(lg) {
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+    }
+}
