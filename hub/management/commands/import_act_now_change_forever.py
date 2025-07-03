@@ -31,11 +31,15 @@ class Command(BaseCommand):
         elif self.data_file.exists():
             dataframe_source_filepath = self.data_file
         else:
-            self.stderr.write(f"No URL provided, and data file {self.data_file} does not exist")
+            self.stderr.write(
+                f"No URL provided, and data file {self.data_file} does not exist"
+            )
             return None
 
         if not self._quiet:
-            self.stdout.write(f"Reading Mass Lobby details from {dataframe_source_filepath}")
+            self.stdout.write(
+                f"Reading Mass Lobby details from {dataframe_source_filepath}"
+            )
 
         df = pd.read_csv(
             dataframe_source_filepath,
