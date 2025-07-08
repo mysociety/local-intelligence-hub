@@ -71,13 +71,13 @@ class Command(BaseCommand):
             },
         )
 
-        for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
-            select_committee_membership_ds.areas_available.add(at)
+        at = AreaType.objects.get(code="WMC23")
+        select_committee_membership_ds.areas_available.add(at)
 
         select_committee_membership, created = DataType.objects.update_or_create(
             data_set=select_committee_membership_ds,
             name="select_committee_membership",
-            defaults={"data_type": "text"},
+            defaults={"data_type": "text", "area_type": at},
         )
 
         return select_committee_membership
