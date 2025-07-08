@@ -381,6 +381,7 @@ class AreaView(BaseAreaView):
             "council_net_zero_date": "council_net_zero_details",
             "council_action_scorecard_total": "council_action_scorecard_sections",
             "hope_not_hate_winner_mrp_jan_2025": "hope_not_hate_cons_mrp_jan_2025",
+            "more_in_common_winner_mrp": "more_in_common_cons_mrp",
         }
 
         context["is_related_category"] = context["related_categories"].values()
