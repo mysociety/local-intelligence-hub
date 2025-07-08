@@ -116,6 +116,7 @@ class Command(BaseImportFromDataFrameCommand):
         self.fill_blanks = row.get("fill_blanks", False)
         self.url_prefix = row.get("url_prefix", False)
         self.url_label = row.get("url_label", False)
+        self.skip_countries = row.get("skip_countries", [])
 
         if row["uses_gss"]:
             self.uses_gss = True

@@ -62,6 +62,7 @@ class BaseAreaImportCommand(BaseCommand):
     area_type = "WMC"
     uses_gss = False
     skip_delete = False
+    skip_countries = []
 
     def __init__(self):
         super().__init__()
@@ -228,8 +229,11 @@ class BaseAreaImportCommand(BaseCommand):
                     for areadata in AreaData.objects.filter(data_type=data_type)
                 ]
                 # If some countries are set to be excluded, their values should not be filled in
-                if data_type.data_set.exclude_countries != []:
-                    for country in data_type.data_set.exclude_countries:
+                excluded_countries = (
+                    data_type.data_set.exclude_countries + self.skip_countries
+                )
+                if excluded_countries != []:
+                    for country in excluded_countries:
                         areas_with_values.extend(
                             [
                                 areadata.area.name
@@ -303,6 +307,16 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
         if not self._quiet:
             self.stdout.write(self.message)
 
+        areas_to_skip = None
+        if self.skip_countries:
+            areas_to_skip = list(
+                AreaData.objects.filter(
+                    data_type__name="country",
+                    data__in=self.skip_countries,
+                    area__area_type__code=self.area_type,
+                ).values_list("area_id", flat=True)
+            )
+
         for index, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
             if type(self.cons_row) is int:
                 cons = row.iloc[self.cons_row]
@@ -322,6 +336,9 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
                     self.stdout.write(f"Failed to find area with code {cons}")
                 else:
                     self.stdout.write(f"no matching area for {cons}")
+                continue
+
+            if areas_to_skip and area.pk in areas_to_skip:
                 continue
 
             try:
