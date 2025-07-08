@@ -1713,5 +1713,150 @@
         "data_col":"is_coastal"
       }
     ]
+  },
+  {
+    "name":"more_in_common_winner_mrp",
+    "label":"Predicted winning party at next general election",
+    "description":"",
+    "data_type":"text",
+    "is_range":false,
+    "category":"opinion",
+    "subcategory":null,
+    "release_date":"July 2025",
+    "source_label":"MRP polling from More in Common.",
+    "source":"https://www.moreincommon.org.uk/latest-insights/more-in-common-s-july-mrp/",
+    "source_type":"csv",
+    "data_url":"https://www.moreincommon.org.uk/media/04ldt2hc/mic_julymrp_data.csv",
+    "table":"areadata",
+    "default_value":"",
+    "comparators":"in",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":"people_in_area",
+    "fill_blanks":true,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"more-in-common-mrp-july-2025.csv",
+    "uses_gss":false,
+    "do_not_delete":true,
+    "file_type":"csv",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": false,
+    "party_data": {
+      "Labour": "Labour Party",
+      "Conservative": "Conservative Party",
+      "Reform UK": "Reform UK",
+      "SNP": "Scottish National Party",
+      "Plaid Cymru": "Plaid Cymru",
+      "Independent": "Independent",
+      "Liberal Democrat": "Liberal Democrats",
+      "Green": "Green Party"
+    },
+    "replace_columns": ["Constituency", "Conservative", "Labour", "Liberal Democrat", "Reform UK", "Green Party", "SNP", "Plaid Cymru", "Other", "Winner", "GE Winner", "Change"],
+    "constituency_col":"Constituency",
+    "data_types": [
+      {
+        "name":"more_in_common_winner_mrp",
+        "label":"Predicted winning party at next general election",
+        "order": 1,
+        "sheet":"Seat summaries",
+        "data_col":"Winner"
+      }
+    ]
+  },
+  {
+    "name":"more_in_common_cons_mrp",
+    "label":"Predicted vote share at next general election",
+    "description":"",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"opinion",
+    "subcategory":null,
+    "release_date":"July 2025",
+    "source_label":"MRP polling from More in Common.",
+    "source":"https://www.moreincommon.org.uk/latest-insights/more-in-common-s-july-mrp/",
+    "source_type":"csv",
+    "data_url":"https://www.moreincommon.org.uk/media/04ldt2hc/mic_julymrp_data.csv",
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":"people_in_area",
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"more-in-common-mrp-july-2025.csv",
+    "uses_gss":false,
+    "do_not_delete":true,
+    "file_type":"csv",
+    "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": true,
+    "replace_columns": ["Constituency", "Conservative", "Labour", "Liberal Democrat", "Reform UK", "The Green Party", "Scottish National Party", "Plaid Cymru", "Other", "Winner", "GE Winner", "Change"],
+    "constituency_col":"Constituency",
+    "data_types": [
+      {
+        "name":"mic_mrp_labour",
+        "label":"Labour",
+        "order": 1,
+        "sheet":"Seat summaries",
+        "data_col":"Labour"
+      },
+      {
+        "name":"mic_mrp_conservative",
+        "label":"Conservative",
+        "order": 2,
+        "sheet":"Seat summaries",
+        "data_col":"Conservative"
+      },
+      {
+        "name":"mic_mrp_libdem",
+        "label":"Liberal Democrat",
+        "order": 3,
+        "sheet":"Seat summaries",
+        "data_col":"Liberal Democrat"
+      },
+      {
+        "name":"mic_mrp_reform",
+        "label":"Reform",
+        "order": 4,
+        "sheet":"Seat summaries",
+        "data_col":"Reform UK"
+      },
+      {
+        "name":"mic_mrp_green",
+        "label":"Green",
+        "order": 5,
+        "sheet":"Seat summaries",
+        "data_col":"The Green Party"
+      },
+      {
+        "name":"mic_mrp_snp",
+        "label":"Scottish National Party",
+        "order": 6,
+        "sheet":"Seat summaries",
+        "skip_countries": ["Northern Ireland", "Wales", "England"],
+        "data_col":"Scottish National Party"
+      },
+      {
+        "name":"mic_mrp_plaid",
+        "label":"Plaid Cymru",
+        "order": 7,
+        "sheet":"Seat summaries",
+        "skip_countries": ["Northern Ireland", "Scotland", "England"],
+        "data_col":"Plaid Cymru"
+      },
+      {
+        "name":"mic_mrp_other",
+        "label":"Other",
+        "order": 8,
+        "sheet":"Seat summaries",
+        "data_col":"Other"
+      }
+    ]
   }
 ]
