@@ -367,10 +367,6 @@ class AreaView(BaseAreaView):
 
                 indexed_categories[data["db_name"]] = data
 
-                # TODO: Remove this after 9th July 2025
-                if data_set.name == "foe_act_now":
-                    context["foe_act_now_dataset"] = data
-
         context["related_categories"] = {
             "constituency_christian_aid_group_count": "constituency_christian_aid_groups",
             "constituency_foe_groups_count": "constituency_foe_groups",
