@@ -27,4 +27,10 @@ class Filter:
                 self.dataset.table, self.column(), comparator.removeprefix("not_")
             ): value,
         }
+        if self.dataset.table == "people__persondata" and self.dataset.person_type:
+            if exclude:
+                return self.query.exclude(**kwargs).filter(
+                    personarea__person_type=self.dataset.person_type
+                )
+            kwargs["personarea__person_type"] = self.dataset.person_type
         return self.query.exclude(**kwargs) if exclude else self.query.filter(**kwargs)
