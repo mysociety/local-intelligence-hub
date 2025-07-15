@@ -20,7 +20,8 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
     uses_gss = True
     do_not_convert = True
 
-    data_file = settings.BASE_DIR / "data" / "2023_scorecards_data.csv"
+    # this is all_section_scores.csv
+    data_file = settings.BASE_DIR / "data" / "2025_scorecards_data.csv"
 
     area_types = ["STC", "DIS"]
 
@@ -29,7 +30,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         "description": "",
         "data_type": "percent",
         "category": "place",
-        "release_date": "2023",
+        "release_date": "2025",
         "source_label": "Data from Climate Emergency UK.",
         "source": "https://councilclimatescorecards.uk/",
         "source_type": "csv",
