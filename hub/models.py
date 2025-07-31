@@ -27,6 +27,7 @@ class UserProperties(models.Model):
     account_confirmed = models.BooleanField(default=False)
     last_seen = models.DateTimeField(null=True, blank=True)
     agreed_terms = models.BooleanField(default=False)
+    sites = models.ManyToManyField(Site)
 
     def __str__(self):
         return self.user.username
