@@ -166,7 +166,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.AllowAllUsersModelBackend"]
+AUTHENTICATION_BACKENDS = ["hub.authbackend.SiteBasedAuthBackend"]
 
 
 # Internationalization
