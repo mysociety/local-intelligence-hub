@@ -9,6 +9,7 @@ from hub.models import (
     DataType,
     Person,
     PersonData,
+    SiteDataSet,
     UserProperties,
 )
 
@@ -37,6 +38,10 @@ class UserPropertiesAdmin(admin.ModelAdmin):
         return obj.user.is_active
 
 
+class DataSetSitesInline(admin.TabularInline):
+    model = SiteDataSet
+
+
 class DataSetDataTypeInline(admin.StackedInline):
     model = DataType
     extra = 0
@@ -62,12 +67,14 @@ class DataSetAdmin(admin.ModelAdmin):
         "is_public",
         "visible",
         "data_type",
+        "sites",
     )
     ordering = ("category", "order", "label")
     search_fields = ["name", "label", "description", "source", "source_label"]
 
     inlines = [
         DataSetDataTypeInline,
+        DataSetSitesInline,
     ]
 
     def has_module_permission(self, request):
