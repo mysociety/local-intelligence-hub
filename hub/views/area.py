@@ -493,6 +493,7 @@ class AreaSearchView(TemplateView):
         lon = self.request.GET.get("lon")
         lat = self.request.GET.get("lat")
         area_type = self.request.GET.get("area_type")
+        site = Site.objects.get_current(self.request)
 
         context["area_type"] = area_type
 
@@ -520,6 +521,7 @@ class AreaSearchView(TemplateView):
             areas_raw = Area.objects.filter(
                 name__icontains=search,
                 area_type__code__in=settings.AREA_SEARCH_AREA_CODES,
+                area_type__sites=site,
             )
             people_raw = Person.objects.filter(name__icontains=search)
 
