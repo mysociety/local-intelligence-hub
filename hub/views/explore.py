@@ -4,6 +4,7 @@ import math
 from collections import defaultdict
 from operator import itemgetter
 
+from django.contrib.sites.models import Site
 from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -27,9 +28,15 @@ class ExploreView(TitleMixin, TemplateView):
 
 class ExploreDatasetsJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
-        types = DataType.objects.exclude(data_set__is_range=True).select_related(
-            "data_set",
-            "area_type",
+        site = Site.objects.get_current(self.request)
+
+        types = (
+            DataType.objects.exclude(data_set__is_range=True)
+            .filter(data_set__sites=site)
+            .select_related(
+                "data_set",
+                "area_type",
+            )
         )
         type_map = defaultdict(dict)
         for t in types:
@@ -60,7 +67,7 @@ class ExploreDatasetsJSON(TemplateView):
         is_non_member = self.request.user.is_anonymous
 
         datasets = []
-        for d in DataSet.objects.filter(visible=True):
+        for d in DataSet.objects.filter(visible=True, sites=site):
             try:
                 options = list(map(itemgetter("title"), d.options))
             # catch bad options and ignore them for now
