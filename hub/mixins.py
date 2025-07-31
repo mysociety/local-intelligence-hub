@@ -1,6 +1,7 @@
 from collections import defaultdict
 from functools import cache
 
+from django.contrib.sites.models import Site
 from django.db.models import Q
 
 from hub.models import Area, AreaData, AreaType, DataSet, DataType, Person, PersonData
@@ -24,6 +25,7 @@ class TitleMixin:
 class FilterMixin:
     @cache
     def filters(self):
+        site = Site.objects.get_current(self.request)
         is_non_member = self.request.user.is_anonymous
 
         filters = []
@@ -51,7 +53,7 @@ class FilterMixin:
 
             try:
                 dataset = DataSet.objects.get(
-                    name=name, areas_available=area_type, visible=True
+                    name=name, areas_available=area_type, visible=True, sites=site
                 )
                 if is_non_member and not dataset.is_public:
                     continue
