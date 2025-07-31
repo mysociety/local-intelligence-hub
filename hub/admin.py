@@ -5,6 +5,7 @@ from hub.models import (
     AreaAction,
     AreaActionData,
     AreaData,
+    AreaType,
     DataSet,
     DataType,
     Person,
@@ -155,6 +156,16 @@ class PersonDataAdmin(admin.ModelAdmin):
         "data_type__data_set__name",
         "person__name",
     )
+
+
+class AreaTypeSiteInline(admin.TabularInline):
+    model = AreaType.sites.through
+
+
+@admin.register(AreaType)
+class AreaTypeAdmin(admin.ModelAdmin):
+    list_display = ("name", "code")
+    inlines = [AreaTypeSiteInline]
 
 
 @admin.register(Area)
