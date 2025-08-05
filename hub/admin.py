@@ -5,10 +5,12 @@ from hub.models import (
     AreaAction,
     AreaActionData,
     AreaData,
+    AreaType,
     DataSet,
     DataType,
     Person,
     PersonData,
+    SiteDataSet,
     UserProperties,
 )
 
@@ -37,6 +39,10 @@ class UserPropertiesAdmin(admin.ModelAdmin):
         return obj.user.is_active
 
 
+class DataSetSitesInline(admin.TabularInline):
+    model = SiteDataSet
+
+
 class DataSetDataTypeInline(admin.StackedInline):
     model = DataType
     extra = 0
@@ -62,12 +68,14 @@ class DataSetAdmin(admin.ModelAdmin):
         "is_public",
         "visible",
         "data_type",
+        "sites",
     )
     ordering = ("category", "order", "label")
     search_fields = ["name", "label", "description", "source", "source_label"]
 
     inlines = [
         DataSetDataTypeInline,
+        DataSetSitesInline,
     ]
 
     def has_module_permission(self, request):
@@ -148,6 +156,16 @@ class PersonDataAdmin(admin.ModelAdmin):
         "data_type__data_set__name",
         "person__name",
     )
+
+
+class AreaTypeSiteInline(admin.TabularInline):
+    model = AreaType.sites.through
+
+
+@admin.register(AreaType)
+class AreaTypeAdmin(admin.ModelAdmin):
+    list_display = ("name", "code")
+    inlines = [AreaTypeSiteInline]
 
 
 @admin.register(Area)

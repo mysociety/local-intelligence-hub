@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from operator import itemgetter
 
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.db import models
 from django.db.models import Avg, FloatField, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
@@ -26,6 +27,7 @@ class UserProperties(models.Model):
     account_confirmed = models.BooleanField(default=False)
     last_seen = models.DateTimeField(null=True, blank=True)
     agreed_terms = models.BooleanField(default=False)
+    sites = models.ManyToManyField(Site)
 
     def __str__(self):
         return self.user.username
@@ -283,6 +285,12 @@ class ShaderMixin:
         return None, None, None
 
 
+class SiteDataSet(models.Model):
+    dataset = models.ForeignKey("DataSet", on_delete=models.CASCADE)
+    site = models.ForeignKey(Site, on_delete=models.CASCADE)
+    enabled = models.BooleanField(default=True)
+
+
 class DataSet(TypeMixin, ShaderMixin, models.Model):
     SOURCE_CHOICES = [
         ("csv", "CSV File"),
@@ -424,6 +432,7 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
     areas_available = models.ManyToManyField("AreaType")
     person_type = models.CharField(max_length=10, null=True, blank=True)
     visible = models.BooleanField(default=True)
+    sites = models.ManyToManyField(Site, through=SiteDataSet)
 
     def __str__(self):
         if self.label:
@@ -458,6 +467,12 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
         return Filter(self, query).run(**kwargs)
 
 
+class SiteAreaType(models.Model):
+    areatype = models.ForeignKey("AreaType", on_delete=models.CASCADE)
+    site = models.ForeignKey(Site, on_delete=models.CASCADE)
+    enabled = models.BooleanField(default=True)
+
+
 class AreaType(models.Model):
     VALID_AREA_TYPES = ["WMC", "WMC23", "STC", "DIS"]
 
@@ -485,6 +500,7 @@ class AreaType(models.Model):
     code = models.CharField(max_length=10, unique=True)
     area_type = models.CharField(max_length=50, choices=AREA_TYPES)
     description = models.CharField(max_length=300)
+    sites = models.ManyToManyField(Site, through=SiteAreaType)
 
     @property
     def name_singular(self):

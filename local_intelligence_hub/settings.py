@@ -100,6 +100,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "django.contrib.sitemaps",
+    "django.contrib.sites",
     "compressor",
     "django_bootstrap5",
     "sslserver",
@@ -116,6 +117,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "hub.middleware.RecordLastSeenMiddleware",
+    "hub.middleware.AddSiteContextMiddleware",
 ]
 
 ROOT_URLCONF = "local_intelligence_hub.urls"
@@ -165,7 +167,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.AllowAllUsersModelBackend"]
+AUTHENTICATION_BACKENDS = ["hub.authbackend.SiteBasedAuthBackend"]
 
 
 # Internationalization

@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.db.models import Count, Q
 from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -202,6 +203,7 @@ class AreaView(BaseAreaView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        site = Site.objects.get_current(self.request)
 
         is_non_member = self.request.user.is_anonymous
 
@@ -235,7 +237,9 @@ class AreaView(BaseAreaView):
 
             context["no_mp"] = False
             data = PersonData.objects.filter(
-                data_type__data_set__visible=True, person=context["mp"]["person"]
+                data_type__data_set__visible=True,
+                person=context["mp"]["person"],
+                data_type__data_set__sites=site,
             ).select_related("data_type")
 
             area_type_q = Q(data_type__area_type=area_type) | Q(
@@ -347,7 +351,7 @@ class AreaView(BaseAreaView):
         favs = self.get_user_favourite_datasets()
         auto_converted = self.get_auto_convered_datasets()
         data_sets = DataSet.objects.order_by("order", "label").filter(
-            areas_available=self.object.area_type, visible=True
+            areas_available=self.object.area_type, visible=True, sites=site
         )
 
         if is_non_member:
@@ -488,6 +492,7 @@ class AreaSearchView(TemplateView):
         lon = self.request.GET.get("lon")
         lat = self.request.GET.get("lat")
         area_type = self.request.GET.get("area_type")
+        site = Site.objects.get_current(self.request)
 
         context["area_type"] = area_type
 
@@ -515,6 +520,7 @@ class AreaSearchView(TemplateView):
             areas_raw = Area.objects.filter(
                 name__icontains=search,
                 area_type__code__in=settings.AREA_SEARCH_AREA_CODES,
+                area_type__sites=site,
             )
             people_raw = Person.objects.filter(name__icontains=search)
 
