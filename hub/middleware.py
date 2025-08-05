@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib.sites.models import Site
 from django.utils.timezone import now
 
 from hub.models import UserProperties
@@ -31,5 +32,23 @@ class RecordLastSeenMiddleware:
                 props.save()
 
         response = self.get_response(request)
+
+        return response
+
+
+class AddSiteContextMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        return response
+
+    def process_template_response(self, request, response):
+        context = response.context_data
+        site = Site.objects.get_current(request)
+
+        context["site"] = site.name
+        response.context_data = context
 
         return response
