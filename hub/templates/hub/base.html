@@ -45,9 +45,9 @@
     <script type="module">document.documentElement.classList.remove('no-js'); document.documentElement.classList.add('js');</script>
 </head>
 <body class="{% block bodyclass %}{% endblock %}">
-    {% include 'hub/includes/header.html' %}
+    {% include site|add:'/hub/includes/header.html' %}
     {% block content %}{% endblock %}
-    {% include 'hub/includes/footer.html' %}
+    {% include site|add:'/hub/includes/footer.html' %}
     {% block script %}
     <script type="module" src="{% static 'js/home-out-esm.js' %}"></script>
     <link rel="prefetch" href="{% static 'js/area-out-esm.js' %}">

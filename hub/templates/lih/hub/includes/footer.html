@@ -1,0 +1,87 @@
+{% load hub_filters %}
+
+<aside class="site-feedback">
+    <div class="container">
+        <h2>How could we improve this page?</h2>
+        <p><a href="https://docs.google.com/forms/d/e/1FAIpQLSfwTS3Mn9g5EOCBcFPF1uCXTbIJ69Tu5NA2kjUR0n-Hc1Knkw/viewform?usp=pp_url&amp;entry.496009622={{ request.build_absolute_uri|urlencode }}">Send us your feedback</a> so we can make the Local Intelligence Hub better for everyone.</p>
+    </div>
+</aside>
+
+<div class="site-footer py-5">
+    <div class="container">
+        <h2 class="h4 mb-3">Local Intelligence Hub</h2>
+        <div class="row mb-n4">
+            <div class="col-md-6 mb-4">
+                <p class="mb-0">Analyse and explore data about local MPs, constituencies, public opinion and the climate and nature movement in order to support your campaigning and organising efforts.</p>
+            </div>
+            <div class="col-md-6 col-lg-5 offset-lg-1 mb-4 d-print-none">
+                <ul class="nav site-footer__nav">
+                    {% include 'hub/includes/nav-item.html' with name='about' label='About' %}
+                    {% include 'hub/includes/nav-item.html' with name='privacy' label='Privacy policy' %}
+                    {% include 'hub/includes/nav-item.html' with name='sources' label='Data sources' %}
+                    {% include 'hub/includes/nav-item.html' with name='terms' label='Terms of use' %}
+                    {% include 'hub/includes/nav-item.html' with name='contact' label='Contact us' %}
+                    {% include 'hub/includes/nav-item.html' with href='https://www.theclimatecoalition.org/donate' label='Donate' %}
+                  {% if perms.auth.edit_user %}
+                    {% pending_account_requests as num %}
+                    {% include 'hub/includes/nav-item.html' with name='accounts' label='Accounts' badge=num %}
+                  {% endif %}
+                </ul>
+            </div>
+        </div>
+        <hr class="my-4 my-md-5">
+        <div class="row mb-n4">
+            <div class="col-lg-5 mb-4">
+                <div class="fs-7 d-flex flex-wrap">
+                    <div class="site-footer__org mb-3 me-4 me-xl-5">
+                        <span>A service from</span>
+                        <div class="d-flex align-items-center">
+                            <a href="https://www.theclimatecoalition.org" aria-label="The Climate Coalition">
+                                {% include 'hub/includes/icons/tcc-logo.html' with classes="me-3 me-lg-4" %}
+                            </a>
+                            <a class="d-print-none" href="https://www.mysociety.org" aria-label="mySociety">
+                                {% include 'hub/includes/icons/mysociety-logo.html' %}
+                            </a>
+                            <a class="d-none d-print-block" href="https://www.mysociety.org" aria-label="mySociety">
+                                {% include 'hub/includes/icons/mysociety-logo-black.html' %}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="site-footer__org mb-3">
+                        <span>With support from</span>
+                        <a href="https://green-alliance.org.uk" aria-label="Green Alliance">
+                            {% include 'hub/includes/icons/green-alliance-logo.html' with width="63" height="50" classes="me-3 me-lg-4" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+                <p class="fs-7 mb-0 site-footer__legals"><a href="https://www.theclimatecoalition.org">The Climate Coalition</a> is the operating name of The Climate Movement, a registered charity (1109973). <a href="https://www.mysociety.org">mySociety</a> is a registered charity (1076346) and a limited company (03277032). <a href="https://green-alliance.org.uk">Green Alliance</a> is a registered charity (1045395) and a limited company (3037633).</p>
+            </div>
+            <div class="col-lg-3 mb-4">
+                <ul class="site-footer__socials d-print-none">
+                    <li>
+                        <a href="https://x.com/theccoalition/" aria-label="X (Twitter)">
+                            {% include 'hub/includes/icons/x-circle.html' %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://facebook.com/theclimatecoalition/" aria-label="Facebook">
+                            {% include 'hub/includes/icons/facebook-circle.html' %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://instagram.com/theclimatecoalition/" aria-label="Instagram">
+                            {% include 'hub/includes/icons/instagram-circle.html' %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/mysociety/local-intelligence-hub/" aria-label="GitHub">
+                            {% include 'hub/includes/icons/github-circle.html' %}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
