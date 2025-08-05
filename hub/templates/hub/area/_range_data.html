@@ -1,15 +1,13 @@
 {% load hub_filters %}
-{% if dataset.name.lower == "action scorecards section scores" %}
-<table class="table mb-0 mt-2" data-chart-type="bar" data-chart-direction="y">
+{% if dataset.db_name == "council_action_scorecard_sections" %}
+<table class="table mb-0 mt-2">
   <tbody>
     {% for row in dataset.data %}
       <tr>
-        <th>
-          {{ row.label|html_format_dataset_name|safe }}
-        </th>
+        <th>{{ row.label|html_format_dataset_name|safe }}</th>
         <td>{{ row.value|floatformat:"0" }}%</td>
       </tr>
-      {% endfor %}
+    {% endfor %}
   </tbody>
 {% else %}
 <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">

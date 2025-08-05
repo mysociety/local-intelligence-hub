@@ -457,7 +457,9 @@
 
               {% for dataset in categories.place %}
                 <div class="card dataset-card
-                  {% if dataset.is_range and dataset.data|length > 9 %}
+                  {% if dataset.db_name == "council_action_scorecard_total" %}
+                    area-data--lg
+                  {% elif dataset.is_range and dataset.data|length > 9 %}
                     area-data--lg
                   {% elif dataset.related_category and dataset.related_category.is_range %}
                     area-data--md
@@ -524,6 +526,10 @@
                         {% if dataset.data.average is not None %}
                         <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
                         {% endif %}
+                        {% if dataset.db_name == "council_action_scorecard_total" %}
+                          <p class="card-text fs-7 mt-3">This score represents how many of <a href="{{ dataset.source_url }}">Climate Emergency UK’s recommended climate actions</a> this council has taken.</p>
+                          <p class="card-text fs-7 mt-3">Councils are marked on over 90 different actions, across 7 topic areas. In 2025, the average council scored around 40% overall, while the best councils scored over 60%.</p>
+                        {% endif %}
                         {% if dataset.related_category and dataset.related_category.is_range %}
                           {% include 'hub/area/_range_data.html' with dataset=dataset.related_category %}
                         {% endif %}
@@ -531,7 +537,7 @@
                     </div>
                     <div class="card-footer">
                       <p class="card-text">
-                        {% if dataset.name.lower == "council climate action scorecard" %}
+                        {% if dataset.db_name == "council_action_scorecard_total" %}
                           <a href="{{ dataset.source_url }}councils/{{ slug }}/">{{ dataset.source_name }}</a>
                         {% else %}
                           <a href="{{ dataset.source_url }}">{{ dataset.source_name }}</a>
