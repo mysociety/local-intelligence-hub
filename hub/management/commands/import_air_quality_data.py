@@ -1,15 +1,16 @@
 from functools import reduce
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
 
 import pandas as pd
 from tqdm import tqdm
 
 from hub.models import Area, AreaData, DataSet, DataType
 
+from .base_importers import BaseAreaImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseAreaImportCommand):
     help = "Import air-pollution data"
 
     source_url = "https://uk-air.defra.gov.uk/data/modelling-data"
@@ -25,7 +26,7 @@ class Command(BaseCommand):
         "data_type": "float",
         "category": "place",
         "source_label": "Data from Defra.",
-        "release_date": "2021",
+        "release_date": "2022",
         "is_range": True,
         "source": source_url,
         "source_type": "csv",
@@ -42,47 +43,50 @@ class Command(BaseCommand):
         "pm_10": {
             "pollutant": "PM10",
             "metric": "Annual mean",
-            "header_label": "pm102021g",
+            "header_label": "pm102022g",
+            "WHO_AQG": "15",
             "comments": "Gravimetric units",
-            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mappm102021g.csv",
+            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mappm102022g.csv",
         },
         "pm_2_5": {
             "pollutant": "PM2.5",
             "metric": "Annual mean",
-            "header_label": "pm252021g",
-            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mappm252021g.csv",
+            "header_label": "pm252022g",
+            "WHO_AQG": "5",
+            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mappm252022g.csv",
         },
         "no_2": {
             "pollutant": "NO2",
             "metric": "Annual mean",
-            "header_label": "no22021",
-            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapno22021.csv",
+            "header_label": "no22022",
+            "WHO_AQG": "10",
+            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapno22022.csv",
         },
         "no_x": {
             "pollutant": "NOx",
             "metric": "Annual mean",
-            "header_label": "nox2021",
+            "header_label": "nox2022",
             "comments": "µg m\u207B\u00B3 (NO\u2093 as NO\u2082)",
-            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapnox2021.csv",
+            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapnox2022.csv",
         },
         "so_2": {
             "pollutant": "SO2",
             "metric": "Annual mean",
-            "header_label": "so22021",
-            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapso22021.csv",
+            "header_label": "so22022",
+            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapso22022.csv",
         },
         "ozone": {
             "pollutant": "Ozone",
             "metric": "DGT120",
-            "header_label": "dgt12021",
+            "header_label": "dgt12022",
             "comments": "number of days on which the daily max 8-hr concentration is greater than 120 µg m\u207B\u00B3",
-            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapdgt12021.csv",
+            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapdgt12022.csv",
         },
         "benzene": {
             "pollutant": "Benzene",
             "metric": "Annual mean",
-            "header_label": "bz2021",
-            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapbz2021.csv",
+            "header_label": "bz2022",
+            "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapbz2022.csv",
         },
     }
 
@@ -109,6 +113,8 @@ class Command(BaseCommand):
         data_set, created = DataSet.objects.update_or_create(
             name="constituency_air_quality", defaults=self.defaults
         )
+        data_set.areas_available.add(self.get_area_type())
+
         data_types = []
         for col in tqdm(df.columns, disable=self._quiet):
             label = self.in_files[col]["pollutant"]
@@ -119,6 +125,7 @@ class Command(BaseCommand):
             data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
                 name=f"air_quality_{col}",
+                area_type=self.get_area_type(),
                 defaults={
                     "data_type": "float",
                     "label": label,
@@ -169,7 +176,9 @@ class Command(BaseCommand):
                     skiprows=5,
                     na_values="MISSING",
                     dtype={"gridcode": "int", metadata["header_label"]: "float"},
-                ).rename(columns={metadata["header_label"]: label})
+                )
+                .rename(columns={metadata["header_label"]: label})
+                .assign(WHO_AQG=lambda x: metadata.get("WHO_AQG", None))
             )
 
         print("Transforming data")
