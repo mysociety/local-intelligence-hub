@@ -1,0 +1,96 @@
+.act-now-banner {
+    position: relative;
+    background: #ffc9ef;
+    border-radius: $border-radius;
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    a {
+        color: inherit; // pass WCAG AA contrast with pink
+    }
+
+    & > a {
+        display: block;
+        order: 1;
+
+        img {
+            max-width: 33%;
+            height: auto;
+        }
+    }
+
+    & > div {
+        padding: 1rem;
+    }
+
+    @include media-breakpoint-up(sm) {
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 0;
+
+        & > a {
+            order: 0;
+            flex: 0 0 auto;
+            width: 25%;
+
+            img {
+                max-width: 100%;
+            }
+        }
+
+        & > div {
+            flex: 1 1 auto;
+            padding-left: 0;
+        }
+
+        dl {
+            display: grid;
+            grid-template-columns: 7em 1fr;
+            gap: 0 1rem;
+        }
+    }
+
+    @include media-breakpoint-up(md) {
+        & > div {
+            padding: 1.5rem;
+            max-width: 38rem;
+        }
+    }
+
+    @include media-breakpoint-up(lg) {
+        & > div {
+            padding: 2rem;
+        }
+    }
+}
+
+.act-now-cta-bar {
+    // Colours come from https://assets.nationbuilder.com/tcc/pages/2383/features/original/3_New.png?1750238318%27)
+    --bs-primary-rgb: 22, 15, 61; // Navy Blue
+    --bs-secondary-rgb: 0, 167, 125; // Green
+    --bs-warning-rgb: 252, 235, 0; // Yellow
+    
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    &__heading {
+        text-transform: uppercase;
+        margin-bottom: 0;
+    }
+    
+    @include media-breakpoint-up(lg) {
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+    }
+}

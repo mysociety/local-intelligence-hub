@@ -389,6 +389,7 @@ class AreaView(BaseAreaView):
         categories_to_remove = defaultdict(list)
 
         area_country = self.get_area_country(indexed_categories)
+        context["country"] = area_country
 
         for category, items in categories.items():
             for data_set in items:
