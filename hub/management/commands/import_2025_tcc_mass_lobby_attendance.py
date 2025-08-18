@@ -1,8 +1,6 @@
-from django.conf import settings
-
 import pandas as pd
 
-from hub.models import AreaData, DataSet, Person
+from hub.models import DataSet, Person
 
 from .base_importers import BaseImportFromDataFrameCommand
 
