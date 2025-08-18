@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from hub.models import Area, AreaData, AreaType, DataSet, DataType
+from hub.models import Area, AreaData, AreaType, DataSet, DataType, PersonData
 from hub.transformers import DataTypeConverter
 from utils.mapit import (
     BadRequestException,
@@ -303,6 +303,26 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
     def get_row_data(self, row, conf):
         return row[conf["col"]]
 
+    def get_person_from_row(self, row, area):
+        raise NotImplementedError()
+
+    def add_data(self, dt, area, defaults, row):
+        if dt.data_set.table == "areadata":
+            data, created = AreaData.objects.update_or_create(
+                data_type=dt,
+                area=area,
+                defaults=defaults,
+            )
+        elif dt.data_set.table == "people__persondata":
+            person = self.get_person_from_row(row, area)
+            data, created = PersonData.objects.update_or_create(
+                data_type=dt,
+                person=person,
+                defaults=defaults,
+            )
+
+        return data, created
+
     def process_data(self, df):
         if not self._quiet:
             self.stdout.write(self.message)
@@ -350,11 +370,10 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
                     else:
                         defaults = {"data": self.get_row_data(row, conf)}
 
-                    area_data, created = AreaData.objects.update_or_create(
-                        data_type=self.data_types[name],
-                        area=area,
-                        defaults=defaults,
+                    area_data, created = self.add_data(
+                        self.data_types[name], area, defaults, row
                     )
+
             except Exception as e:
                 print(f"issue with {cons}: {e}")
                 break
