@@ -2,7 +2,7 @@ from django.conf import settings
 
 import pandas as pd
 
-from hub.models import AreaData, DataSet
+from hub.models import AreaData, DataSet, Person
 
 from .base_importers import BaseImportFromDataFrameCommand
 
@@ -29,10 +29,11 @@ class Command(BaseImportFromDataFrameCommand):
                 "source": "https://www.theclimatecoalition.org/act-now-change-forever",
                 "source_type": "csv",
                 "data_url": "",
-                "table": "areadata",
+                "table": "people__persondata",
                 "is_shadable": True,
                 "is_filterable": True,
                 "is_public": True,
+                "person_type": "MP",
                 "comparators": DataSet.in_comparators(),
                 "options": [
                     {"title": "MP attended", "shader": "blue-500"},
@@ -59,12 +60,24 @@ class Command(BaseImportFromDataFrameCommand):
                 "is_public": True,
                 "comparators": DataSet.numerical_comparators(),
                 "unit_type": "raw",
+                "person_type": "MP",
                 "unit_distribution": "people_in_area",
                 "fill_blanks": True,
             },
             "col": "total_constituents",
-        }
+        },
     }
+
+    def get_person_from_row(self, row, area):
+        try:
+            person = Person.objects.get(
+                name=row["mp_name"], person_type="MP", personarea__area=area
+            )
+        except Person.DoesNotExist:
+            print(f"No such person: {row['mp_name']} for {area.name}")
+            return
+
+        return person
 
     def get_dataframe(self):
         df = pd.read_csv(
@@ -75,8 +88,8 @@ class Command(BaseImportFromDataFrameCommand):
                 "Did the MP attend?",
                 "Did MP send a representative instead?",
                 "Did MP or rep. attend?",
-                "Number of constituents registered (final numbers)"
-            ]
+                "Number of constituents registered (final numbers)",
+            ],
         )
 
         # Rename the columns, for simplicity
@@ -86,18 +99,30 @@ class Command(BaseImportFromDataFrameCommand):
             "mp_attended",
             "aide_attended",
             "mp_or_aide_attended",
-            "total_constituents"
+            "total_constituents",
         ]
 
         # Remove empty rows
         df.dropna(subset=["constituency_name"], inplace=True)
 
         # Fix broken constituency names in source spreadsheet
-        df["constituency_name"] = df["constituency_name"].replace({
-            "Montgomeryshire and GlyndÅµr": "Montgomeryshire and Glyndŵr",
-            "Taunton": "Taunton and Wellington",
-            "Ynys Man": "Ynys Môn",
-        })
+        df["constituency_name"] = df["constituency_name"].replace(
+            {
+                "Montgomeryshire and GlyndÅµr": "Montgomeryshire and Glyndŵr",
+                "Taunton": "Taunton and Wellington",
+                "Ynys Man": "Ynys Môn",
+            }
+        )
+
+        df["mp_name"] = df["mp_name"].replace(
+            {
+                "Sian Berry": "Siân Berry",
+                "Zoe Franklin": "Zöe Franklin",
+                "DÃ¡ire Hughes": "Dáire Hughes",
+                "Emma Lewell-Buck": "Emma Lewell",
+                "Ã“rfhlaith Begley": "Órfhlaith Begley",
+            }
+        )
 
         # Replace empty values in the "total_constituents" column with 0
         df["total_constituents"] = df["total_constituents"].fillna(0)
