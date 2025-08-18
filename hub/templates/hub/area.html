@@ -431,6 +431,21 @@
                     </div>
                 </div>
 
+                {% if mp.2025_mass_lobby_mp %}
+                <div class="card dataset-card area-data--sm area-data--featured">
+                    <div class="card-header">
+                        <h3 class="h5">2025 Mass Lobby attendance</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">
+                            {{ mp.2025_mass_lobby_mp }}
+                        </p>
+                    </div>
+
+                </div>
+
+                {% endif %}
+
               {% if no_mp and mp.person %}
                 <div class="card dataset-card area-data--sm area-data--featured">
                     <div class="card-header">
