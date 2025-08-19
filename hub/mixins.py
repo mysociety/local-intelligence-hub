@@ -7,6 +7,12 @@ from django.db.models import Q
 from hub.models import Area, AreaData, AreaType, DataSet, DataType, Person, PersonData
 
 
+class CobrandTemplateMixin:
+    def get_template_names(self):
+        site = Site.objects.get_current(self.request)
+        return [f"{site.name}/{self.template_name}", self.template_name]
+
+
 class TitleMixin:
     site_title = "Local Intelligence Hub"
 

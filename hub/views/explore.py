@@ -10,11 +10,11 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django.views.generic import TemplateView
 
-from hub.mixins import FilterMixin, TitleMixin
+from hub.mixins import CobrandTemplateMixin, FilterMixin, TitleMixin
 from hub.models import DataSet, DataType, UserDataSets
 
 
-class ExploreView(TitleMixin, TemplateView):
+class ExploreView(TitleMixin, CobrandTemplateMixin, TemplateView):
     page_title = "Explore"
     template_name = "hub/explore.html"
 

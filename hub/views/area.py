@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.text import slugify
 from django.views.generic import DetailView, TemplateView, View
 
-from hub.mixins import TitleMixin
+from hub.mixins import CobrandTemplateMixin, TitleMixin
 from hub.models import (
     Area,
     AreaActionData,
@@ -156,7 +156,7 @@ class BaseAreaView(TitleMixin, DetailView):
         return data
 
 
-class AreaView(BaseAreaView):
+class AreaView(CobrandTemplateMixin, BaseAreaView):
     model = Area
     template_name = "hub/area.html"
     context_object_name = "area"
@@ -445,7 +445,7 @@ class AreaView(BaseAreaView):
         return context
 
 
-class AreaSearchView(TemplateView):
+class AreaSearchView(CobrandTemplateMixin, TemplateView):
     template_name = "hub/area_search.html"
 
     def render_to_response(self, context):
