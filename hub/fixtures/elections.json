@@ -14,6 +14,14 @@
     }
   },
   {
+    "model": "hub.sitedataset",
+    "pk": 2,
+    "fields": {
+      "site": 1,
+      "dataset": 2
+    }
+  },
+  {
     "model": "hub.dataset",
     "pk": 3,
     "fields": {
@@ -26,6 +34,14 @@
     }
   },
   {
+    "model": "hub.sitedataset",
+    "pk": 3,
+    "fields": {
+      "site": 1,
+      "dataset": 3
+    }
+  },
+  {
     "model": "hub.dataset",
     "pk": 4,
     "fields": {
@@ -35,6 +51,14 @@
       "source": "https://wikipedia.org",
       "areas_available": [1],
       "table": "people__persondata"
+    }
+  },
+  {
+    "model": "hub.sitedataset",
+    "pk": 4,
+    "fields": {
+      "site": 1,
+      "dataset": 4
     }
   },
   {

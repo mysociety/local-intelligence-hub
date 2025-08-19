@@ -31,6 +31,7 @@ class TestPageRenders(TestCase):
 
 class TestExploreDatasetsPage(TestCase):
     fixtures = [
+        "sites.json",
         "areas.json",
         "areas_23.json",
         "mps_23.json",
@@ -178,6 +179,7 @@ class TestExploreDatasetsPage(TestCase):
 
 class TestExploreFilteringPage(TestCase):
     fixtures = [
+        "sites.json",
         "areas.json",
         "areas_23.json",
         "mps_23.json",
@@ -277,6 +279,7 @@ class TestExploreFilteringPage(TestCase):
 
 class TestAreaPage(TestCase):
     fixtures = [
+        "sites.json",
         "areas.json",
         "areas_23.json",
         "mps.json",
@@ -460,6 +463,7 @@ class TestAreaPage(TestCase):
 
 class TestAreaPageActions(TestCase):
     fixtures = [
+        "sites.json",
         "areas.json",
         "areas_23.json",
         "mps.json",
@@ -561,7 +565,7 @@ class TestAreaPageActions(TestCase):
 
 
 class TestAreaSearchPage(TestCase):
-    fixtures = ["areas.json", "areas_23.json", "mps_23.json"]
+    fixtures = ["sites.json", "areas.json", "areas_23.json", "mps_23.json"]
 
     def setUp(self):
         u = User.objects.create(username="user@example.com")
@@ -703,7 +707,13 @@ class TestAreaSearchPage(TestCase):
 
 
 class testUserFavouriteViews(TestCase):
-    fixtures = ["areas.json", "mps.json", "elections.json", "area_data.json"]
+    fixtures = [
+        "sites.json",
+        "areas.json",
+        "mps.json",
+        "elections.json",
+        "area_data.json",
+    ]
 
     def setUp(self):
         self.u = User.objects.create(username="user@example.com")

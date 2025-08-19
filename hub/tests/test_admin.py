@@ -5,7 +5,7 @@ from hub.models import DataSet
 
 
 class TestDataSetAdmin(TestCase):
-    fixtures = ["areas.json", "area_data.json"]
+    fixtures = ["sites.json", "areas.json", "area_data.json"]
 
     def setUp(self):
         self.u = User.objects.create(username="user@example.com")

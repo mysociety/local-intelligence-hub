@@ -10,6 +10,14 @@
     }
   },
   {
+    "model": "hub.siteareatype",
+      "pk": 1,
+      "fields": {
+        "areatype": 1,
+        "site": 1
+      }
+  },
+  {
     "model": "hub.areatype",
     "pk": 2,
     "fields": {
@@ -18,6 +26,14 @@
       "area_type": "Westminster Constituency",
       "description": "Constituency 2023"
     }
+  },
+  {
+    "model": "hub.siteareatype",
+      "pk": 2,
+      "fields": {
+        "areatype": 2,
+        "site": 1
+      }
   },
   {
     "model": "hub.areatype",
@@ -30,6 +46,14 @@
     }
   },
   {
+    "model": "hub.siteareatype",
+      "pk": 3,
+      "fields": {
+        "areatype": 3,
+        "site": 1
+      }
+  },
+  {
     "model": "hub.areatype",
     "pk": 4,
     "fields": {
@@ -38,6 +62,14 @@
       "area_type": "Single Tier Council",
       "description": "Single Tier Council"
     }
+  },
+  {
+    "model": "hub.siteareatype",
+      "pk": 4,
+      "fields": {
+        "areatype": 4,
+        "site": 1
+      }
   },
   {
     "model": "hub.area",

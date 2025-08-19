@@ -48,6 +48,14 @@
     }
   },
   {
+    "model": "hub.sitedataset",
+    "pk": 1,
+    "fields": {
+      "site": 1,
+      "dataset": 1
+    }
+  },
+  {
     "model": "hub.datatype",
     "pk": 1,
     "fields": {
@@ -69,6 +77,14 @@
         { "title": "red party", "shader": "#ff0000" }
       ],
       "areas_available": [1]
+    }
+  },
+  {
+    "model": "hub.sitedataset",
+    "pk": 11,
+    "fields": {
+      "site": 1,
+      "dataset": 11
     }
   },
   {
