@@ -1,0 +1,78 @@
+{% extends "hub/base.html" %}
+
+{% load static %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/x-scss" href="{% static 'css/home.scss' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="py-5 bg-green-100">
+    <div class="container mt-n4">
+        <h1 class="display-3 mb-3">EVAW</h1>
+        <p class="fs-4 mb-4" style="max-width: 30em;">Your starting point for data about local MPs, constituencies, public opinion and the climate and nature movement.</p>
+        <label class="form-label" for="search">Search by constituency name, MP name, or postcode</label>
+        <form class="row mt-2 mb-2 js-homepage-search" style="max-width: 30rem;" action="{% url 'area_search' %}">
+            <div class="col">
+                <div class="search-input search-input-lg">
+                    {% include 'hub/includes/icons/search.html' %}
+                    <input name="search" type="search" id="search" class="form-control form-control-lg" required>
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-lg">Search</button>
+            </div>
+        </form>
+        <a class="js-geolocate d-none d-flex align-items-center btn btn-link px-0" href="{% url 'area_search' %}">
+            {% include 'hub/includes/icons/geolocate.html' with classes="me-2" %}
+            Use my current location
+        </a>
+    </div>
+</div>
+
+<div class="homepage-map-section">
+    <div class="container">
+        <div class="row">
+
+            <div class="col-lg-6 pt-5 pb-6">
+                <h2 class="mb-4 h1">Explore data across the&nbsp;UK</h2>
+                <p class="mb-4 fs-5" style="max-width: 28em;">Use data from The Climate Coalition, its member organisations, and the wider sector, to narrow down your focus to the areas and constituencies that matter to you.</p>
+                <p class="mb-4 fs-5" style="max-width: 28em;">Use the interactive map to discover data about your area, then export as a spreadsheet for further analysis.</p>
+                <a href="{% url 'explore' %}" class="btn btn-lg btn-primary">Start exploring</a>
+            </div>
+
+            <a class="col-lg-5 offset-lg-1 pt-5 pb-6 pb-lg-5 d-flex flex-column align-items-center justify-content-center" href="{% url 'explore' %}">
+                <div class="bg-gray-100 border p-3 rounded shadow-lg filter ms-auto">
+                    <div class="filter__header">
+                        <h3 class="h6">Great Big Green Week events 2023</h3>
+                        <span class="btn-close p-0"></span>
+                    </div>
+                    <div class="filter__body">
+                        <div class="form-control fs-7">is greater than</div>
+                        <div class="form-control fs-7">1</div>
+                    </div>
+                </div>
+                <div class="bg-gray-100 border p-3 rounded shadow-lg filter me-auto mb-0">
+                    <div class="filter__header">
+                        <h3 class="h6">MP majority</h3>
+                        <span class="btn-close p-0"></span>
+                    </div>
+                    <div class="d-flex mt-3">
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(255, 255, 217);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(237, 248, 177);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(199, 233, 180);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(127, 205, 187);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(65, 182, 196);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(29, 145, 192);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(34, 94, 168);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(37, 52, 148);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(8, 29, 88);"></span></div>
+                </div>
+            </a>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

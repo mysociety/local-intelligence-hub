@@ -10,7 +10,7 @@ import mailchimp_marketing as MailChimp
 from mailchimp_marketing.api_client import ApiClientError
 
 from hub.forms import MailingListSignupForm
-from hub.mixins import TitleMixin
+from hub.mixins import CobrandTemplateMixin, TitleMixin
 from hub.models import Area, AreaType, DataSet
 
 
@@ -30,12 +30,12 @@ class NotFoundPageView(TitleMixin, TemplateView):
         )
 
 
-class HomePageView(TitleMixin, TemplateView):
+class HomePageView(TitleMixin, CobrandTemplateMixin, TemplateView):
     page_title = ""
     template_name = "hub/home.html"
 
 
-class SourcesView(TitleMixin, TemplateView):
+class SourcesView(TitleMixin, CobrandTemplateMixin, TemplateView):
     page_title = "Datasets and data sources"
     template_name = "hub/sources.html"
 
@@ -86,32 +86,32 @@ class SourcesView(TitleMixin, TemplateView):
         return context
 
 
-class FutureConstituenciesView(TitleMixin, TemplateView):
+class FutureConstituenciesView(TitleMixin, CobrandTemplateMixin, TemplateView):
     page_title = "Data for future constituencies"
     template_name = "hub/future-constituencies.html"
 
 
-class PrivacyView(TitleMixin, TemplateView):
+class PrivacyView(TitleMixin, CobrandTemplateMixin, TemplateView):
     page_title = "Privacy policy"
     template_name = "hub/privacy.html"
 
 
-class TermsView(TitleMixin, TemplateView):
+class TermsView(TitleMixin, CobrandTemplateMixin, TemplateView):
     page_title = "Terms of use"
     template_name = "hub/terms.html"
 
 
-class AboutView(TitleMixin, TemplateView):
+class AboutView(TitleMixin, CobrandTemplateMixin, TemplateView):
     page_title = "About"
     template_name = "hub/about.html"
 
 
-class ContactView(TitleMixin, TemplateView):
+class ContactView(TitleMixin, CobrandTemplateMixin, TemplateView):
     page_title = "Contact us"
     template_name = "hub/contact.html"
 
 
-class ToolsView(TitleMixin, TemplateView):
+class ToolsView(TitleMixin, CobrandTemplateMixin, TemplateView):
     page_title = ""
     template_name = "hub/tools.html"
 
