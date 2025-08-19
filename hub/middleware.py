@@ -49,6 +49,7 @@ class AddSiteContextMiddleware:
         site = Site.objects.get_current(request)
 
         context["site"] = site.name
+        context["site_path"] = f"{site.name}/"
         response.context_data = context
 
         return response
