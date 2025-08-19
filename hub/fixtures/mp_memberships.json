@@ -12,6 +12,14 @@
     }
   },
   {
+    "model": "hub.sitedataset",
+    "pk": 10,
+    "fields": {
+      "site": 1,
+      "dataset": 10
+    }
+  },
+  {
     "model": "hub.datatype",
     "pk": 10,
     "fields": {

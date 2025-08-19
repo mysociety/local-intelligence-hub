@@ -16,6 +16,14 @@
     }
   },
   {
+    "model": "hub.sitedataset",
+    "pk": 5,
+    "fields": {
+      "site": 1,
+      "dataset": 5
+    }
+  },
+  {
     "model": "hub.dataset",
     "pk": 6,
     "fields": {
@@ -30,6 +38,14 @@
     }
   },
   {
+    "model": "hub.sitedataset",
+    "pk": 6,
+    "fields": {
+      "site": 1,
+      "dataset": 6
+    }
+  },
+  {
     "model": "hub.dataset",
     "pk": 7,
     "fields": {
@@ -41,6 +57,14 @@
       "table": "areadata",
       "areas_available": [1],
       "category": "opinion"
+    }
+  },
+  {
+    "model": "hub.sitedataset",
+    "pk": 7,
+    "fields": {
+      "site": 1,
+      "dataset": 7
     }
   },
   {
