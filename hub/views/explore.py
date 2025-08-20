@@ -32,7 +32,7 @@ class ExploreDatasetsJSON(TemplateView):
 
         types = (
             DataType.objects.exclude(data_set__is_range=True)
-            .filter(data_set__sites=site)
+            .filter(data_set__sites=site, data_set__sitedataset__enabled=True)
             .select_related(
                 "data_set",
                 "area_type",
@@ -67,7 +67,9 @@ class ExploreDatasetsJSON(TemplateView):
         is_non_member = self.request.user.is_anonymous
 
         datasets = []
-        for d in DataSet.objects.filter(visible=True, sites=site):
+        for d in DataSet.objects.filter(
+            visible=True, sites=site, sitedataset__enabled=True
+        ):
             try:
                 options = list(map(itemgetter("title"), d.options))
             # catch bad options and ignore them for now

@@ -240,6 +240,7 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
                 data_type__data_set__visible=True,
                 person=context["mp"]["person"],
                 data_type__data_set__sites=site,
+                data_type__data_set__sitedataset__enabled=True,
             ).select_related("data_type")
 
             area_type_q = Q(data_type__area_type=area_type) | Q(
@@ -351,7 +352,10 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
         favs = self.get_user_favourite_datasets()
         auto_converted = self.get_auto_convered_datasets()
         data_sets = DataSet.objects.order_by("order", "label").filter(
-            areas_available=self.object.area_type, visible=True, sites=site
+            areas_available=self.object.area_type,
+            visible=True,
+            sites=site,
+            sitedataset__enabled=True,
         )
 
         if is_non_member:
@@ -522,6 +526,7 @@ class AreaSearchView(CobrandTemplateMixin, TemplateView):
                 name__icontains=search,
                 area_type__code__in=settings.AREA_SEARCH_AREA_CODES,
                 area_type__sites=site,
+                area_type__siteareatype__enabled=True,
             )
             people_raw = Person.objects.filter(name__icontains=search)
 
