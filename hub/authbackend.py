@@ -1,6 +1,4 @@
-from django.contrib.auth import authenticate
 from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 
 
@@ -13,7 +11,11 @@ class SiteBasedAuthBackend(ModelBackend):
         user = super().authenticate(request, username=username, password=password)
         site = Site.objects.get_current(request)
         if user and (
-            user.is_superuser or user.userproperties.sites.filter(id=site.id).exists()
+            user.is_superuser
+            or (
+                hasattr(user, "userproperties")
+                and user.userproperties.sites.filter(id=site.id).exists()
+            )
         ):
             return user
         else:
