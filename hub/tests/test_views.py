@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.test import TestCase
 from django.urls import reverse
 
@@ -10,8 +11,9 @@ from hub.models import (
     DataSet,
     Person,
     PersonArea,
-    UserDataSets,
     SiteAreaType,
+    UserDataSets,
+    UserProperties,
 )
 
 
@@ -35,6 +37,29 @@ class TestPageRenders(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "hub/explore.html")
+
+
+class TestSiteLogin(TestCase):
+    fixtures = [
+        "sites.json",
+    ]
+
+    def test_site_access(self):
+        s = Site.objects.get(domain="testserver")
+        u = User.objects.create_user("user@example.org", "user@example.org", "password")
+        response = self.client.post(
+            "/accounts/login/",
+            {"username": "user@example.org", "password": "password"},
+        )
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+
+        up = UserProperties.objects.create(user=u)
+        up.sites.add(s)
+        response = self.client.post(
+            "/accounts/login/",
+            {"username": "user@example.org", "password": "password"},
+        )
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
 
 
 class TestExploreDatasetsPage(TestCase):
