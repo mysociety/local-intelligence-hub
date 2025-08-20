@@ -4,7 +4,15 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from hub.models import Area, AreaAction, DataSet, Person, PersonArea, UserDataSets
+from hub.models import (
+    Area,
+    AreaAction,
+    DataSet,
+    Person,
+    PersonArea,
+    UserDataSets,
+    SiteAreaType,
+)
 
 
 class Test404Page(TestCase):
@@ -600,6 +608,26 @@ class TestAreaSearchPage(TestCase):
         self.assertContains(response, "Borsetshire East District Council")
         self.assertNotContains(response, "Borsetshire West")
 
+    @patch("utils.mapit.MapIt.postcode_point_to_gss_codes")
+    def test_postcode_lookup_multiple_areas_not_for_site(self, mapit_areas):
+        mapit_areas.return_value = ["E10000005", "E10000101", "E10000002"]
+
+        url = reverse("area_search")
+        response = self.client.get(url, {"search": "SE17 3HE"}, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "hub/area_search.html")
+
+        context = response.context
+        self.assertEqual(len(context["areas"]), 2)
+        self.assertContains(response, "New South Borsetshire")
+        self.assertContains(response, "Borsetshire East District Council")
+        self.assertNotContains(response, "Borsetshire West")
+
+        SiteAreaType.objects.filter(areatype__code="DIS").delete()
+        response = self.client.get(url, {"search": "SE17 3HE"}, follow=True)
+        self.assertRedirects(response, "/area/WMC23/New%20South%20Borsetshire")
+
     @patch("utils.mapit.MapIt.postcode_point_to_gss_codes_with_type")
     def test_postcode_lookup_with_area_type(self, mapit_areas):
         mapit_areas.return_value = {
@@ -704,6 +732,26 @@ class TestAreaSearchPage(TestCase):
         self.assertContains(response, "Borsetshire East Council")
         self.assertContains(response, "Borsetshire East District Council")
         self.assertNotContains(response, "/WMC/Borsetshire East")
+
+    def test_area_types_not_enabled_for_site_ignores(self):
+        url = reverse("area_search")
+        response = self.client.get(url, {"search": "Borsetshire"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "hub/area_search.html")
+
+        context = response.context
+        self.assertEqual(len(context["areas"]), 5)
+        self.assertContains(response, "Borsetshire East Council")
+        self.assertContains(response, "Borsetshire East District Council")
+        self.assertNotContains(response, "/WMC/Borsetshire East")
+
+        SiteAreaType.objects.filter(areatype__code="STC").delete()
+        response = self.client.get(url, {"search": "Borsetshire"})
+        self.assertEqual(response.status_code, 200)
+        context = response.context
+        self.assertEqual(len(context["areas"]), 4)
+        self.assertNotContains(response, "Borsetshire East Council")
 
 
 class testUserFavouriteViews(TestCase):
