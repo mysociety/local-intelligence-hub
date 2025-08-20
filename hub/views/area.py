@@ -50,15 +50,23 @@ class BaseAreaView(TitleMixin, DetailView):
             if area_type_code in AreaType.VALID_AREA_TYPES:
                 bad_case = True
 
+        site = Site.objects.get_current(self.request)
+        try:
+            area_type = AreaType.objects.get(
+                code=area_type_code, sites=site, siteareatype__enabled=True
+            )
+        except AreaType.DoesNotExist:
+            raise Http404("Area not found")
+
         try:
             area = Area.objects.get(
-                area_type__code=area_type_code,
+                area_type=area_type,
                 name=self.kwargs.get("name"),
             )
         except Area.DoesNotExist:
             try:
                 area = Area.objects.get(
-                    area_type__code=area_type_code,
+                    area_type=area_type,
                     name__iexact=self.kwargs.get("name"),
                 )
                 bad_case = True
@@ -463,6 +471,8 @@ class AreaSearchView(CobrandTemplateMixin, TemplateView):
         areas = None
         err = None
 
+        site = Site.objects.get_current(self.request)
+
         try:
             mapit = MapIt()
             if kwargs.get("lon") and kwargs.get("lat"):
@@ -478,7 +488,10 @@ class AreaSearchView(CobrandTemplateMixin, TemplateView):
                     gss_codes = mapit.postcode_point_to_gss_codes(kwargs["pc"])
 
             areas = Area.objects.filter(
-                gss__in=gss_codes, area_type__code__in=settings.AREA_SEARCH_AREA_CODES
+                gss__in=gss_codes,
+                area_type__code__in=settings.AREA_SEARCH_AREA_CODES,
+                area_type__sites=site,
+                area_type__siteareatype__enabled=True,
             )
             areas = list(areas)
         except (
