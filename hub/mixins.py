@@ -76,7 +76,10 @@ class FilterMixin:
             except DataSet.DoesNotExist:  # pragma: nocover
                 try:
                     datatype = DataType.objects.get(
-                        name=name, area_type=area_type, data_set__visible=True
+                        name=name,
+                        area_type=area_type,
+                        data_set__visible=True,
+                        data_set__sites=site,
                     )
                     filters.append(
                         {
