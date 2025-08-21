@@ -1,7 +1,8 @@
 from time import sleep
 from typing import Optional
 
-from django.core.management.base import BaseCommand
+from django.contrib.sites.models import Site
+from django.core.management.base import BaseCommand, CommandError
 
 import pandas as pd
 import requests
@@ -76,10 +77,27 @@ class BaseAreaImportCommand(BaseCommand):
         )
 
         parser.add_argument(
+            "-s",
+            "--site",
+            action="store",
+            help="Name of site to add dataset to",
+        )
+
+        parser.add_argument(
             "--skip_new_areatype_conversion",
             action="store_true",
             help="do not auto convert to new constituency data",
         )
+
+    def get_site(self):
+        if self._site_name is None:
+            raise CommandError("site name required", returncode=1)
+
+        try:
+            site = Site.objects.get(name=self._site_name)
+            self.site = site
+        except Site.DoesNotExist:
+            raise CommandError(f"No such site: {self._site_name}", returncode=1)
 
     def add_to_dict(self, df):
         names = df.area.tolist()
@@ -181,6 +199,7 @@ class BaseAreaImportCommand(BaseCommand):
                 },
             )
             data_set.areas_available.add(self.get_area_type())
+            data_set.sites.add(self.site)
 
             type_defaults = {}
             if config["defaults"].get("order"):
@@ -284,8 +303,10 @@ class BaseAreaImportCommand(BaseCommand):
     def process_data(self, df: pd.DataFrame):
         raise NotImplementedError()
 
-    def handle(self, quiet=False, *args, **kwargs):
+    def handle(self, quiet=False, site=None, *args, **kwargs):
         self._quiet = quiet
+        self._site_name = site
+        self.get_site()
         df = self.get_df()
         if df is None or df.empty:
             return
@@ -381,7 +402,14 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
     def get_dataframe(self) -> Optional[pd.DataFrame]:
         raise NotImplementedError()
 
-    def handle(self, quiet=False, skip_new_areatype_conversion=False, *args, **options):
+    def handle(
+        self,
+        quiet=False,
+        skip_new_areatype_conversion=False,
+        site=None,
+        *args,
+        **options,
+    ):
         self._quiet = quiet
         if not hasattr(self, "do_not_convert"):
             self.do_not_convert = skip_new_areatype_conversion
@@ -390,6 +418,8 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
             if not self._quiet:
                 self.stdout.write(f"missing data for {self.message} ({self.area_type})")
             return
+        self._site_name = site
+        self.get_site()
         self.add_data_sets(df)
         self.delete_data()
         self.process_data(df)
@@ -486,13 +516,15 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
             except AttributeError:
                 pass
 
-    def handle(self, quiet=False, *args, **kwargs):
+    def handle(self, quiet=False, site=None, *args, **kwargs):
         self._quiet = quiet
         df = self.get_df()
         if df is None or df.empty:
             if not self._quiet:
                 self.stdout.write(f"missing data for {self.message} ({self.area_type})")
             return
+        self._site_name = site
+        self.get_site()
         self.add_data_sets()
         self.delete_data()
         self.process_data(df)
@@ -541,13 +573,15 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
                     area.int = area.value() + 1
                 area.save()
 
-    def handle(self, quiet=False, *args, **options):
+    def handle(self, quiet=False, site=None, *args, **options):
         self._quiet = quiet
         df = self.get_dataframe()
         if df is None or df.empty:
             if not self._quiet:
                 self.stdout.write(f"missing data for {self.message} ({self.area_type})")
             return
+        self._site_name = site
+        self.get_site()
         self.add_data_sets(df)
         self.set_data_type()
         self.delete_data()
