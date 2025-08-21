@@ -8,4 +8,4 @@ cd `dirname $0`/..
 
 ./node_modules/.bin/esbuild --bundle hub/static/js/home.js --outfile=build/js/home-out-esm.js --format=esm --minify
 ./node_modules/.bin/esbuild --bundle hub/static/js/area.js --outfile=build/js/area-out-esm.js --format=esm --minify
-./node_modules/.bin/esbuild --bundle hub/static/js/explore.js --outfile=build/js/explore-out-esm.js --format=esm --minify
+./node_modules/.bin/esbuild --bundle hub/static/js/explore.js --outfile=build/js/explore-out-esm.js --format=esm  --minify --define:__VUE_PROD_HYDRATION_MISMATCH_DETAILS__='false'
