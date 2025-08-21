@@ -8,23 +8,23 @@ from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import election results for UK Members of Parliament"
 
     area_type = "WMC23"
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
+        super(Command, self).add_arguments(parser)
 
         parser.add_argument(
             "--area_type", action="store", help="Set area type code, default is WMC23"
         )
 
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
 
         if options.get("area_type") is not None:
             self.area_type = options["area_type"]
@@ -105,6 +105,7 @@ class Command(BaseCommand):
             },
         )
         majority_ds.areas_available.add(area_type)
+        self.add_object_to_site(majority_ds)
         majority, created = DataType.objects.update_or_create(
             data_set=majority_ds,
             name="mp_election_majority",
@@ -127,6 +128,7 @@ class Command(BaseCommand):
             },
         )
         last_elected_ds.areas_available.add(area_type)
+        self.add_object_to_site(last_elected_ds)
         last_elected, created = DataType.objects.update_or_create(
             data_set=last_elected_ds,
             name="mp_last_elected",
@@ -149,6 +151,7 @@ class Command(BaseCommand):
             },
         )
         first_elected_ds.areas_available.add(area_type)
+        self.add_object_to_site(first_elected_ds)
         first_elected, created = DataType.objects.update_or_create(
             data_set=first_elected_ds,
             name="mp_first_elected",

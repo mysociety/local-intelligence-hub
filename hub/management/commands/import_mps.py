@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from hub.models import Area, AreaType, DataSet, DataType, Person, PersonData
 
-from .base_importers import party_shades
+from .base_importers import BaseImportCommand, party_shades
 
 party_map = {
     "Conservative": "Conservative Party",
@@ -42,18 +42,13 @@ MP_IMPORT_COMMANDS = [
 ]
 
 
-class Command(BaseCommand):
+class Command(BaseImportCommand):
     help = "Import UK Members of Parliament"
 
     area_type = "WMC23"
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
-    def handle(self, quiet: bool = False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         self.import_mps()
         self.check_for_duplicate_mps()
         self.import_mp_images()
@@ -207,6 +202,7 @@ class Command(BaseCommand):
                 name=data_type, defaults=defaults
             )
             ds.areas_available.add(area_type)
+            self.add_object_to_site(ds)
             dt, created = DataType.objects.get_or_create(
                 data_set=ds,
                 name=data_type,
