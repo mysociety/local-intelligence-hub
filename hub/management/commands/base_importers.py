@@ -59,6 +59,61 @@ class MultipleAreaTypesMixin:
             super(MultipleAreaTypesMixin, self).handle(*args, **options)
 
 
+class BaseImportCommand(BaseCommand):
+    site = None
+    all_sites = None
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-q", "--quiet", action="store_true", help="Silence progress bars."
+        )
+
+        parser.add_argument(
+            "-s",
+            "--site",
+            action="store",
+            help="Name of site to add dataset to",
+        )
+
+        parser.add_argument(
+            "--all_sites",
+            action="store_true",
+            help="Add dataset to all sites",
+        )
+
+    def get_site(self):
+        if self.all_sites is False and self._site_name is None:
+            raise CommandError("either all_sites or site name required", returncode=1)
+
+        if self._site_name:
+            try:
+                site = Site.objects.get(name=self._site_name)
+                self.site = site
+            except Site.DoesNotExist:
+                raise CommandError(f"No such site: {self._site_name}", returncode=1)
+        elif self._all_sites:
+            self.all_sites = Site.objects.all()
+
+    def add_object_to_site(self, obj):
+        if hasattr(obj, "sites") is False:
+            self.stderr(
+                self.styles.ERROR(f"{type(obj)} does not have sites, can't add a site")
+            )
+            return
+
+        if self.site:
+            obj.sites.add(self.site)
+        elif self.all_sites:
+            for site in self.all_sites:
+                obj.sites.add(site)
+
+    def handle(self, quiet: bool = False, all_sites=False, site=None, *args, **options):
+        self._quiet = quiet
+        self._site_name = site
+        self._all_sites = all_sites
+        self.get_site()
+
+
 class BaseAreaImportCommand(BaseCommand):
     area_type = "WMC"
     uses_gss = False
