@@ -1,10 +1,40 @@
+from collections.abc import Generator
+from contextlib import contextmanager
 from datetime import date
 from functools import lru_cache
+
+from django.core.management.base import BaseCommand
+from django.db.transaction import atomic
 
 import pandas as pd
 from mysoc_dataset import get_dataset_url
 
 council_types = {"STC": ["CTY", "LBO", "MD", "SCO", "NID", "UA", "WPA"], "DIS": ["NMD"]}
+
+
+# from https://adamj.eu/tech/2022/10/13/dry-run-mode-for-data-imports-in-django/
+class DoRollback(Exception):
+    pass
+
+
+@contextmanager
+def rollback_atomic() -> Generator[None, None, None]:
+    try:
+        with atomic():
+            yield
+            raise DoRollback()
+    except DoRollback:
+        pass
+
+
+class BaseTransactionCommand(BaseCommand):
+    def get_atomic_context(self, commit):
+        if commit:
+            atomic_context = atomic()
+        else:
+            atomic_context = rollback_atomic()
+
+        return atomic_context
 
 
 @lru_cache
