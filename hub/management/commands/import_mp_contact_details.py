@@ -1,29 +1,26 @@
 from datetime import date
 
-from django.core.management.base import BaseCommand
-
 import requests
 from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import contact details for UK Members of Parliament"
 
     area_type = "WMC23"
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
+        super(Command, self).add_arguments(parser)
         parser.add_argument(
             "--area_type", action="store", help="Set area type code, default is WMC23"
         )
 
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
 
         if options.get("area_type") is not None:
             self.area_type = options["area_type"]
@@ -90,6 +87,7 @@ class Command(BaseCommand):
             },
         )
         email_ds.areas_available.add(area_type)
+        self.add_object_to_site(email_ds)
         email_dt, created = DataType.objects.update_or_create(
             data_set=email_ds,
             name="mp_email",
@@ -113,6 +111,7 @@ class Command(BaseCommand):
             },
         )
         phone_ds.areas_available.add(area_type)
+        self.add_object_to_site(phone_ds)
         phone_dt, created = DataType.objects.update_or_create(
             data_set=phone_ds,
             name="mp_phone",

@@ -1,26 +1,21 @@
 from datetime import date
 
-from django.core.management.base import BaseCommand
-
 import pandas as pd
 import requests
 from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, PersonData
 
+from .base_importers import BaseImportCommand
+
 COMMITTEE_REQUEST_URL = "https://committees-api.parliament.uk/api/Committees"
 
 
-class Command(BaseCommand):
+class Command(BaseImportCommand):
     help = "Import select committee memberships for UK Members of Parliament"
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         self.import_results()
 
     def get_df(self):
@@ -73,6 +68,7 @@ class Command(BaseCommand):
 
         at = AreaType.objects.get(code="WMC23")
         select_committee_membership_ds.areas_available.add(at)
+        self.add_object_to_site(select_committee_membership_ds)
 
         select_committee_membership, created = DataType.objects.update_or_create(
             data_set=select_committee_membership_ds,

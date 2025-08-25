@@ -256,14 +256,12 @@ class Command(BaseImportFromDataFrameCommand):
 
     def handle(
         self,
-        quiet=False,
         skip_new_areatype_conversion=False,
         import_name=None,
         list_imports=False,
         *args,
         **options,
     ):
-
         if list_imports:
             self.list_all_imports()
         elif import_name is None:
@@ -279,4 +277,4 @@ class Command(BaseImportFromDataFrameCommand):
                 self.initial_delete(conf)
                 initial_delete_done = True
 
-            super().handle(quiet, skip_new_areatype_conversion, *args, **options)
+            super().handle(skip_new_areatype_conversion, *args, **options)

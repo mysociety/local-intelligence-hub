@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.core.management.base import BaseCommand
 from django.utils.html import strip_tags
 
 import pandas as pd
@@ -7,8 +6,10 @@ from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import relevant MP climate stances from TWFY votes"
 
     policy_ids = [
@@ -34,9 +35,7 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
+        super(Command, self).add_arguments(parser)
 
         parser.add_argument(
             "--local_files",
@@ -53,8 +52,8 @@ class Command(BaseCommand):
             )
             self.positions = settings.BASE_DIR / "data" / "policy_calc_to_load.parquet"
 
-    def handle(self, quiet=False, local=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, local=False, *args, **options):
+        super(Command, self).handle(*args, **options)
         self.local = local
         self.set_data_locations()
 
@@ -70,7 +69,7 @@ class Command(BaseCommand):
         p = p.loc[p["policy_id"].isin(self.policy_ids)]
         p = p.loc[p["is_target"] == 1]
 
-        if not quiet:
+        if not self._quiet:
             self.stdout.write("processing policy stance data")
         policies = self.get_all_relevant_policies(p)
 
@@ -154,6 +153,8 @@ class Command(BaseCommand):
 
             for at in AreaType.objects.filter(code__in=["WMC23"]):
                 ds.areas_available.add(at)
+
+            self.add_object_to_site(ds)
 
             data_type, created = DataType.objects.update_or_create(
                 data_set=ds,

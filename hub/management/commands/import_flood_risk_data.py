@@ -1,13 +1,14 @@
 from django.conf import settings
-from django.core.management.base import BaseCommand
 
 import pandas as pd
 from tqdm import tqdm
 
 from hub.models import Area, AreaData, DataSet, DataType
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import flood risk data"
 
     data_file = settings.BASE_DIR / "data" / "risk_of_flooding.csv"
@@ -33,13 +34,8 @@ class Command(BaseCommand):
         "unit_distribution": "physical_area",
     }
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         df = self.get_dataframe()
         if df is None:
             if not self._quiet:
@@ -57,6 +53,7 @@ class Command(BaseCommand):
         data_set, created = DataSet.objects.update_or_create(
             name="constituency_flood_risk", defaults=self.defaults
         )
+        self.add_object_to_site(data_set)
         data_types = []
         for col in tqdm(df.columns, disable=self._quiet):
             data_type, created = DataType.objects.update_or_create(

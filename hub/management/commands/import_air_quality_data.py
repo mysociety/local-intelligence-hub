@@ -1,15 +1,16 @@
 from functools import reduce
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
 
 import pandas as pd
 from tqdm import tqdm
 
 from hub.models import Area, AreaData, DataSet, DataType
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import air-pollution data"
 
     source_url = "https://uk-air.defra.gov.uk/data/modelling-data"
@@ -86,13 +87,8 @@ class Command(BaseCommand):
         },
     }
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         df = self.get_dataframe()
         if df is None:
             self.stdout.write(
@@ -109,6 +105,7 @@ class Command(BaseCommand):
         data_set, created = DataSet.objects.update_or_create(
             name="constituency_air_quality", defaults=self.defaults
         )
+        self.add_object_to_site(data_set)
         data_types = []
         for col in tqdm(df.columns, disable=self._quiet):
             label = self.in_files[col]["pollutant"]

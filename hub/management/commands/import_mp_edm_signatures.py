@@ -1,7 +1,6 @@
 from functools import cache
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
 
 import pandas as pd
 import requests
@@ -9,8 +8,10 @@ from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import relevant MP EDM signatures"
 
     edm_list = settings.BASE_DIR / "data" / "relevant_edms.csv"
@@ -29,9 +30,9 @@ class Command(BaseCommand):
                 "release_date": row["release_date"],
             }
 
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
-        if not quiet:
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
+        if not self._quiet:
             print("Getting relevant data on EDMs from Parliament API")
         self.get_edm_list()
         edms = self.get_all_edms()
@@ -136,6 +137,8 @@ class Command(BaseCommand):
                     "comparators": DataSet.comparators_default(),
                 },
             )
+
+            self.add_object_to_site(ds)
 
             for at in AreaType.objects.filter(code__in=["WMC23"]):
                 ds.areas_available.add(at)

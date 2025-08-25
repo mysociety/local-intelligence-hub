@@ -15,11 +15,6 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
     uses_gss = True
     do_not_convert = True
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
     area_types = ["WMC", "WMC23"]
 
     mapit_types = {

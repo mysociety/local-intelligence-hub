@@ -116,8 +116,3 @@ class Command(MultipleAreaTypesMixin, BaseAreaImportCommand):
                 area=area,
                 data=len(data),
             )
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )

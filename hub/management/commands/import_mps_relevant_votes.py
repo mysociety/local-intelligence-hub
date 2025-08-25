@@ -1,14 +1,14 @@
 from functools import cache
 
-from django.core.management.base import BaseCommand
-
 import requests
 from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import relevant MP votes + support on amendments, etc"
 
     vote_division_ids = [1116, 1372]
@@ -17,14 +17,14 @@ class Command(BaseCommand):
     vote_api_url = "https://commonsvotes-api.parliament.uk/data/division/"
     edm_api_url = "https://oralquestionsandmotions-api.parliament.uk/EarlyDayMotion/"
 
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         # Relevant votes
-        if not quiet:
+        if not self._quiet:
             print("Getting relevant votes from Parliament API")
         votes = self.get_all_relevant_votes()
 
-        if not quiet:
+        if not self._quiet:
             print("Getting relevant data on EDMs from Parliament API")
         edms = self.get_all_edms()
 
@@ -197,6 +197,7 @@ class Command(BaseCommand):
                     "comparators": DataSet.in_comparators(),
                 },
             )
+            self.add_object_to_site(ds)
 
             for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
                 ds.areas_available.add(at)
@@ -208,33 +209,35 @@ class Command(BaseCommand):
             )
             data_types[vote_machine_name] = data_type
 
-            for edm in edms:
-                edm_machine_name = self.get_machine_name(edm)
-                ds, created = DataSet.objects.update_or_create(
-                    name=edm_machine_name,
-                    defaults={
-                        "data_type": "string",
-                        "description": descriptions[edm_machine_name],
-                        "label": f"MP support for {edm['edm_name']}",
-                        "release_date": release_dates[edm_machine_name],
-                        "source_label": "Data from UK Parliament.",
-                        "source": "https://parliament.uk/",
-                        "table": "people__persondata",
-                        "options": edm_options,
-                        "subcategory": "supporter",
-                        "comparators": DataSet.comparators_default(),
-                    },
-                )
+        for edm in edms:
+            edm_machine_name = self.get_machine_name(edm)
+            ds, created = DataSet.objects.update_or_create(
+                name=edm_machine_name,
+                defaults={
+                    "data_type": "string",
+                    "description": descriptions[edm_machine_name],
+                    "label": f"MP support for {edm['edm_name']}",
+                    "release_date": release_dates[edm_machine_name],
+                    "source_label": "Data from UK Parliament.",
+                    "source": "https://parliament.uk/",
+                    "table": "people__persondata",
+                    "options": edm_options,
+                    "subcategory": "supporter",
+                    "comparators": DataSet.comparators_default(),
+                },
+            )
+            self.add_object_to_site(ds)
 
-                for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
-                    ds.areas_available.add(at)
+            for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
+                ds.areas_available.add(at)
 
-                data_type, created = DataType.objects.update_or_create(
-                    data_set=ds,
-                    name=edm_machine_name,
-                    defaults={"data_type": "text"},
-                )
-                data_types[edm_machine_name] = data_type
+            data_type, created = DataType.objects.update_or_create(
+                data_set=ds,
+                name=edm_machine_name,
+                defaults={"data_type": "text"},
+            )
+            data_types[edm_machine_name] = data_type
+
         return data_types
 
     def import_results(self, votes, edms):
