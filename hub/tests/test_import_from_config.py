@@ -10,10 +10,12 @@ from hub.models import AreaData, DataSet
 
 
 class ImportTestCase(TestCase):
-    fixtures = ["areas.json"]
+    fixtures = ["areas.json", "sites.json"]
 
     def call_command(self, quiet=True, *args, **kwargs):
         out = StringIO()
+        if kwargs.get("site") is None:
+            kwargs["site"] = "lih"
         call_command(
             self.command,
             quiet=quiet,

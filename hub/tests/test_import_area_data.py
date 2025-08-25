@@ -1,6 +1,7 @@
 from io import StringIO
 from unittest import mock
 
+from django.contrib.sites.models import Site
 from django.core.management import call_command
 from django.test import TestCase
 
@@ -11,10 +12,12 @@ from hub.models import Area, AreaData, AreaType, DataSet, DataType
 
 
 class ImportTestCase(TestCase):
-    fixtures = ["areas.json"]
+    fixtures = ["areas.json", "sites.json"]
 
     def call_command(self, quiet=True, *args, **kwargs):
         out = StringIO()
+        if kwargs.get("site") is None:
+            kwargs["site"] = "lih"
         call_command(
             self.command,
             quiet=quiet,
@@ -27,8 +30,12 @@ class ImportTestCase(TestCase):
 
 
 class ImportNumericalDataWithMissingValuesTestCase(TestCase):
+    fixtures = ["sites.json"]
+
     def setUp(self):
         self.command = BaseAreaImportCommand()
+        site = Site.objects.get(name="lih")
+        self.command.site = site
         self.command.data_sets = {
             "data_type_1": {
                 "defaults": {
