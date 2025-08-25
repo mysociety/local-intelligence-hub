@@ -107,14 +107,21 @@ class BaseImportCommand(BaseCommand):
             for site in self.all_sites:
                 obj.sites.add(site)
 
-    def handle(self, quiet: bool = False, all_sites=False, site=None, *args, **options):
+    def handle(
+        self,
+        all_sites: bool = False,
+        quiet: bool = False,
+        site: str = "",
+        *args,
+        **options,
+    ):
         self._quiet = quiet
-        self._site_name = site
         self._all_sites = all_sites
+        self._site_name = site
         self.get_site()
 
 
-class BaseAreaImportCommand(BaseCommand):
+class BaseAreaImportCommand(BaseImportCommand):
     area_type = "WMC"
     uses_gss = False
     skip_delete = False
@@ -127,32 +134,12 @@ class BaseAreaImportCommand(BaseCommand):
         self.data_types = {}
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
-        parser.add_argument(
-            "-s",
-            "--site",
-            action="store",
-            help="Name of site to add dataset to",
-        )
-
+        super(BaseAreaImportCommand, self).add_arguments(parser)
         parser.add_argument(
             "--skip_new_areatype_conversion",
             action="store_true",
             help="do not auto convert to new constituency data",
         )
-
-    def get_site(self):
-        if self._site_name is None:
-            raise CommandError("site name required", returncode=1)
-
-        try:
-            site = Site.objects.get(name=self._site_name)
-            self.site = site
-        except Site.DoesNotExist:
-            raise CommandError(f"No such site: {self._site_name}", returncode=1)
 
     def add_to_dict(self, df):
         names = df.area.tolist()
@@ -254,7 +241,7 @@ class BaseAreaImportCommand(BaseCommand):
                 },
             )
             data_set.areas_available.add(self.get_area_type())
-            data_set.sites.add(self.site)
+            self.add_object_to_site(data_set)
 
             type_defaults = {}
             if config["defaults"].get("order"):
@@ -358,14 +345,14 @@ class BaseAreaImportCommand(BaseCommand):
     def process_data(self, df: pd.DataFrame):
         raise NotImplementedError()
 
-    def handle(self, quiet=False, site=None, *args, **kwargs):
-        self._quiet = quiet
-        self._site_name = site
-        self.get_site()
+    def handle(self, *args, **kwargs):
+        super(BaseAreaImportCommand, self).handle(*args, **kwargs)
         df = self.get_df()
         if df is None or df.empty:
+            if not self._quiet:
+                self.stdout.write(f"missing data for {self.message} ({self.area_type})")
             return
-        self.add_data_sets()
+        self.add_data_sets(df)
         self.delete_data()
         self.process_data(df)
         self.update_averages()
@@ -457,30 +444,18 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
     def get_dataframe(self) -> Optional[pd.DataFrame]:
         raise NotImplementedError()
 
+    def get_df(self):
+        return self.get_dataframe()
+
     def handle(
         self,
-        quiet=False,
         skip_new_areatype_conversion=False,
-        site=None,
         *args,
         **options,
     ):
-        self._quiet = quiet
         if not hasattr(self, "do_not_convert"):
             self.do_not_convert = skip_new_areatype_conversion
-        df = self.get_dataframe()
-        if df is None or df.empty:
-            if not self._quiet:
-                self.stdout.write(f"missing data for {self.message} ({self.area_type})")
-            return
-        self._site_name = site
-        self.get_site()
-        self.add_data_sets(df)
-        self.delete_data()
-        self.process_data(df)
-        self.update_averages()
-        self.update_max_min()
-        self.convert_to_new_con()
+        super(BaseImportFromDataFrameCommand, self).handle(*args, **options)
 
 
 class BaseLatLongImportCommand(BaseAreaImportCommand):
@@ -532,7 +507,6 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
     do_not_convert = True
 
     def process_data(self, df: pd.DataFrame):
-
         if not self._quiet:
             self.stdout.write(f"{self.message} ({self.area_type})")
 
@@ -571,20 +545,8 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
             except AttributeError:
                 pass
 
-    def handle(self, quiet=False, site=None, *args, **kwargs):
-        self._quiet = quiet
-        df = self.get_df()
-        if df is None or df.empty:
-            if not self._quiet:
-                self.stdout.write(f"missing data for {self.message} ({self.area_type})")
-            return
-        self._site_name = site
-        self.get_site()
-        self.add_data_sets()
-        self.delete_data()
-        self.process_data(df)
-        self.update_averages()
-        self.update_max_min()
+    def handle(self, *args, **kwargs):
+        super(BaseConstituencyGroupListImportCommand, self).handle(*args, **kwargs)
 
 
 class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
@@ -593,8 +555,7 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
     def set_data_type(self):
         self.data_type = list(self.data_types.values())[0]
 
-    def get_dataframe(self):
-
+    def get_df(self):
         if not self.data_file.exists():
             return None
 
@@ -612,6 +573,9 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
         return list(areas)
 
     def process_data(self, df):
+        if not hasattr(self, "data_type"):
+            self.set_data_type()
+
         if not self._quiet:
             self.stdout.write(f"{self.message} ({self.area_type})")
 
@@ -628,18 +592,5 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
                     area.int = area.value() + 1
                 area.save()
 
-    def handle(self, quiet=False, site=None, *args, **options):
-        self._quiet = quiet
-        df = self.get_dataframe()
-        if df is None or df.empty:
-            if not self._quiet:
-                self.stdout.write(f"missing data for {self.message} ({self.area_type})")
-            return
-        self._site_name = site
-        self.get_site()
-        self.add_data_sets(df)
-        self.set_data_type()
-        self.delete_data()
-        self.process_data(df)
-        self.update_averages()
-        self.update_max_min()
+    def handle(self, *args, **options):
+        super(BaseConstituencyCountImportCommand, self).handle(*args, **options)
