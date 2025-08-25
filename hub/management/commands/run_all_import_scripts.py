@@ -47,11 +47,24 @@ class Command(BaseCommand):
             help="Run 'generate_' scripts as well as 'import_' scripts",
         )
 
+        parser.add_argument(
+            "-s",
+            "--site",
+            action="store",
+            help="Name of site to add dataset to",
+        )
+
+        parser.add_argument(
+            "--all_sites",
+            action="store_true",
+            help="Add dataset to all sites",
+        )
+
     def run_generator_scripts(self, generators, *args, **options):
         total = str(len(generators))
         failed_generators = {}
         for i, generator in enumerate(generators):
-            print(f"Running command: {generator} ({str(i+1)}/{total})")
+            print(f"Running command: {generator} ({str(i + 1)}/{total})")
             try:
                 call_command(generator)
             except Exception as e:
@@ -72,7 +85,7 @@ class Command(BaseCommand):
             imports.remove(importer)
             print(f"Running command: {importer} ({str(i)}/{total})")
             try:
-                call_command(importer)
+                call_command(importer, (), **options)
             except Exception as e:
                 print(f"Error raised: {e}")
                 print("Moving to next importer...")
@@ -85,7 +98,7 @@ class Command(BaseCommand):
         for importer in imports:
             print(f"Running command: {importer} ({str(i)}/{total})")
             try:
-                call_command(importer)
+                call_command(importer, (), **options)
             except Exception as e:
                 print(f"Error raised: {e}")
                 print("Moving to next importer...")
@@ -101,4 +114,4 @@ class Command(BaseCommand):
         scripts = self.get_scripts()
         if generate:
             self.run_generator_scripts(generators=scripts["generators"])
-        self.run_importer_scripts(imports=scripts["importers"])
+        self.run_importer_scripts(imports=scripts["importers"], **options)
