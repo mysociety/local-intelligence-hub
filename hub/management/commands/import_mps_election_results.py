@@ -1,7 +1,5 @@
 from datetime import date
 
-from django.core.management.base import BaseCommand
-
 import requests
 from dateutil.parser import isoparse
 from tqdm import tqdm

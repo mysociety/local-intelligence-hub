@@ -1,18 +1,19 @@
 from django.conf import settings
-from django.core.management.base import BaseCommand
 
 import pandas as pd
 from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, PersonData
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import MP engagement (open letters)"
     data_file = settings.BASE_DIR / "data" / "open_letters.csv"
 
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         self.data_types = self.create_data_types()
         df = self.get_df()
         if df is None or df.empty:
@@ -56,6 +57,8 @@ class Command(BaseCommand):
             },
         )
 
+        self.add_object_to_site(ds)
+
         for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
             ds.areas_available.add(at)
 
@@ -80,6 +83,8 @@ class Command(BaseCommand):
                 "comparators": DataSet.comparators_default(),
             },
         )
+
+        self.add_object_to_site(ds)
 
         for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
             ds.areas_available.add(at)

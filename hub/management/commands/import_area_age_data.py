@@ -1,25 +1,20 @@
-from django.core.management.base import BaseCommand
-
 import pandas as pd
 from tqdm import tqdm
 
 from hub.models import Area, AreaData, AreaType, DataSet, DataType
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import data about area age spread"
 
     source_url = "https://commonslibrary.parliament.uk/constituency-statistics-population-by-age/"
     data_url = "https://data.parliament.uk/resources/constituencystatistics/PowerBIData/Demography/Population.xlsx"
     area_type = "WMC"
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         df = pd.read_excel(self.data_url, sheet_name="Age group data")
 
         defaults = {
@@ -44,6 +39,7 @@ class Command(BaseCommand):
             name="constituency_age_distribution",
             defaults=defaults,
         )
+        self.add_object_to_site(data_set)
 
         averages = {}
         df = df.loc[df["Date"] == 2020]

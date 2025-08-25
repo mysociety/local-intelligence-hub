@@ -1,25 +1,20 @@
 from datetime import date
 
-from django.core.management.base import BaseCommand
-
 import requests
 from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import MP Job titles"
 
     area_type = "WMC23"
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         self.import_results()
 
     def get_area_type(self):
@@ -43,6 +38,7 @@ class Command(BaseCommand):
             },
         )
         mp_job_titles_ds.areas_available.add(self.get_area_type())
+        self.add_object_to_site(mp_job_titles_ds)
 
         mp_job_titles, created = DataType.objects.update_or_create(
             data_set=mp_job_titles_ds,

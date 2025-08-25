@@ -1,12 +1,12 @@
-from django.core.management.base import BaseCommand
-
 import pandas as pd
 from tqdm import tqdm
 
-from hub.models import Area, AreaData, DataSet, DataType
+from hub.models import Area, AreaData, AreaType, DataSet, DataType
+
+from .base_importers import BaseImportCommand
 
 
-class Command(BaseCommand):
+class Command(BaseImportCommand):
     help = "Import data about ethnicity"
 
     source_url = (
@@ -38,13 +38,8 @@ class Command(BaseCommand):
         "unit_distribution": "people_in_area",
     }
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         df = self.get_dataframe()
         self.data_types = self.create_data_types(df)
         self.delete_data()
@@ -53,15 +48,19 @@ class Command(BaseCommand):
     def create_data_types(self, df):
         if not self._quiet:
             self.stdout.write("Creating dataset + types")
+        self.at = AreaType.objects.get(code=self.area_type)
         data_set, created = DataSet.objects.update_or_create(
             name="consituency_ethnicity", defaults=self.defaults
         )
+        data_set.areas_available.add(self.at)
+        self.add_object_to_site(data_set)
         data_types = []
         for col in tqdm(df.columns, disable=self._quiet):
             if col != "gss":
                 data_type, created = DataType.objects.update_or_create(
                     data_set=data_set,
                     name=f"eth_{self.machine_readable_names[col]}",
+                    area_type=self.at,
                     defaults={
                         "data_type": "percent",
                         "label": col,
@@ -91,7 +90,7 @@ class Command(BaseCommand):
             if col != "gss":
                 average = df[col].mean()
                 data_type = DataType.objects.get(
-                    name=f"eth_{self.machine_readable_names[col]}"
+                    name=f"eth_{self.machine_readable_names[col]}", area_type=self.at
                 )
                 data_type.average = average
                 data_type.save()

@@ -1,27 +1,26 @@
 from django.conf import settings
-from django.core.management.base import BaseCommand
 
 import pandas as pd
 from tqdm import tqdm
 
 from hub.models import Area, AreaAction, AreaActionData
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import Act Now Change Forever data"
     data_file = settings.BASE_DIR / "data" / "act_now.csv"
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
+        super(Command, self).add_arguments(parser)
 
         parser.add_argument(
             "-u", "--url", action="store", help="URL to Google Sheets CSV export."
         )
 
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         self.csv_url = options.get("url")
         self.import_results()
 
@@ -64,7 +63,6 @@ class Command(BaseCommand):
         return df
 
     def import_results(self):
-
         df = self.get_df()
 
         if df is None or df.empty:

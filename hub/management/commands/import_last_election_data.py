@@ -2,7 +2,6 @@ import re
 from datetime import date
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 
 import numpy as np
@@ -13,10 +12,10 @@ from tqdm import tqdm
 
 from hub.models import Area, AreaData, AreaType, DataSet, DataType
 
-from .base_importers import party_shades
+from .base_importers import BaseImportCommand, party_shades
 
 
-class Command(BaseCommand):
+class Command(BaseImportCommand):
     help = "Import data from the last election"
     source_url = "https://commonslibrary.parliament.uk/tag/elections-data/"
 
@@ -65,8 +64,8 @@ class Command(BaseCommand):
         "pbpa": "People Before Profit Alliance",
     }
 
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         self.delete_data()
         df = self.get_last_election_df()
         if df is not None:
@@ -227,6 +226,7 @@ class Command(BaseCommand):
             },
         )
         second_party_ds.areas_available.add(self.get_area_type())
+        self.add_object_to_site(second_party_ds)
 
         second_party, created = DataType.objects.update_or_create(
             data_set=second_party_ds,
@@ -251,6 +251,7 @@ class Command(BaseCommand):
         )
 
         last_election_ds.areas_available.add(self.get_area_type())
+        self.add_object_to_site(last_election_ds)
 
         last_election, created = DataType.objects.update_or_create(
             data_set=last_election_ds,

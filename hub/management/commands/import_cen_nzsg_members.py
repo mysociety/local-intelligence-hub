@@ -1,22 +1,21 @@
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
-
 import pandas as pd
 from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import CEN and NZSG Members"
 
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         self.import_results()
 
     def get_df(self):
-
         file_loc = Path("data", "cen_nzsg_members.csv")
         if not file_loc.exists():
             return None
@@ -45,6 +44,7 @@ class Command(BaseCommand):
                 "comparators": DataSet.comparators_default(),
             },
         )
+        self.add_object_to_site(cen_ds)
         nzsg_ds, created = DataSet.objects.update_or_create(
             name="nzsg_member",
             defaults={
@@ -59,6 +59,7 @@ class Command(BaseCommand):
                 "comparators": DataSet.comparators_default(),
             },
         )
+        self.add_object_to_site(nzsg_ds)
 
         for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
             nzsg_ds.areas_available.add(at)

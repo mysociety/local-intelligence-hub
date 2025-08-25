@@ -2,16 +2,16 @@ from collections import defaultdict
 from datetime import date, timedelta
 from functools import cache
 
-from django.core.management.base import BaseCommand
-
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import relevant MP written questions, be default fetches data from previous day."
 
     departments = [
@@ -24,9 +24,7 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
+        super(Command, self).add_arguments(parser)
 
         parser.add_argument(
             "--start_date",
@@ -52,6 +50,7 @@ class Command(BaseCommand):
         )
 
         ds.areas_available.add(AreaType.objects.get(code="WMC23"))
+        self.add_object_to_site(ds)
 
         data_type, created = DataType.objects.update_or_create(
             data_set=ds,
@@ -149,9 +148,9 @@ class Command(BaseCommand):
                 },
             )
 
-    def handle(self, quiet=False, start_date=None, *args, **options):
-        self._quiet = quiet
-        if not quiet:
+    def handle(self, start_date=None, *args, **options):
+        super(Command, self).handle(*args, **options)
+        if not self._quiet:
             print("Getting recent relevant wrans from parliament")
 
         if start_date is None:

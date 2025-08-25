@@ -1,12 +1,12 @@
 from datetime import date
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
-
 from mysoc_dataset import get_dataset_df, get_dataset_url
 from tqdm import tqdm
 
 from hub.models import AreaType, DataSet, DataType, Person, PersonData
+
+from .base_importers import BaseImportCommand
 
 party_lookup = {
     "Conservative": "Conservative Party",
@@ -21,7 +21,7 @@ party_lookup = {
 }
 
 
-class Command(BaseCommand):
+class Command(BaseImportCommand):
     help = "Import data on what APPGs an MP is part of"
 
     source_url = "https://www.parliament.uk/mps-lords-and-offices/standards-and-financial-interests/parliamentary-commissioner-for-standards/registers-of-interests/register-of-all-party-party-parliamentary-groups/"
@@ -33,8 +33,8 @@ class Command(BaseCommand):
         done_survey=True,
     )
 
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
+    def handle(self, *args, **options):
+        super(Command, self).handle(*args, **options)
         self.import_results()
 
     def add_mps(self, df):
@@ -102,6 +102,7 @@ class Command(BaseCommand):
                 "comparators": DataSet.in_comparators(),
             },
         )
+        self.add_object_to_site(appg_membership_ds)
 
         for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
             appg_membership_ds.areas_available.add(at)

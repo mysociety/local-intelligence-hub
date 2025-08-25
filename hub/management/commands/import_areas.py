@@ -1,15 +1,20 @@
 import json
 
-from django.core.management.base import BaseCommand
+from django.contrib.sites.models import Site
+from django.core.management.base import CommandError
 
 from tqdm import tqdm
 
 from hub.models import Area, AreaType
 from utils.mapit import MapIt, NotFoundException
 
+from .base_importers import BaseImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseImportCommand):
     help = "Import basic area information from MaPit"
+
+    _site_name = None
 
     boundary_types = [
         {
@@ -57,7 +62,33 @@ class Command(BaseCommand):
             help="Print out extra diagnostics - very verbose",
         )
 
+        parser.add_argument(
+            "-s",
+            "--site",
+            action="store",
+            help="Name of site to add dataset to",
+        )
+
+        parser.add_argument(
+            "--all_sites",
+            action="store_true",
+            help="Add dataset to all sites",
+        )
+
+    def get_site(self):
+        if self._site_name:
+            try:
+                site = Site.objects.get(name=self._site_name)
+                self.site = site
+            except Site.DoesNotExist:
+                raise CommandError(f"No such site: {self._site_name}", returncode=1)
+        elif self._all_sites:
+            self.all_sites = Site.objects.all()
+
     def handle(self, quiet: bool = False, diagnostics: bool = False, *args, **options):
+        self._site_name = options.get("site")
+        self._all_sites = options.get("all_sites")
+        self.get_site()
         mapit_client = MapIt()
         for b_type in self.boundary_types:
             areas = mapit_client.areas_of_type(
@@ -69,12 +100,14 @@ class Command(BaseCommand):
                 )
             area_type, created = AreaType.objects.get_or_create(
                 code=b_type["code"],
-                area_type=b_type["area_type"],
                 defaults={
+                    "area_type": b_type["area_type"],
                     "name": b_type["name"],
                     "description": b_type["description"],
                 },
             )
+
+            self.add_object_to_site(area_type)
 
             if diagnostics or not quiet:
                 print(f"Importing {b_type['name']} Areas")
