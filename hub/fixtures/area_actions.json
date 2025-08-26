@@ -20,6 +20,14 @@
         "part": 1
       }
     }
+  },
+  {
+    "model": "hub.siteareaaction",
+    "pk": 1,
+    "fields": {
+      "action": 1,
+      "site": 1
+    }
   }
 ]
 

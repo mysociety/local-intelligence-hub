@@ -6,6 +6,14 @@
       "domain": "testserver",
       "name": "lih"
     }
+  },
+  {
+    "model": "sites.site",
+    "pk": 2,
+    "fields": {
+      "domain": "bestserver",
+      "name": "gih"
+    }
   }
 ]
 

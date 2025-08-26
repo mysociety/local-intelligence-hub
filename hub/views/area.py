@@ -436,7 +436,9 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
         context["user_is_member"] = not is_non_member
 
         actions = AreaActionData.objects.filter(
-            area=context["area"], action__visible=True
+            area=context["area"],
+            action__visible=True,
+            action__sites=site,
         ).select_related("action")
 
         if self.request.session.get("area_action"):

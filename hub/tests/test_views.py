@@ -11,6 +11,7 @@ from hub.models import (
     DataSet,
     Person,
     PersonArea,
+    SiteAreaAction,
     SiteAreaType,
     UserDataSets,
     UserProperties,
@@ -517,6 +518,19 @@ class TestAreaPageActions(TestCase):
         action = AreaAction.objects.get(name="action_one")
         action.visible = False
         action.save()
+
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        self.assertIsNone(context.get("actions"))
+
+    def test_area_page_action_not_for_site(self):
+        siteaction = SiteAreaAction.objects.get(action__name="action_one")
+        site = Site.objects.get(name="gih")
+        siteaction.site = site
+        siteaction.save()
 
         url = reverse("area", args=("WMC", "South Borsetshire"))
         response = self.client.get(url)
