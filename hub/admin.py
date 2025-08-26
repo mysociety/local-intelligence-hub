@@ -10,6 +10,7 @@ from hub.models import (
     DataType,
     Person,
     PersonData,
+    SiteAreaAction,
     SiteDataSet,
     UserProperties,
 )
@@ -184,6 +185,10 @@ class AreaAdmin(admin.ModelAdmin):
     )
 
 
+class AreaActionSitesInline(admin.TabularInline):
+    model = SiteAreaAction
+
+
 @admin.register(AreaAction)
 class AreaActionAdmin(admin.ModelAdmin):
     list_display = (
@@ -191,6 +196,7 @@ class AreaActionAdmin(admin.ModelAdmin):
         "label",
     )
     search_fields = ("name",)
+    inlines = [AreaActionSitesInline]
 
 
 @admin.register(AreaActionData)

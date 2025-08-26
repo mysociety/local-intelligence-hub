@@ -768,6 +768,12 @@ class AreaData(CommonData):
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
 
 
+class SiteAreaAction(models.Model):
+    action = models.ForeignKey("AreaAction", on_delete=models.CASCADE)
+    site = models.ForeignKey(Site, on_delete=models.CASCADE)
+    enabled = models.BooleanField(default=True)
+
+
 class AreaAction(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
@@ -780,6 +786,7 @@ class AreaAction(models.Model):
     passphrase = models.CharField(max_length=100, blank=True, null=True)
     visible = models.BooleanField(default=False)
     template = models.CharField(max_length=200, blank=True, null=True)
+    sites = models.ManyToManyField(Site, through=SiteAreaAction)
 
     def get_template(self):
         template = "hub/area/_base_action.html"
