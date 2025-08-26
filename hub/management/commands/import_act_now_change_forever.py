@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.sites.models import Site
 
 import pandas as pd
 from tqdm import tqdm
@@ -68,6 +69,7 @@ class Command(BaseImportCommand):
         if df is None or df.empty:
             return
 
+        site = Site.objects.get(name="lih")
         action, _ = AreaAction.objects.update_or_create(
             name="2025_tcc_act_now",
             defaults={
@@ -78,6 +80,7 @@ class Command(BaseImportCommand):
                 "template": "_act_now.html",
             },
         )
+        action.sites.add(site)
         for _, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
             a = Area.objects.get(gss=row["gss_code"], area_type__code="WMC23")
 
