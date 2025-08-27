@@ -11,7 +11,7 @@ from django.views.decorators.cache import cache_control
 from django.views.generic import TemplateView
 
 from hub.mixins import CobrandTemplateMixin, FilterMixin, TitleMixin
-from hub.models import DataSet, DataType, UserDataSets
+from hub.models import AreaType, DataSet, DataType, UserDataSets
 
 
 class ExploreView(TitleMixin, CobrandTemplateMixin, TemplateView):
@@ -24,6 +24,28 @@ class ExploreView(TitleMixin, CobrandTemplateMixin, TemplateView):
         context["user_is_member"] = not self.request.user.is_anonymous
 
         return context
+
+
+class ExploreAreaTypesJSON(TemplateView):
+    def render_to_response(self, context, **response_kwargs):
+        site = Site.objects.get_current(self.request)
+
+        area_types = AreaType.objects.filter(sites=site)
+
+        area_type_list = []
+        for at in area_types:
+            area_type_list.append(
+                {
+                    "slug": at.code,
+                    "label": at.name,
+                    "short_label": at.area_type,
+                    "description": at.description,
+                }
+            )
+        return JsonResponse(
+            area_type_list,
+            safe=False,
+        )
 
 
 class ExploreDatasetsJSON(TemplateView):

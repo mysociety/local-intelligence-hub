@@ -30,6 +30,11 @@ urlpatterns = [
     path("", core.HomePageView.as_view(), name="home"),
     path("explore/", explore.ExploreView.as_view(), name="explore"),
     path(
+        "explore/areatypes.json",
+        explore.ExploreAreaTypesJSON.as_view(),
+        name="explore_areatype_json",
+    ),
+    path(
         "explore/datasets.json",
         explore.ExploreDatasetsJSON.as_view(),
         name="explore_datasets_json",
