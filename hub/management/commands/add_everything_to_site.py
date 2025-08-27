@@ -3,7 +3,7 @@ from collections import defaultdict
 from django.contrib.sites.models import Site
 
 from hub.import_utils import BaseTransactionCommand
-from hub.models import AreaType, DataSet, UserProperties
+from hub.models import AreaAction, AreaType, DataSet, UserProperties
 
 
 class Command(BaseTransactionCommand):
@@ -46,6 +46,10 @@ class Command(BaseTransactionCommand):
             for ds in DataSet.objects.all():
                 counts["data sets"] += 1
                 ds.sites.add(site)
+
+            for aa in AreaAction.objects.all():
+                counts["area actions"] += 1
+                aa.sites.add(site)
 
             for key, count in counts.items():
                 self.stdout.write(f"add {site.name} to {count} {key}")
