@@ -27,21 +27,6 @@ const app = createApp({
         label: "Westminster constituencies",
         short_label: "constituencies",
         description: "These are the areas currently represented by MPs in the UK Parliament, since the July 2024 general election."
-      }, {
-        slug: "WMC",
-        label: "Old (pre-2024) Westminster constituencies",
-        short_label: "constituencies",
-        description: "These constituencies were represented by MPs in UK Parliament up until the July 2024 general election."
-      }, {
-        slug: "STC",
-        label: "Single Tier councils",
-        short_label: "councils",
-        description: "Includes county councils, London boroughs, unitary authorities, and metropolitain districts."
-      }, {
-        slug: "DIS",
-        label: "District councils",
-        short_label: "councils",
-        description: "Some places are served by both a county council, and one of these district councils, which handle local services like rubbish collection and planning applications."
       }],
 
       filters_applied: false, // were filters applied on the last Update?
@@ -115,6 +100,7 @@ const app = createApp({
     }
   },
   mounted() {
+    this.loadAreaTypes()
     this.restoreState()
     this.$refs.filtersContainer.removeAttribute('hidden')
     this.$refs.shaderContainer.removeAttribute('hidden')
@@ -157,6 +143,15 @@ const app = createApp({
             }
           })
           this.datasets = datasets
+        })
+    },
+    loadAreaTypes() {
+      const url = new URL(window.location.origin + '/explore/areatypes.json')
+
+      return fetch(url.href)
+        .then(response => response.json())
+        .then((areatypes) => {
+          this.area_types = areatypes
         })
     },
     getSortType() {
