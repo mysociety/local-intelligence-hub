@@ -88,3 +88,9 @@ By default, `script/test` runs all the tests. If you want to run a single TestCa
 You can run the linting and formatting suite from inside or outside the docker container:
 
     script/lint
+
+### multi site setup
+
+This uses django's sites framework to enable having multiple front end's for the same data. You will need to add one site per front end in the django admin. Assuming you have an existing site there is an `add_everything_to_site` management command which will set up everything for that site to carry on working.
+
+All the views will default to looking for templates in `hub/templates/$site_name/` first and then `hub/templates/`. To replicate this behaviour in a template include you will need `{% include `siteinclude' %}` and then use the `site_include` tag.
