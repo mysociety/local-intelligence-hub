@@ -2,7 +2,6 @@ from collections import defaultdict
 from functools import cache
 
 from django.db.models import Q
-from django.http import Http404
 
 from hub.models import Area, AreaData, AreaType, DataSet, DataType, Person, PersonData
 
