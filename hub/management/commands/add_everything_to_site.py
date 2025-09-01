@@ -1,7 +1,6 @@
-from collections import defaultdict
-
 from django.contrib.sites.models import Site
 
+from hub.site_utils import add_site_to_classes
 from hub.import_utils import BaseTransactionCommand
 from hub.models import AreaAction, AreaType, DataSet, UserProperties
 
@@ -33,23 +32,9 @@ class Command(BaseTransactionCommand):
             self.stderr.write(f"No such site: {site_name}")
             return
 
-        counts = defaultdict(int)
         with self.get_atomic_context(self.commit):
-            for up in UserProperties.objects.all():
-                counts["users"] += 1
-                up.sites.add(site)
-
-            for at in AreaType.objects.all():
-                counts["area types"] += 1
-                at.sites.add(site)
-
-            for ds in DataSet.objects.all():
-                counts["data sets"] += 1
-                ds.sites.add(site)
-
-            for aa in AreaAction.objects.all():
-                counts["area actions"] += 1
-                aa.sites.add(site)
+            classes = [UserProperties, AreaType, AreaAction, DataSet]
+            counts = add_site_to_classes(site, classes)
 
             for key, count in counts.items():
                 self.stdout.write(f"add {site.name} to {count} {key}")
