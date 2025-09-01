@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.sites.models import Site
+from django.http import Http404
 from django.utils.timezone import now
 
 from hub.models import UserProperties
@@ -36,6 +37,27 @@ class RecordLastSeenMiddleware:
         return response
 
 
+class CurrentSiteMiddlware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        site = None
+        try:
+            site = Site.objects.get_current(request)
+        except Site.DoesNotExist:
+            if Site.objects.count() == 1:
+                site = Site.objects.first()
+            else:
+                raise Http404("Site not found")
+
+        request.site = site
+
+        response = self.get_response(request)
+
+        return response
+
+
 class AddSiteContextMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -46,10 +68,8 @@ class AddSiteContextMiddleware:
 
     def process_template_response(self, request, response):
         context = response.context_data
-        site = Site.objects.get_current(request)
-
-        context["site"] = site.name
-        context["site_path"] = f"{site.name}/"
+        context["site"] = request.site.name
+        context["site_path"] = f"{request.site.name}/"
         response.context_data = context
 
         return response

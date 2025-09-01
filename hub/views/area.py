@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.db.models import Count, Q
 from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -50,7 +49,7 @@ class BaseAreaView(TitleMixin, DetailView):
             if area_type_code in AreaType.VALID_AREA_TYPES:
                 bad_case = True
 
-        site = Site.objects.get_current(self.request)
+        site = self.request.site
         try:
             area_type = AreaType.objects.get(
                 code=area_type_code, sites=site, siteareatype__enabled=True
@@ -211,7 +210,7 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        site = Site.objects.get_current(self.request)
+        site = self.request.site
 
         is_non_member = self.request.user.is_anonymous
 
@@ -473,7 +472,7 @@ class AreaSearchView(CobrandTemplateMixin, TemplateView):
         areas = None
         err = None
 
-        site = Site.objects.get_current(self.request)
+        site = self.request.site
 
         try:
             mapit = MapIt()
@@ -512,7 +511,7 @@ class AreaSearchView(CobrandTemplateMixin, TemplateView):
         lon = self.request.GET.get("lon")
         lat = self.request.GET.get("lat")
         area_type = self.request.GET.get("area_type")
-        site = Site.objects.get_current(self.request)
+        site = self.request.site
 
         context["area_type"] = area_type
 

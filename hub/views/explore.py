@@ -4,7 +4,6 @@ import math
 from collections import defaultdict
 from operator import itemgetter
 
-from django.contrib.sites.models import Site
 from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -28,7 +27,7 @@ class ExploreView(TitleMixin, CobrandTemplateMixin, TemplateView):
 
 class ExploreAreaTypesJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
-        site = Site.objects.get_current(self.request)
+        site = self.request.site
 
         area_types = AreaType.objects.filter(sites=site)
 
@@ -50,7 +49,7 @@ class ExploreAreaTypesJSON(TemplateView):
 
 class ExploreDatasetsJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
-        site = Site.objects.get_current(self.request)
+        site = self.request.site
 
         types = (
             DataType.objects.exclude(data_set__is_range=True)

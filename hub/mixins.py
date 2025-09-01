@@ -1,15 +1,16 @@
 from collections import defaultdict
 from functools import cache
 
-from django.contrib.sites.models import Site
 from django.db.models import Q
+from django.http import Http404
 
 from hub.models import Area, AreaData, AreaType, DataSet, DataType, Person, PersonData
 
 
 class CobrandTemplateMixin:
     def get_template_names(self):
-        site = Site.objects.get_current(self.request)
+        site = self.request.site
+
         return [f"{site.name}/{self.template_name}", self.template_name]
 
 
@@ -31,7 +32,7 @@ class TitleMixin:
 class FilterMixin:
     @cache
     def filters(self):
-        site = Site.objects.get_current(self.request)
+        site = self.request.site
         is_non_member = self.request.user.is_anonymous
 
         filters = []
