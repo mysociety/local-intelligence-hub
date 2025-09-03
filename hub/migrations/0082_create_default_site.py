@@ -11,6 +11,9 @@ def reverse_noop(apps, schema_editor):  # pragma: no cover
 def create_default_site(apps, schema_editor):
     Site = apps.get_model("sites", "Site")
     host = settings.ALLOWED_HOSTS[0]
+    if host == "*":
+        return
+
     site_count = Site.objects.count()
     if site_count == 0:
         Site.objects.create(
