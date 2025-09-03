@@ -76,6 +76,12 @@ class BaseImportCommand(BaseCommand):
         )
 
         parser.add_argument(
+            "--site_list",
+            action="store",
+            help="comma separated list of sites to add dataset to",
+        )
+
+        parser.add_argument(
             "--all_sites",
             action="store_true",
             help="Add dataset to all sites",
@@ -91,6 +97,9 @@ class BaseImportCommand(BaseCommand):
                 self.site = site
             except Site.DoesNotExist:
                 raise CommandError(f"No such site: {self._site_name}", returncode=1)
+        elif self._site_list:
+            sites = self._site_list.split(",")
+            self.all_sites = Site.objects.filter(name__in=sites)
         elif self._all_sites:
             self.all_sites = Site.objects.all()
 
@@ -112,11 +121,13 @@ class BaseImportCommand(BaseCommand):
         all_sites: bool = False,
         quiet: bool = False,
         site: str = "",
+        site_list: str = "",
         *args,
         **options,
     ):
         self._quiet = quiet
         self._all_sites = all_sites
+        self._site_list = site_list
         self._site_name = site
         self.get_site()
 
