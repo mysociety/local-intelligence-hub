@@ -1,10 +1,9 @@
-import pandas as pd
-
 from django.contrib.sites.models import Site
+
+import pandas as pd
 
 from hub.import_utils import BaseTransactionCommand
 from hub.models import DataSet
-from hub.site_utils import add_site_to_classes
 
 
 class Command(BaseTransactionCommand):
