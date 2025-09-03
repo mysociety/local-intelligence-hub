@@ -43,13 +43,14 @@ class CurrentSiteMiddlware:
 
     def __call__(self, request):
         site = None
-        try:
-            site = Site.objects.get_current(request)
-        except Site.DoesNotExist:
-            if Site.objects.count() == 1:
-                site = Site.objects.first()
-            else:
-                raise Http404("Site not found")
+        if not request.path.startswith("/admin"):
+            try:
+                site = Site.objects.get_current(request)
+            except Site.DoesNotExist:
+                if Site.objects.count() == 1:
+                    site = Site.objects.first()
+                else:
+                    raise Http404("Site not found")
 
         request.site = site
 
@@ -67,6 +68,9 @@ class AddSiteContextMiddleware:
         return response
 
     def process_template_response(self, request, response):
+        if request.path.startswith("/admin"):
+            return response
+
         context = response.context_data
         context["site"] = request.site.name
         context["site_path"] = f"{request.site.name}/"
