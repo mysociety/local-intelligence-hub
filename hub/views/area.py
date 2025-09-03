@@ -224,7 +224,7 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
         area_type = self.object.area_type
         context["area_type"] = area_type.code
         context["is_westminster_cons"] = True
-        if area_type.area_type != "Westminster Constituency":
+        if area_type.area_type != "westminster_constituency":
             context["is_westminster_cons"] = False
 
         context["slug"] = slugify(self.object.name)
