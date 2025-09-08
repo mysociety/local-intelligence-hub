@@ -16,3 +16,20 @@ mark {
         }
     }
 }
+
+$headings-text-transform: null !default;
+$display-text-transform: null !default;
+
+@if $headings-text-transform {
+    %heading {
+        text-transform: $headings-text-transform;
+    }
+}
+
+@if $display-text-transform {
+    @each $display, $font-size in $display-font-sizes {
+        .display-#{$display} {
+            text-transform: $headings-text-transform;
+        }
+    }
+}

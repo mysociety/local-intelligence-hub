@@ -1,4 +1,6 @@
-.navbar-nav {
+.site-nav {
+    background: $site-nav-bg;
+
     .nav-link {
         font-weight: bold;
         text-transform: uppercase;
@@ -17,9 +19,11 @@
 }
 
 @include media-breakpoint-down(sm) {
-    .navbar-nav {
-        margin-top: 1rem;
-        margin-bottom: 0;
+    .site-nav {
+        .navbar-nav {
+            margin-top: 1rem;
+            margin-bottom: 0;
+        }
 
         & > .nav-item {
             border-top: 1px solid rgba(#000, 0.1);
@@ -32,8 +36,10 @@
 }
 
 @include media-breakpoint-up(sm) {
-    .navbar-nav {
-        margin-right: calc(var(--bs-navbar-nav-link-padding-x) * -1);
+    .site-nav {
+        .navbar-nav {
+            margin-right: calc(var(--bs-navbar-nav-link-padding-x) * -1);
+        }
     }
 }
 

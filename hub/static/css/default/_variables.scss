@@ -1,0 +1,175 @@
+// Color system
+
+$color-tcc-robin-red: #e84d2e;
+$color-tcc-autumn-orange: #ed6832;
+$color-tcc-honeysuckle-yellow: #fec835;
+$color-tcc-peak-district-green: #bcd685;
+$color-tcc-heart-green: #89c489;
+$color-tcc-seafoam-green: #1aa680;
+$color-tcc-sherwood-forest-green: #073a41;
+$color-tcc-kingfisher-blue: #21a8e0;
+$color-tcc-windermere-blue: #202448;
+$color-tcc-ben-nevis-grey: #1d1d1b;
+
+$color-darker-seafoam: #068670; // like seafoam-green, but 4.51 contrast with #fff
+
+$red: darken($color-tcc-robin-red, 10%);
+
+$orange: $color-tcc-autumn-orange;
+
+$yellow: $color-tcc-honeysuckle-yellow;
+
+$blue: $color-tcc-kingfisher-blue;
+$blue-500: $color-tcc-kingfisher-blue;
+$blue-600: mix($color-tcc-windermere-blue, $color-tcc-kingfisher-blue, 25%);
+$blue-700: mix($color-tcc-windermere-blue, $color-tcc-kingfisher-blue, 50%);
+$blue-800: mix($color-tcc-windermere-blue, $color-tcc-kingfisher-blue, 75%);
+$blue-900: $color-tcc-windermere-blue;
+
+$green: $color-tcc-heart-green;
+$green-100: mix(#fff, $color-tcc-peak-district-green, 66.66%);
+$green-200: mix(#fff, $color-tcc-peak-district-green, 33.33%);
+$green-300: $color-tcc-peak-district-green;
+$green-400: mix($color-tcc-heart-green, $color-tcc-peak-district-green, 50%);
+$green-500: $color-tcc-heart-green;
+$green-600: darken($color-tcc-heart-green, 10%);
+$green-700: darken($color-tcc-heart-green, 25%);
+$green-800: darken($color-tcc-heart-green, 45%);
+$green-900: darken($color-tcc-heart-green, 55%);
+
+$teal: $color-tcc-seafoam-green;
+$teal-100: mix($white, $color-tcc-seafoam-green, 80%);
+$teal-200: mix($white, $color-tcc-seafoam-green, 60%);
+$teal-300: mix($white, $color-tcc-seafoam-green, 40%);
+$teal-400: mix($white, $color-tcc-seafoam-green, 20%);
+$teal-500: $color-tcc-seafoam-green;
+$teal-600: $color-darker-seafoam;
+$teal-700: mix($color-tcc-sherwood-forest-green, $color-darker-seafoam, 50%);
+$teal-800: $color-tcc-sherwood-forest-green;
+$teal-900: mix($black, $color-tcc-sherwood-forest-green, 40%);
+
+$primary: $color-darker-seafoam;
+$secondary: $gray-600;
+$success: $color-tcc-heart-green;
+$dark: $color-tcc-sherwood-forest-green;
+$info: $blue;
+
+// Options
+
+// Gradient
+
+// Spacing
+
+// Position
+
+// Body
+
+$body-bg: $white;
+$body-color: $color-tcc-sherwood-forest-green;
+
+// Utilities maps
+
+// Links
+
+$link-color: $color-darker-seafoam;
+$link-shade-percentage: 20%;
+$link-hover-color: shift-color($link-color, $link-shade-percentage);
+
+// Paragraphs
+
+// Grid breakpoints
+
+// Grid containers
+
+// Grid columns
+
+// Container padding
+
+// Components
+
+// Typography
+
+$font-family-sans-serif: "Public Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+// Tables
+
+$table-striped-bg-factor: .04;
+$table-striped-bg: rgba($teal-900, $table-striped-bg-factor);
+$table-active-bg-factor: .1;
+$table-active-bg: rgba($teal-900, $table-active-bg-factor);
+$table-hover-bg-factor: .075;
+$table-hover-bg: rgba($teal-900, $table-hover-bg-factor);
+
+// Buttons + Forms
+
+// Buttons
+
+// Forms
+
+// Form validation
+
+// Z-index master list
+
+// Navs
+
+// Navbar
+
+$navbar-light-color: $black;
+$navbar-light-hover-color: $link-hover-color;
+$navbar-light-active-color: $teal-500;
+$navbar-light-toggler-icon-bg: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path stroke='#{$navbar-light-color}' stroke-linecap='round' stroke-miterlimit='10' stroke-width='3' d='M4 7h22M4 15h22M4 23h22'/></svg>");
+
+// Dropdowns
+
+// Pagination
+
+// Placeholders
+
+// Cards
+
+// Accordion
+
+// Tooltips
+
+// Popovers
+
+// Toasts
+
+// Badges
+
+// Modals
+
+// Alerts
+
+// Progress bars
+
+// List group
+
+$list-group-action-hover-color: $link-hover-color;
+
+// Image thumbnails
+
+// Figures
+
+// Breadcrumbs
+
+// Carousel
+
+// Spinners
+
+// Close
+
+// Offcanvas
+
+// Code
+
+// Local Intelligence Hub
+
+$site-nav-bg: $green-100;
+
+$site-footer-bg: $teal-800;
+$site-footer-color: $white;
+$site-footer-link-color: $white;
+$site-footer-link-hover-color: $teal-200;
+
+$homepage-search-section-bg: $green-100;

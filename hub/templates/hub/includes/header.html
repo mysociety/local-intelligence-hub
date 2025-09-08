@@ -1,7 +1,9 @@
-<nav class="navbar navbar-expand-sm bg-green-100">
+{% load siteinclude %}
+
+<nav class="navbar navbar-expand-sm site-nav">
     <div class="container">
-        <a class="navbar-brand" href="{% url 'home' %}" aria-label="Local Intelligence Hub">
-            {% include 'hub/includes/icons/lih-logo.html' with classes="site-logo" %}
+        <a class="navbar-brand" href="{% url 'home' %}" aria-label="{{ site_title }}">
+            {% site_include 'hub/includes/site-logo.html' with classes="site-logo" %}
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>

@@ -171,10 +171,10 @@
 
 @keyframes success-ping {
     0% {
-        box-shadow: 0 0 0 0rem rgba($color-tcc-honeysuckle-yellow, 0.5);
+        box-shadow: 0 0 0 0rem rgba($yellow, 0.5);
     }
     100% {
-        box-shadow: 0 0 0 10rem rgba($color-tcc-honeysuckle-yellow, 0);
+        box-shadow: 0 0 0 10rem rgba($yellow, 0);
     }
 }
 

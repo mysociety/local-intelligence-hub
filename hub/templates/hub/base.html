@@ -8,23 +8,23 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="initial-scale=1, viewport-fit=cover">
     <title>{{ page_title }}</title>
-    {% compress css %}
-    {% block css %}
-    <link rel="stylesheet" type="text/x-scss" href="{% static 'css/main.scss' %}">
-    {% endblock %}
-    {% endcompress %}
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,700;0,800;1,400&amp;display=swap">
-    <meta name="theme-color" content="#e9f1d6">
+  {% compress css %}
+  {% block css %}
+    {% site_include 'hub/includes/head-css.html' %}
+  {% endblock %}
+  {% endcompress %}
+    {% site_include 'hub/includes/head-external-css.html' %}
+    {% site_include 'hub/includes/head-theme-color.html' %}
 
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
 
-    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+    {% site_include 'hub/includes/head-favicon.html' %}
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:title" content="{{ page_title }}">
-    <meta property="og:site_name" content="Local Intelligence Hub">
+    <meta property="og:site_name" content="{{ site_title }}">
     <meta property="og:description" content="{{ meta_description|default:'Your starting point for data about local MPs, constituencies, public opinion and the climate and nature movement.' }}">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="https://{{ request.get_host }}{% static 'img/opengraph.png' %}">
+    {% site_include 'hub/includes/head-og-image.html' %}
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
