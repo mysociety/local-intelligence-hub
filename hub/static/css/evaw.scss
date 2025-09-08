@@ -1,5 +1,6 @@
 @import "../../../vendor/bootstrap/scss/functions";
 @import "variables";
+@import "evaw/variables";
 
 @import "../../../vendor/bootstrap/scss/mixins/banner";
 @include bsBanner("");
@@ -10,6 +11,7 @@
 @import "../../../vendor/bootstrap/scss/utilities";
 
 @import "utilities";
+@import "evaw/utilities";
 
 @import "../../../vendor/bootstrap/scss/root";
 @import "../../../vendor/bootstrap/scss/reboot";

@@ -1,5 +1,6 @@
 @import "../../../vendor/bootstrap/scss/functions";
 @import "variables";
+@import "default/variables";
 
 @import "../../../vendor/bootstrap/scss/mixins/banner";
 @include bsBanner("");
@@ -9,7 +10,8 @@
 @import "../../../vendor/bootstrap/scss/mixins";
 @import "../../../vendor/bootstrap/scss/utilities";
 
-@import "homeutilities";
+@import "utilities-home";
+@import "default/utilities-home";
 
 @import "../../../vendor/bootstrap/scss/root";
 @import "../../../vendor/bootstrap/scss/reboot";

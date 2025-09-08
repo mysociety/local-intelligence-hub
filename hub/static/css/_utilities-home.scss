@@ -16,29 +16,9 @@ $gray-colors: ();
     );
 }
 
-$all-colors: map-merge-multiple($greens, $gray-colors);
-
 $utilities: map-merge(
     $utilities,
     (
-        "color": map-merge(
-            map-get($utilities, "color"),
-            (
-                values: map-merge(
-                    map-get(map-get($utilities, "color"), "values"),
-                    $all-colors,
-                ),
-            ),
-        ),
-        "background-color": map-merge(
-            map-get($utilities, "background-color"),
-            (
-                values: map-merge(
-                    map-get(map-get($utilities, "background-color"), "values"),
-                    $all-colors,
-                ),
-            ),
-        ),
         "font-weight": map-merge(
             map-get($utilities, "font-weight"),
             (
@@ -59,11 +39,3 @@ $utilities: map-merge(
         ),
     ),
 );
-
-@each $color, $value in $all-colors {
-    $color-rgb: to-rgb($value);
-    .text-bg-#{$color} {
-        color: color-contrast($value) if($enable-important-utilities, !important, null);
-        background-color: RGBA($color-rgb, var(--#{$prefix}bg-opacity, 1)) if($enable-important-utilities, !important, null);
-    }
-}

@@ -1,9 +1,9 @@
 .site-footer {
-    --bs-link-color: #{$white};
-    --bs-link-hover-color: #{$teal-200};
-    color: $white;
-    background-color: $teal-800;
-    box-shadow: 0 1000px 0 1000px $teal-800;
+    --bs-link-color: #{$site-footer-link-color};
+    --bs-link-hover-color: #{$site-footer-link-hover-color};
+    color: $site-footer-color;
+    background-color: $site-footer-bg;
+    box-shadow: 0 1000px 0 1000px $site-footer-bg;
     min-height: 10rem;
 }
 
@@ -26,7 +26,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    color: mix($white, $teal-800, 70%);
+    color: mix($site-footer-color, $site-footer-bg, 70%);
 
     & > span {
         margin-bottom: 1rem;
@@ -44,7 +44,7 @@
 }
 
 .site-footer__legals {
-    color: mix($white, $teal-800, 70%);
+    color: mix($site-footer-color, $site-footer-bg, 70%);
 }
 
 .site-footer__socials {

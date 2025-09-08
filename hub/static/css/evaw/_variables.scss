@@ -1,0 +1,163 @@
+// Color system
+
+$color-evaw-purple: #4a1855;
+$color-evaw-turquoise: #09d2bb;
+$color-evaw-crimson: #f93a51;
+$color-evaw-gold: #f4cb47;
+$color-evaw-off-black: #301037; // very dark purple, almost black
+
+$white: #fff;
+$gray-100: mix(desaturate($color-evaw-off-black, 30%), #fff, 5%);
+$gray-200: mix(desaturate($color-evaw-off-black, 30%), #fff, 10%);
+$gray-300: mix(desaturate($color-evaw-off-black, 30%), #fff, 15%);
+$gray-400: mix(desaturate($color-evaw-off-black, 30%), #fff, 23%);
+$gray-500: mix(desaturate($color-evaw-off-black, 30%), #fff, 35%);
+$gray-600: mix(desaturate($color-evaw-off-black, 30%), #fff, 65%);
+$gray-700: mix(desaturate($color-evaw-off-black, 30%), #fff, 80%);
+$gray-800: mix(desaturate($color-evaw-off-black, 30%), #fff, 90%);
+$gray-900: $color-evaw-off-black;
+$black: #000;
+
+$blue: #0EAEDF;
+$purple: $color-evaw-purple;
+$red: $color-evaw-crimson;
+$orange: #F9A03A;
+$yellow: $color-evaw-gold;
+$green: $color-evaw-turquoise;
+
+$primary: $purple;
+$secondary: $yellow;
+$success: $green;
+$info: $blue;
+$warning: $orange;
+$danger: $red;
+$light: $gray-100;
+$dark: $gray-900;
+
+// Annoying that we have to declare shades here, when they’re about to be
+// re-calculated by variables.scss using our custom core colours, sigh.
+$yellow-100: tint-color($yellow, 80%);
+
+// Options
+
+// Gradient
+
+// Spacing
+
+// Position
+
+// Body
+
+$body-bg: $white;
+$body-color: $color-evaw-purple;
+
+// Utilities maps
+
+// Links
+
+$link-color: $color-evaw-purple;
+$link-hover-color: $color-evaw-crimson;
+
+// Paragraphs
+
+// Grid breakpoints
+
+// Grid containers
+
+// Grid columns
+
+// Container padding
+
+// Components
+
+$border-width: 2px; // up from 1px
+
+// Typography
+
+$font-family-sans-serif: Inter, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+$headings-font-family: Anton, Impact, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+$headings-font-weight: 400;
+$headings-text-transform: uppercase;
+
+$display-font-family: $headings-font-family;
+$display-text-transform: uppercase;
+
+// Tables
+
+// Buttons + Forms
+
+// Buttons
+
+$btn-border-radius: 0;
+$btn-border-radius-sm: 0;
+$btn-border-radius-lg: 0;
+
+$btn-text-transform: uppercase;
+
+// Forms
+
+$input-border-radius: 0;
+$input-border-radius-sm: 0;
+$input-border-radius-lg: 0;
+
+// Form validation
+
+// Z-index master list
+
+// Navs
+
+// Navbar
+
+// Dropdowns
+
+// Pagination
+
+// Placeholders
+
+// Cards
+
+// Accordion
+
+// Tooltips
+
+// Popovers
+
+// Toasts
+
+// Badges
+
+// Modals
+
+// Alerts
+
+// Progress bars
+
+// List group
+
+// Image thumbnails
+
+// Figures
+
+// Breadcrumbs
+
+// Carousel
+
+// Spinners
+
+// Close
+
+// Offcanvas
+
+// Code
+
+// Local Intelligence Hub
+
+$site-nav-bg: $yellow-100;
+
+$site-footer-bg: $color-evaw-off-black;
+$site-footer-color: $white;
+$site-footer-link-color: $white;
+$site-footer-link-hover-color: $color-evaw-turquoise;
+
+$homepage-search-section-bg: $yellow-100;

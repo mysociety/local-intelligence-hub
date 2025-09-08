@@ -3,14 +3,14 @@
 {% load static %}
 
 {% block css %}
-    <link rel="stylesheet" type="text/x-scss" href="{% static 'css/home.scss' %}">
+    <link rel="stylesheet" type="text/x-scss" href="{% static 'css/evaw-home.scss' %}">
 {% endblock %}
 
 {% block content %}
 
-<div class="py-5 bg-green-100">
+<div class="py-5 homepage-search-section">
     <div class="container mt-n4">
-        <h1 class="display-3 mb-3">EVAW</h1>
+        <h1 class="display-3 mb-3" style="max-width: 12em;">Data to end violence against women and girls</h1>
         <p class="fs-4 mb-4" style="max-width: 30em;">Your starting point for data about local MPs, constituencies, public opinion and the climate and nature movement.</p>
         <label class="form-label" for="search">Search by constituency name, MP name, or postcode</label>
         <form class="row mt-2 mb-2 js-homepage-search" style="max-width: 30rem;" action="{% url 'area_search' %}">
