@@ -2,10 +2,14 @@
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/mysociety/local-intelligence-hub?devcontainer_path=.devcontainer%2Fauto-quick-setup%2Fdevcontainer.json)
 
-A Beta version of a tool to help The Climate Coalition with better access
-to data needed to enable local and national action on climate.
+An online tool that helps public affairs and community organising teams to collaborate and coordinate action at the national and local level, using data on elected representatives, local populations, public opinion, and more.
 
-The [original static prototype](https://github.com/mysociety/local-intelligence-hub/commit/4fab6ff08401d4e4c29615ab07ff4f6c4f4e6050) was built as part of mySociety’s August 2022 prototyping week exploring how The Climate Coalition might we give climate campaign organisations and communities better access to the data they need to enable local and national action on climate.
+The [original static prototype](https://github.com/mysociety/local-intelligence-hub/commit/4fab6ff08401d4e4c29615ab07ff4f6c4f4e6050) for the Hub was built as part of mySociety’s August 2022 prototyping week exploring how The Climate Coalition might we give climate campaign organisations and communities better access to the data they need to enable local and national action on climate.
+
+The first version of the Local Intelligence Hub launched as a collaboration between mySociety, The Climate Coalition, and Green Alliance, in early 2024.
+
+A second version of the Hub (containing data on violence against women and girls rather than climate or nature) was developed in collaboration with the End Violence Against Women coalition, in late 2025.
+
 ## Development install
 
 You will need [Docker](https://docs.docker.com/desktop/) installed.
@@ -15,8 +19,15 @@ Clone the repository:
     git clone git@github.com:mysociety/local-intelligence-hub.git
     cd local-intelligence-hub
 
-Create and edit a .env file using `.env-example` file and then
-update `SECRET_KEY` and `MAPIT_API_KEY`. You can get the latter from https://mapit.mysociety.org/account/signup/
+Then create an `.env` file, using the example:
+
+    cp .env-example .env
+
+Edit the `.env` file making sure to:
+
+- Pick a new `SECRET_KEY`.
+- Set `ALLOWED_HOSTS` to a comma-separated list of all domains your local version of the site will serve – eg: `ALLOWED_HOSTS=lih.127.0.0.1.nip.io,evaw.127.0.0.1.nip.io` for two separate “cobrands” of the site.
+- Set a `MAPIT_API_KEY` (you can get one from https://mapit.mysociety.org/account/signup/).
 
 ### Running Docker manually (recommended)
 
@@ -89,8 +100,24 @@ You can run the linting and formatting suite from inside or outside the docker c
 
     script/lint
 
-### multi site setup
+## Multi Site setup
 
-This uses django's sites framework to enable having multiple front end's for the same data. You will need to add one site per front end in the django admin. Assuming you have an existing site there is an `add_everything_to_site` management command which will set up everything for that site to carry on working.
+This uses [Django’s “sites” framework](https://docs.djangoproject.com/en/5.2/ref/contrib/sites/) to enable sharing the same data between multiple, differently branded front ends. You will need to add one “site” in the Django admin, for each front end you require.
 
-All the views will default to looking for templates in `hub/templates/$site_name/` first and then `hub/templates/`. To replicate this behaviour in a template include you will need `{% include `siteinclude' %}` and then use the `site_include` tag.
+As explained above, whether you want to host one site or many, you will need to explicitly define each domain in a comma-separated list in the `ALLOWED_HOSTS` variable in your `.env` file. Some examples:
+
+```
+ALLOWED_HOSTS=localhost
+ALLOWED_HOSTS=site1.127.0.0.1.nip.io
+ALLOWED_HOSTS=site1.127.0.0.1.nip.io,site2.127.0.0.1.nip.io
+```
+
+If you’re upgrading from a version of the codebase before the Multi Site behaviour was added, after starting your site, you can run the `add_everything_to_site` management command to associate all existing users, datasets, and more with a given site by name, eg:
+
+```
+script/manage add_everything_to_site --site default
+```
+
+Further sites can be added via the Django admin.
+
+All the views will default to looking for templates in `hub/templates/$site_name/` first and then `hub/templates/`. To replicate this behaviour in a template include you will need to `{% load 'siteinclude' %}` at the top of the template, and then use the `{% site_include %}` tag.
