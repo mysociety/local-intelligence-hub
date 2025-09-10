@@ -209,8 +209,12 @@ class Command(BaseImportFromDataFrameCommand):
                 df = df.iloc[:, 0 : len(self.replace_columns)]
             df.columns = self.replace_columns
 
+        # drop any completely empty rows (eg: "spacer" rows in an Excel sheet)
+        df = df.dropna(how="all")
+
         if not isinstance(self.get_cons_col(), int):
             df = df.astype({self.get_cons_col(): "str"})
+
         if self.data_type == "percent":
             if self.fill_blanks:
                 df[self.data_col] = df[self.data_col].fillna(0)

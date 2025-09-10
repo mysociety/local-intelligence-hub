@@ -396,12 +396,12 @@
         "data_col":"White British"
       },
       {
-        "name":"ethnicity_white_british",
+        "name":"ethnicity_white",
         "label":"White British",
         "sheet":"NI_table",
         "header_row":5,
         "constituency_col":"New constituency name",
-        "data_col":"White British"
+        "data_col":"White"
       },
       {
         "name":"ethnicity_white_british",
@@ -422,14 +422,6 @@
       {
         "name":"ethnicity_other_white",
         "label":"Other White",
-        "sheet":"NI_table",
-        "header_row":5,
-        "constituency_col":"New constituency name",
-        "data_col":"Other White"
-      },
-      {
-        "name":"ethnicity_other_white",
-        "label":"Other White",
         "sheet":"Scotland_table",
         "header_row":5,
         "constituency_col":0,
@@ -449,7 +441,7 @@
         "sheet":"NI_table",
         "header_row":5,
         "constituency_col":"New constituency name",
-        "data_col":"Asian / Asian British"
+        "data_col":"Asian"
       },
       {
         "name":"ethnicity_asian",
@@ -461,23 +453,23 @@
       },
       {
         "name":"ethnicity_black",
-        "label":"African, Caribbean or Black",
+        "label":"Black / Black British",
         "sheet":"EW_table",
         "header_row":5,
         "constituency_col":"New constituency name",
-        "data_col":"African, Caribbean or Black"
+        "data_col":"Black / Black British"
       },
       {
         "name":"ethnicity_black",
-        "label":"African, Caribbean or Black",
+        "label":"Black / Black British",
         "sheet":"NI_table",
         "header_row":5,
         "constituency_col":"New constituency name",
-        "data_col":"African, Caribbean or Black"
+        "data_col":"Black"
       },
       {
         "name":"ethnicity_black",
-        "label":"African, Caribbean or Black",
+        "label":"Black / Black British",
         "sheet":"Scotland_table",
         "header_row":5,
         "constituency_col":0,
@@ -497,7 +489,7 @@
         "sheet":"NI_table",
         "header_row":5,
         "constituency_col":"New constituency name",
-        "data_col":"Mixed / Multiple ethnic groups"
+        "data_col":"Mixed"
       },
       {
         "name":"ethnicity_multiple",
@@ -521,7 +513,7 @@
         "sheet":"NI_table",
         "header_row":5,
         "constituency_col":"New constituency name",
-        "data_col":"Other ethnic groups"
+        "data_col":"Other"
       },
       {
         "name":"ethnicity_other",
@@ -699,11 +691,6 @@
         "name":"constituency_current_occupation_manager",
         "label":"Managers, directors and senior officials",
         "data_col":"1. Managers, directors and senior officials"
-      },
-      {
-        "name":"constituency_current_occupation_",
-        "label":"Driving a car or van",
-        "data_col":"Driving a car or van"
       },
       {
         "name":"constituency_current_occupation_professional",
