@@ -165,7 +165,7 @@ class AreaTypeSiteInline(admin.TabularInline):
 
 @admin.register(AreaType)
 class AreaTypeAdmin(admin.ModelAdmin):
-    list_display = ("name", "code")
+    list_display = ("name_singular", "code")
     inlines = [AreaTypeSiteInline]
 
 

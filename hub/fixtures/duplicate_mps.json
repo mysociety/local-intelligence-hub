@@ -60,10 +60,13 @@
       "model": "hub.areatype",
       "pk": 1,
       "fields": {
-        "name": "Constituency",
         "code": "WMC",
-        "area_type": "Constituency",
-        "description": "Constituency"
+        "area_type": "Westminster Constituency",
+        "name_singular": "Pre-2024 Parliamentary Constituency",
+        "name_plural": "Pre-2024 Parliamentary Constituencies",
+        "short_name_singular": "constituency",
+        "short_name_plural": "constituencies",
+        "description": "Westminster Parliamentary Constituencies, as created in 2010."
       }
     },
     {
