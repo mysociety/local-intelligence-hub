@@ -22,11 +22,13 @@ const app = createApp({
       columns: [], // additional columns to be requested on next Update
       area_type: "WMC23", // the area type to fetch
       area_type_changed: false, // so we know to reload the map
-      area_types: [{
-        slug: "WMC23",
-        label: "Westminster constituencies",
-        short_label: "constituencies",
-        description: "These are the areas currently represented by MPs in the UK Parliament, since the July 2024 general election."
+      area_types: [{ // need at least one area_type defined, or we get into race conditions, sigh
+        slug: 'WMC23',
+        description: 'Westminster Parliamentary Constituencies, as created in 2023, and first used at the 2024 General Election.',
+        name_singular: 'Parliamentary Constituency',
+        name_plural: 'Parliamentary Constituencies',
+        short_name_singular: 'constituency',
+        short_name_plural: 'constituencies'
       }],
 
       filters_applied: false, // were filters applied on the last Update?
@@ -397,6 +399,10 @@ const app = createApp({
       return this.area_types.find((t) => {
         return t["slug"] == slug
       })
+    },
+    getPluralisedAreaTypeShortName(slug, number) {
+      var at = this.getAreaType(slug)
+      return at[(number == 1) ? 'short_name_singular': 'short_name_plural']
     },
     updateResults() {
       if (this.view == 'map') {

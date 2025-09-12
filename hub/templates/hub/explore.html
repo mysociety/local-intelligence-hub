@@ -44,13 +44,13 @@
             <div class="mb-4 mb-lg-5" v-cloak>
                 <h2 class="h5 mb-3 mb-lg-4 text-primary">Select an area type</h2>
                 <button type="button" class="btn btn-outline-secondary p-3 pe-5 w-100 position-relative text-start" @click="selectAreaType">
-                    <p class="mb-2 lh-sm">${ getAreaType(area_type)["label"] }</p>
+                    <p class="mb-2 lh-sm">${ getAreaType(area_type)["name_plural"] }</p>
                     <small class="d-block fw-normal">${ getAreaType(area_type)["description"] }</small>
                     {% include "hub/includes/icons/select.html" with classes="position-absolute top-50 start-95 translate-middle" %}
                 </button>
             </div>
 
-            <h2 class="h5 mb-4 text-primary">Filter ${ getAreaType(area_type)["short_label"] }</h2>
+            <h2 class="h5 mb-4 text-primary">Filter ${ getAreaType(area_type)["short_name_plural"] }</h2>
 
             <div ref="filtersContainer" class="mb-4" hidden>
                 <template v-for="filter in filters">
@@ -109,7 +109,7 @@
                             <button @click="removeFilter(filter.name)" type="button" class="btn-close p-0" aria-label="Remove filter"></button>
                         </div>
                         <div class="filter__body">
-                            <p class="mb-0 mt-2 fs-7">This dataset is not available for ${ getAreaType(area_type)["label"] }</p>
+                            <p class="mb-0 mt-2 fs-7">This dataset is not available for ${ getAreaType(area_type)["name_plural"] }</p>
                         </div>
                     </div>
                 </template>
@@ -132,7 +132,7 @@
             <div class="tab-content">
                 <div class="tab-pane" :class="{ 'active': mapViewActive }" id="options-map" role="tabpanel" aria-labelledby="tab-map" tabindex="0">
 
-                    <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Shade ${ getAreaType(area_type)["short_label"] } (optional)</h2>
+                    <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Shade ${ getAreaType(area_type)["short_name_plural"] } (optional)</h2>
 
                     <div ref="shaderContainer" hidden>
                         <div v-if="shader" class="filter mb-0" :class="{ 'bg-red-100': !shader.areas_available.includes(area_type) }">
@@ -194,7 +194,7 @@
                                 <button @click="removeColumn(column.name)" type="button" class="btn-close p-0" aria-label="Remove column"></button>
                             </div>
                             <div class="filter__body">
-                                <p class="mb-0 mt-2 fs-7">This dataset is not available for ${ getAreaType(area_type)["label"] }</p>
+                                <p class="mb-0 mt-2 fs-7">This dataset is not available for ${ getAreaType(area_type)["name_plural"] }</p>
                             </div>
                         </div>
                     </template>
@@ -223,16 +223,16 @@
             </template>
             <template v-else-if="filters_applied && area_count == 0">
                 {% include 'hub/includes/icons/exclamation.html' with classes="flex-grow-0 me-2" %}
-                No matching ${ getAreaType(area_type)["short_label"] }
+                No matching ${ getPluralisedAreaTypeShortName(area_type) }
             </template>
             <template v-else-if="filters_applied">
-                ${ area_count } matching ${ getAreaType(area_type)["short_label"] }
+                ${ area_count } matching ${ getPluralisedAreaTypeShortName(area_type, area_count) }
             </template>
             <template v-else-if="area_count">
-                ${ area_count } ${ getAreaType(area_type)["short_label"] }
+                ${ area_count } ${ getPluralisedAreaTypeShortName(area_type, area_count) }
             </template>
             <template v-else>
-                No ${ getAreaType(area_type)["short_label"] }
+                No ${ getPluralisedAreaTypeShortName(area_type) }
             </template>
         </div>
         <div class="explore-map" ref="map" :hidden="!mapViewActive"></div>

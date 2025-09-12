@@ -3,10 +3,13 @@
     "model": "hub.areatype",
     "pk": 1,
     "fields": {
-      "name": "Constituency",
       "code": "WMC",
       "area_type": "Westminster Constituency",
-      "description": "Constituency"
+      "name_singular": "Pre-2024 Parliamentary Constituency",
+      "name_plural": "Pre-2024 Parliamentary Constituencies",
+      "short_name_singular": "constituency",
+      "short_name_plural": "constituencies",
+      "description": "Westminster Parliamentary Constituencies, as created in 2010."
     }
   },
   {
@@ -21,10 +24,13 @@
     "model": "hub.areatype",
     "pk": 2,
     "fields": {
-      "name": "Constituency 2023",
       "code": "WMC23",
       "area_type": "Westminster Constituency",
-      "description": "Constituency 2023"
+      "name_singular": "Parliamentary Constituency",
+      "name_plural": "Parliamentary Constituencies",
+      "short_name_singular": "constituency",
+      "short_name_plural": "constituencies",
+      "description": "Westminster Parliamentary Constituencies, as created in 2023, and first used at the 2024 General Election."
     }
   },
   {
@@ -39,10 +45,13 @@
     "model": "hub.areatype",
     "pk": 3,
     "fields": {
-      "name": "District Council",
       "code": "DIS",
       "area_type": "District Council",
-      "description": "District Council"
+      "name_singular": "District Council",
+      "name_plural": "District Councils",
+      "short_name_singular": "council",
+      "short_name_plural": "councils",
+      "description": "In “two tier” council areas, District Councils look after local services like rubbish collection, recycling, housing, and planning applications, while a County Council looks after everything else."
     }
   },
   {
@@ -57,10 +66,13 @@
     "model": "hub.areatype",
     "pk": 4,
     "fields": {
-      "name": "Single Tier Council",
       "code": "STC",
       "area_type": "Single Tier Council",
-      "description": "Single Tier Council"
+      "name_singular": "Single Tier Council",
+      "name_plural": "Single Tier Councils",
+      "short_name_singular": "council",
+      "short_name_plural": "councils",
+      "description": "This includes Unitary Authorities, London Boroughs, and County Councils in England, as well as all councils in Scotland, Wales, and Nothern Ireland."
     }
   },
   {

@@ -193,9 +193,9 @@ class FilterMixin:
         return value
 
     def data(self, as_dict=False, mp_name=False):
-        headers = ["Constituency Name"]
-        if self.area_type().area_type != "Westminster Constituency":
-            headers = ["Council Name"]
+        area_type = self.area_type()
+
+        headers = [f"{area_type.short_name_singular} Name".capitalize()]
         headers += map(lambda f: f["dataset"].label, self.filters())
         headers += map(
             lambda f: f.get("header_label", f["label"]), self.columns(mp_name=mp_name)
