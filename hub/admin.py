@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 
 from hub.models import (
@@ -167,6 +168,12 @@ class AreaTypeSiteInline(admin.TabularInline):
 class AreaTypeAdmin(admin.ModelAdmin):
     list_display = ("name_singular", "code")
     inlines = [AreaTypeSiteInline]
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == "description":
+            formfield.widget = forms.Textarea(attrs=formfield.widget.attrs)
+        return formfield
 
 
 @admin.register(Area)
