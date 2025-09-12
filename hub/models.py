@@ -482,33 +482,16 @@ class AreaType(models.Model):
         ("district_council", "District Council"),
     ]
 
-    NAMES_SINGULAR = {
-        "WMC": "old constituency",
-        "WMC23": "new constituency",
-        "STC": "single tier council",
-        "DIS": "district council",
-    }
-
-    NAMES_PLURAL = {
-        "WMC": "old constituencies",
-        "WMC23": "new constituencies",
-        "STC": "single tier councils",
-        "DIS": "district councils",
-    }
-
-    name = models.CharField(max_length=50, unique=True)
     code = models.CharField(max_length=10, unique=True)
-    area_type = models.CharField(max_length=50, choices=AREA_TYPES)
+    area_type = models.CharField(
+        max_length=50, choices=AREA_TYPES
+    )  # a general "type" of areaType (rather than a specific generation)
+    name_singular = models.CharField(max_length=50)  # eg: "Parliamentary Constituency"
+    name_plural = models.CharField(max_length=50)  # eg: "Parliamentary Constituencies"
+    short_name_singular = models.CharField(max_length=50)  # eg: "constituency"
+    short_name_plural = models.CharField(max_length=50)  # eg: "constituency"
     description = models.CharField(max_length=300)
     sites = models.ManyToManyField(Site, through=SiteAreaType)
-
-    @property
-    def name_singular(self):
-        return self.NAMES_SINGULAR[self.code]
-
-    @property
-    def name_plural(self):
-        return self.NAMES_PLURAL[self.code]
 
     def __str__(self):
         return self.code

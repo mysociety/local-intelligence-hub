@@ -22,11 +22,13 @@ const app = createApp({
       columns: [], // additional columns to be requested on next Update
       area_type: "WMC23", // the area type to fetch
       area_type_changed: false, // so we know to reload the map
-      area_types: [{
-        slug: "WMC23",
-        label: "Westminster constituencies",
-        short_label: "constituencies",
-        description: "These are the areas currently represented by MPs in the UK Parliament, since the July 2024 general election."
+      area_types: [{ // need at least one area_type defined, or we get into race conditions, sigh
+        slug: 'WMC23',
+        description: 'Westminster Parliamentary Constituencies, as created in 2023, and first used at the 2024 General Election.',
+        name_singular: 'Parliamentary Constituency',
+        name_plural: 'Parliamentary Constituencies',
+        short_name_singular: 'constituency',
+        short_name_plural: 'constituencies'
       }],
 
       filters_applied: false, // were filters applied on the last Update?
@@ -37,7 +39,7 @@ const app = createApp({
 
       currentType: 'filter', // what to add from the Add Dataset modal (filter, shader, or column)
       searchText: '', // filter datasets by name in the Add Dataset modal
-      sortBy: 'Constituency Name', // column to use to sort the table
+      sortBy: 'Constituency name', // column to use to sort the table
       sortOrder: 1, // sort order direction - 1 for ascending, 0 for descending
       downloadCsvWithNextTableUpdate: false,
     }
@@ -398,6 +400,10 @@ const app = createApp({
         return t["slug"] == slug
       })
     },
+    getPluralisedAreaTypeShortName(slug, number) {
+      var at = this.getAreaType(slug)
+      return at[(number == 1) ? 'short_name_singular': 'short_name_plural']
+    },
     updateResults() {
       if (this.view == 'map') {
         this.updateMap()
@@ -571,11 +577,11 @@ const app = createApp({
       this.loading = true
       this.filters_applied = (this.filters.length > 0)
 
-      if (this.sortBy == 'Constituency Name' || this.sortBy == 'Council Name') {
+      if (this.sortBy == 'Constituency name' || this.sortBy == 'Council name') {
           if (["DIS", "STC"].includes(this.area_type)) {
-            this.sortBy = "Council Name"
+            this.sortBy = "Council name"
           } else {
-            this.sortBy = "Constituency Name"
+            this.sortBy = "Constituency name"
           }
       }
 

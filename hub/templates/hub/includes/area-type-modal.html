@@ -8,8 +8,8 @@
             <div class="modal-body bg-gray-100">
                 <div class="list-group">
                     <button v-for="t in area_types" class="list-group-item list-group-item-action" @click="changeAreaType(t.slug)">
-                        <div class="d-flex align-items-center mb-2">
-                            <strong class="lh-sm me-auto pe-3">${ t.label }</strong>
+                        <div class="d-flex align-items-center mb-1">
+                            <strong class="lh-sm me-auto pe-3">${ t.name_plural }</strong>
                         </div>
                         <small class="d-block fs-7">
                             ${ t.description }

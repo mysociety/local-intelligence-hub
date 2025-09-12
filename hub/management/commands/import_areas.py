@@ -20,34 +20,46 @@ class Command(BaseImportCommand):
         {
             "mapit_type": ["WMC"],
             "mapit_generation": 54,
-            "name": "2010 Parliamentary Constituency",
             "code": "WMC",
             "area_type": "Westminster Constituency",
-            "description": "Westminster Parliamentary Constituency boundaries, as created in 2010",
+            "name_singular": "Pre-2024 Parliamentary Constituency",
+            "name_plural": "Pre-2024 Parliamentary Constituencies",
+            "short_name_singular": "constituency",
+            "short_name_plural": "constituencies",
+            "description": "Westminster Parliamentary Constituencies, as created in 2010.",
         },
         {
             "mapit_type": ["WMC"],
             "mapit_generation": None,
-            "name": "2023 Parliamentary Constituency",
             "code": "WMC23",
             "area_type": "Westminster Constituency",
-            "description": "Westminster Parliamentary Constituency boundaries, as created in 2023",
+            "name_singular": "Parliamentary Constituency",
+            "name_plural": "Parliamentary Constituencies",
+            "short_name_singular": "constituency",
+            "short_name_plural": "constituencies",
+            "description": "Westminster Parliamentary Constituencies, as created in 2023, and first used at the 2024 General Election.",
         },
         {
             "mapit_type": ["LBO", "UTA", "COI", "LGD", "CTY", "MTD"],
             "mapit_generation": None,
-            "name": "Single Tier Councils",
             "code": "STC",
             "area_type": "Single Tier Council",
-            "description": "Single Tier Council",
+            "name_singular": "Single Tier Council",
+            "name_plural": "Single Tier Councils",
+            "short_name_singular": "council",
+            "short_name_plural": "councils",
+            "description": "This includes Unitary Authorities, London Boroughs, and County Councils in England, as well as all councils in Scotland, Wales, and Nothern Ireland.",
         },
         {
             "mapit_type": ["DIS", "NMD"],
             "mapit_generation": None,
-            "name": "District Councils",
             "code": "DIS",
             "area_type": "District Council",
-            "description": "District Council",
+            "name_singular": "District Council",
+            "name_plural": "District Councils",
+            "short_name_singular": "council",
+            "short_name_plural": "councils",
+            "description": "In “two tier” council areas, District Councils look after local services like rubbish collection, recycling, housing, and planning applications, while a County Council looks after everything else.",
         },
     ]
 
@@ -102,7 +114,8 @@ class Command(BaseImportCommand):
                 code=b_type["code"],
                 defaults={
                     "area_type": b_type["area_type"],
-                    "name": b_type["name"],
+                    "name_singular": b_type["name_singular"],
+                    "name_plural": b_type["name_plural"],
                     "description": b_type["description"],
                 },
             )
@@ -110,7 +123,7 @@ class Command(BaseImportCommand):
             self.add_object_to_site(area_type)
 
             if diagnostics or not quiet:
-                print(f"Importing {b_type['name']} Areas")
+                print(f"Importing {b_type['name_plural']}")
             disable = quiet or diagnostics
             for area in tqdm(areas, disable=disable):
                 if diagnostics:
