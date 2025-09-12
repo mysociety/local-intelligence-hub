@@ -567,9 +567,9 @@
                       {% elif dataset.is_range and dataset.data|length > 0 %}
                           {% include 'hub/area/_range_data.html' with dataset=dataset %}
                       {% else %}
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}%</p>
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}{% if dataset.data_type == "percent" %}%{% endif %}</p>
                         {% if dataset.data.average is not None %}
-                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
+                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}{% if dataset.data_type == "percent" %}%{% endif %} national average</p>
                         {% endif %}
                         {% if dataset.db_name == "council_action_scorecard_total" %}
                           <p class="card-text fs-7 mt-3">This score represents how many of <a href="{{ dataset.source_url }}">Climate Emergency UK’s recommended climate actions</a> this council has taken.</p>
@@ -661,8 +661,8 @@
                           </tbody>
                         </table>
                       {% else %}
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}%</p>
-                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}{% if dataset.data_type == "percent" %}%{% endif %}</p>
+                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}{% if dataset.data_type == "percent" %}%{% endif %} national average</p>
                       {% endif %}
                       {% if dataset.related_category and dataset.related_category.is_range %}
                         {% include 'hub/area/_range_data.html' with dataset=dataset.related_category %}
@@ -722,9 +722,9 @@
                     <div class="card-body">
                       {% if dataset.data_type == "json" %}
                         {% include 'hub/area/_json_data.html' with dataset=dataset %}
-                      {% elif dataset.data_type == "percentage" %}
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}%</p>
-                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
+                      {% elif dataset.data_type == "percent" or dataset.data_type == "float" %}
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}{% if dataset.data_type == "percent" %}%{% endif %}</p>
+                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}{% if dataset.data_type == "percent" %}%{% endif %} national average</p>
                       {% elif dataset.data_type == "integer" %}
                         {% if dataset.related_category %}
                         <p class="card-text mb-3 display-6 lh-1 text-primary">{{ dataset.data.value|intcomma }}</p>
