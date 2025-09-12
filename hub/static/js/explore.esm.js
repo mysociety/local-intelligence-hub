@@ -39,7 +39,7 @@ const app = createApp({
 
       currentType: 'filter', // what to add from the Add Dataset modal (filter, shader, or column)
       searchText: '', // filter datasets by name in the Add Dataset modal
-      sortBy: 'Constituency Name', // column to use to sort the table
+      sortBy: 'Constituency name', // column to use to sort the table
       sortOrder: 1, // sort order direction - 1 for ascending, 0 for descending
       downloadCsvWithNextTableUpdate: false,
     }
@@ -577,11 +577,11 @@ const app = createApp({
       this.loading = true
       this.filters_applied = (this.filters.length > 0)
 
-      if (this.sortBy == 'Constituency Name' || this.sortBy == 'Council Name') {
+      if (this.sortBy == 'Constituency name' || this.sortBy == 'Council name') {
           if (["DIS", "STC"].includes(this.area_type)) {
-            this.sortBy = "Council Name"
+            this.sortBy = "Council name"
           } else {
-            this.sortBy = "Constituency Name"
+            this.sortBy = "Constituency name"
           }
       }
 
