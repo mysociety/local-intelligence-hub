@@ -74,7 +74,7 @@ class TestExploreDatasetsPage(TestCase):
         "mp_memberships.json",
     ]
     output_csv = str.encode(
-        "Constituency Name,APPG membership\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2\r\n"
+        "Constituency name,APPG membership\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2\r\n"
     )
 
     def setUp(self):
@@ -106,7 +106,7 @@ class TestExploreDatasetsPage(TestCase):
 
     def test_explore_view_extra_column(self):
         output_csv = str.encode(
-            "Constituency Name,APPG membership,Constituency Polling Data - Wind support\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0\r\n"
+            "Constituency name,APPG membership,Constituency Polling Data - Wind support\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0\r\n"
         )
 
         url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG&columns=wind_support"
@@ -119,7 +119,7 @@ class TestExploreDatasetsPage(TestCase):
 
     def test_explore_view_multiple_extra_columns(self):
         output_csv = str.encode(
-            "Constituency Name,APPG membership,Constituency Polling Data - Wind support,Constituency Fuel Poverty - Constituency Fuel Poverty\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0,12.4321\r\n"
+            "Constituency name,APPG membership,Constituency Polling Data - Wind support,Constituency Fuel Poverty - Constituency Fuel Poverty\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0,12.4321\r\n"
         )
 
         url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG&columns=wind_support,fuel_poverty"
@@ -132,7 +132,7 @@ class TestExploreDatasetsPage(TestCase):
 
     def test_explore_view_extra_columns_multiset(self):
         output_csv = str.encode(
-            "Constituency Name,APPG membership,Constituency Polling Data - Wind support,Constituency Age Distribution - Constituency Age 0-9 %age\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0,10.1234\r\n"
+            "Constituency name,APPG membership,Constituency Polling Data - Wind support,Constituency Age Distribution - Constituency Age 0-9 %age\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0,10.1234\r\n"
         )
 
         url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG&columns=wind_support,ages_0-9"
@@ -145,7 +145,7 @@ class TestExploreDatasetsPage(TestCase):
 
     def test_explore_view_extra_columns_new_cons(self):
         output_csv = str.encode(
-            "Constituency Name,MP Name,ParlId\r\nSouth Borsetshire,James Madeupname,1\r\nBorsetshire West,Juliet Madeupname,\r\nBorsetshire East,No current MP,\r\n"
+            "Constituency name,MP Name,ParlId\r\nSouth Borsetshire,James Madeupname,1\r\nBorsetshire West,Juliet Madeupname,\r\nBorsetshire East,No current MP,\r\n"
         )
 
         url = f"{reverse('explore_csv')}?columns=mp_name,parlid"
@@ -157,7 +157,7 @@ class TestExploreDatasetsPage(TestCase):
         )
 
         output_csv = str.encode(
-            "Constituency Name,MP Name,ParlId\r\nNew Borsetshire West,Juliet Madeupname,\r\nNew South Borsetshire,James Madeupname,1\r\nNew Mid Borsetshire,Andrew Madeupname,\r\n"
+            "Constituency name,MP Name,ParlId\r\nNew Borsetshire West,Juliet Madeupname,\r\nNew South Borsetshire,James Madeupname,1\r\nNew Mid Borsetshire,Andrew Madeupname,\r\n"
         )
 
         url = f"{reverse('explore_csv')}?area_type=WMC23&columns=mp_name,parlid"
@@ -170,7 +170,7 @@ class TestExploreDatasetsPage(TestCase):
 
     def test_explore_view_extra_columns_new_cons_diff_numbers(self):
         output_csv = str.encode(
-            "Constituency Name,MP Majority,MP Name\r\nSouth Borsetshire,1234,James Madeupname\r\n"
+            "Constituency name,MP Majority,MP Name\r\nSouth Borsetshire,1234,James Madeupname\r\n"
         )
 
         url = f"{reverse('explore_csv')}?columns=mp_name&mp_election_majority__gt=1000"
@@ -182,7 +182,7 @@ class TestExploreDatasetsPage(TestCase):
         )
 
         output_csv = str.encode(
-            "Constituency Name,MP Majority,MP Name\r\nNew South Borsetshire,1001,James Madeupname\r\n"
+            "Constituency name,MP Majority,MP Name\r\nNew South Borsetshire,1001,James Madeupname\r\n"
         )
 
         url = f"{reverse('explore_csv')}?area_type=WMC23&columns=mp_name&mp_election_majority__gt=1000"
@@ -199,7 +199,7 @@ class TestExploreDatasetsPage(TestCase):
         ds.save()
 
         output_csv = str.encode(
-            "Constituency Name,APPG membership\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2\r\n"
+            "Constituency name,APPG membership\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2\r\n"
         )
 
         url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG&columns=wind_support"

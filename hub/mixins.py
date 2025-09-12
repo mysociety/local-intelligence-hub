@@ -195,7 +195,7 @@ class FilterMixin:
     def data(self, as_dict=False, mp_name=False):
         area_type = self.area_type()
 
-        headers = [f"{area_type.short_name_singular} Name".capitalize()]
+        headers = [f"{area_type.short_name_singular} name".capitalize()]
         headers += map(lambda f: f["dataset"].label, self.filters())
         headers += map(
             lambda f: f.get("header_label", f["label"]), self.columns(mp_name=mp_name)
