@@ -36,9 +36,11 @@ class ExploreAreaTypesJSON(TemplateView):
             area_type_list.append(
                 {
                     "slug": at.code,
-                    "label": at.name,
-                    "short_label": at.area_type,
                     "description": at.description,
+                    "name_singular": at.name_singular,
+                    "name_plural": at.name_plural,
+                    "short_name_singular": at.short_name_singular,
+                    "short_name_plural": at.short_name_plural,
                 }
             )
         return JsonResponse(
@@ -280,7 +282,7 @@ class ExploreJSON(FilterMixin, TemplateView):
                 "properties": {
                     "PCON13CD": area_obj.gss,
                     "name": area_obj.name,
-                    "type": area_obj.area_type.name,
+                    "type": area_obj.area_type.code,
                 }
             }
             for k in area.keys():
