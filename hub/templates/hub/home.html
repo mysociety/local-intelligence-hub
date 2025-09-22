@@ -1,6 +1,7 @@
 {% extends "hub/base.html" %}
 
 {% load static %}
+{% load siteinclude %}
 
 {% block css %}
     <link rel="stylesheet" type="text/x-scss" href="{% static 'css/default-home.scss' %}">
@@ -37,9 +38,14 @@
 
             <div class="col-lg-6 pt-5 pb-6">
                 <h2 class="mb-4 h1">Explore data across the&nbsp;UK</h2>
-                <p class="mb-4 fs-5" style="max-width: 28em;">Use data from The Climate Coalition, its member organisations, and the wider sector, to narrow down your focus to the areas and constituencies that matter to you.</p>
-                <p class="mb-4 fs-5" style="max-width: 28em;">Use the interactive map to discover data about your area, then export as a spreadsheet for further analysis.</p>
-                <a href="{% url 'explore' %}" class="btn btn-lg btn-primary">Start exploring</a>
+                <p class="mb-4 fs-5" style="max-width: 28em;">Identify your priority areas as a map or spreadsheet download – powered by rich data from The Climate Coalition, its member organisations, and the wider sector.</p>
+              {% block examples %}
+                <h3 class="h6 text-muted mb-3">Examples:</h3>
+                <div class="homepage-canned-queries">
+                    {% site_include 'hub/includes/canned-queries.html' %}
+                    <a href="{% url 'explore' %}">Create your own!</a>
+                </div>
+              {% endblock %}
             </div>
 
             <a class="col-lg-5 offset-lg-1 pt-5 pb-6 pb-lg-5 d-flex flex-column align-items-center justify-content-center" href="{% url 'explore' %}">

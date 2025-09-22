@@ -2,6 +2,10 @@ mark {
     color: inherit;
 }
 
+summary {
+    color: var(--#{$prefix}link-color);
+}
+
 .readable {
     max-width: 40rem;
 

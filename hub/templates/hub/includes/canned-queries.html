@@ -1,0 +1,5 @@
+{% load hub_filters %}
+
+<a href="{% url 'explore' %}?{% urlencode_params 2025_mass_lobby_mp__in='MP attended,MP sent a representative' shader='party' area_type='WMC23' %}">MPs engaging on climate issues</a>
+<a href="{% url 'explore' %}?{% urlencode_params persuasion_jul_2024_immigration_undermined__gte=55 not_able_to_pay_energy_bills__gte=55 shader='not_able_to_pay_energy_bills' view='table' area_type='WMC23' %}">Energy bill worries in anti-immigration constituencies</a>
+<a href="{% url 'explore' %}?{% urlencode_params mp_election_majority__lt=5000 party__in='Labour Party,Labour Co-operative' constituency_nz_support__gte=61 area_type='WMC23' %}">Slim government majorities with pro-climate demand</a>

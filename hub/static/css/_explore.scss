@@ -90,6 +90,39 @@ $osm-sea-blue: rgb(168, 212, 243);
     background: linear-gradient($body-bg, rgba($green-100, 0.3))
 }
 
+.explore-canned-queries {
+    --#{$prefix}gutter-x: #{$grid-gutter-width};
+    --#{$prefix}gutter-y: #{$grid-gutter-width};
+
+    display: grid;
+    gap: var(--#{$prefix}gutter-x) var(--#{$prefix}gutter-y);
+    grid-template-columns: 1fr;
+
+    & > * {
+        --#{$prefix}card-spacer-y: #{$card-spacer-y};
+        --#{$prefix}card-spacer-x: #{$card-spacer-x};
+        --#{$prefix}card-border-width: #{$card-border-width};
+        --#{$prefix}card-border-color: #{$card-border-color};
+        --#{$prefix}card-border-radius: #{$card-border-radius};
+        --#{$prefix}card-box-shadow: #{$card-box-shadow};
+        --#{$prefix}card-bg: #{$card-bg};
+
+        // vertical and horizontal content centering
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+
+        // card styling
+        background-color: var(--#{$prefix}card-bg);
+        background-clip: border-box;
+        border: var(--#{$prefix}card-border-width) solid var(--#{$prefix}card-border-color);
+        @include border-radius(var(--#{$prefix}card-border-radius));
+        @include box-shadow(var(--#{$prefix}card-box-shadow));
+        padding: var(--#{$prefix}card-spacer-y) var(--#{$prefix}card-spacer-x);
+    }
+}
+
 .filter {
     padding: map-get($spacers, 3);
     margin-bottom: map-get($spacers, 4);

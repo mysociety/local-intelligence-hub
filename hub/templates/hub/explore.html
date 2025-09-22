@@ -1,6 +1,7 @@
 {% extends 'hub/base.html' %}
 
 {% load static %}
+{% load siteinclude %}
 
 {% block bodyclass %}page-explore{% endblock %}
 
@@ -20,9 +21,16 @@
 
             <p>Use data from The Climate Coalition, its member organisations, and the wider sector, to narrow down your focus to the constituencies that matter to you.</p>
 
-            <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Select an output format</h2>
+          {% block examples %}
+            <details>
+                <summary>Need inspiration? Try an example…</summary>
+                <div class="explore-canned-queries mt-3">
+                    {% site_include 'hub/includes/canned-queries.html' %}
+                </div>
+            </details>
+          {% endblock %}
 
-            <ul class="nav nav-tabs mx-n4 mx-lg-n5 px-4 px-lg-5" id="myTab" role="tablist">
+            <ul class="nav nav-tabs mt-4 mt-lg-5 mx-n4 mx-lg-n5 px-4 px-lg-5" id="myTab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link py-3 px-4 fw-bold" :class="{ 'active': mapViewActive }" id="tab-map" data-bs-toggle="tab" data-bs-target="#options-map" type="button" role="tab" aria-controls="options-map" :aria-selected="mapViewActive ? 'true' : 'false'" @click="changeView('map')">Map view</button>
                 </li>
