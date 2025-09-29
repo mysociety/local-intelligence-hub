@@ -11,6 +11,10 @@ from utils.mapit import MapIt, NotFoundException
 from .base_importers import BaseImportCommand
 
 
+def find_where(list_of_dicts, key, value):
+    return next((d for d in list_of_dicts if d[key] == value), None)
+
+
 class Command(BaseImportCommand):
     help = "Import basic area information from MaPit"
 
@@ -49,6 +53,14 @@ class Command(BaseImportCommand):
             "area_type": "District Council",
             "description": "District Council",
         },
+        {
+            "mapit_type": None,
+            "mapit_generation": None,
+            "name": "Policing Areas",
+            "code": "POL",
+            "area_type": "Policing Area",
+            "description": "In England and Wales, these are Police and Crime Commissioner areas; in Scotland and Northern Ireland, each country is policing area of its own",
+        },
     ]
 
     def add_arguments(self, parser):
@@ -85,19 +97,26 @@ class Command(BaseImportCommand):
         elif self._all_sites:
             self.all_sites = Site.objects.all()
 
+    def get_areas_of_type(self, boundary_type_code):
+        b_type = find_where(self.boundary_types, "code", boundary_type_code)
+        if b_type.get("mapit_type"):
+            return self.mapit_client.areas_of_type(
+                b_type["mapit_type"], generation=b_type["mapit_generation"]
+            )
+        elif b_type.get("code") == "POL":
+            return []
+        else:
+            return []
+
+    def get_area_geometry(self, mapit_id_or_gss):
+        pass
+
     def handle(self, quiet: bool = False, diagnostics: bool = False, *args, **options):
         self._site_name = options.get("site")
         self._all_sites = options.get("all_sites")
         self.get_site()
-        mapit_client = MapIt()
+        self.mapit_client = MapIt()
         for b_type in self.boundary_types:
-            areas = mapit_client.areas_of_type(
-                b_type["mapit_type"], generation=b_type["mapit_generation"]
-            )
-            if diagnostics:
-                print(
-                    f"fetched mapit areas with type {b_type['mapit_type']}, generation {b_type['mapit_generation']}, our type {b_type['code']}"
-                )
             area_type, created = AreaType.objects.get_or_create(
                 code=b_type["code"],
                 defaults={
@@ -111,12 +130,15 @@ class Command(BaseImportCommand):
 
             if diagnostics or not quiet:
                 print(f"Importing {b_type['name']} Areas")
+
+            areas = self.get_areas_of_type(b_type["code"])
+
             disable = quiet or diagnostics
             for area in tqdm(areas, disable=disable):
                 if diagnostics:
                     print(f"looking at {area['name']}, mapit type {area['type']}")
                 try:
-                    geom = mapit_client.area_geometry(area["id"])
+                    geom = self.mapit_client.area_geometry(area["id"])
                     geom = {
                         "type": "Feature",
                         "geometry": geom,
@@ -140,7 +162,7 @@ class Command(BaseImportCommand):
                         name=area["name"],
                         area_type=area_type,
                         defaults={
-                            "mapit_id": area["id"],
+                            "mapit_id": area["id"],  # only if it's a mapit area
                             "gss": area["codes"]["gss"],
                         },
                     )
