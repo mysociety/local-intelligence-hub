@@ -77,6 +77,7 @@ class FilterMixin:
                         "comparator": comparator,
                         "value": value,
                         "value_col": dataset.value_col,
+                        "header_label": dataset.label,
                     }
                 )
             except DataSet.DoesNotExist:  # pragma: nocover
@@ -95,6 +96,7 @@ class FilterMixin:
                             "comparator": comparator,
                             "value": value,
                             "value_col": datatype.value_col,
+                            "header_label": f"{datatype.data_set.label} - {datatype.label}",
                         }
                     )
                 except DataType.DoesNotExist:  # pragma: nocover
@@ -196,7 +198,7 @@ class FilterMixin:
         area_type = self.area_type()
 
         headers = [f"{area_type.short_name_singular} name".capitalize()]
-        headers += map(lambda f: f["dataset"].label, self.filters())
+        headers += map(lambda f: f.get("header_label", f["label"]), self.filters())
         headers += map(
             lambda f: f.get("header_label", f["label"]), self.columns(mp_name=mp_name)
         )

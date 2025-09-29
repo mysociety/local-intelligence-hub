@@ -218,10 +218,19 @@ const app = createApp({
         Object.keys(dataset.comparators)[0]
       dataset.selectedValue = current.value || dataset.defaultValue
 
+      // They requested a DataType, so we want to select that.
+      // It must be in `dataset.types` because otherwise `getDataset`
+      // wouldn’t have returned this DataSet.
+      if (dataset.name !== datasetName) {
+        dataset.selectedType = datasetName
+      }
+
       if (!dataset.selectedValue && dataset.options) {
         dataset.selectedValue = dataset.options[0]
       }
 
+      // They requested a DataSet with DataTypes, but didn’t
+      // pick a type. Default to the first DataType.
       if (!dataset.selectedType && dataset.types) {
         dataset.selectedType = dataset.types[0].name
       }
