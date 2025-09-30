@@ -357,7 +357,9 @@ const app = createApp({
         if (key == 'view' ) {
           this.view = v;
         } else if (key == 'shader') {
-          pending[v] = () => { this.addShader(v) }
+          // append _shader to avoid key overlap if filtering and shading with
+          // the same dataset/type
+          pending[v + "_shader"] = () => { this.addShader(v) }
         } else if (key == 'columns') {
           pending[v] = () => { for (const col of v.split(',')) { this.addColumn(col) } }
         } else if (key == 'area_type') {
