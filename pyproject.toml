@@ -6,7 +6,7 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-django = "4.2.24"
+django = "4.2.25"
 django-bootstrap5 = "^22.1"
 django-environ = "^0.9.0"
 django-sslserver = "^0.22"
