@@ -474,12 +474,13 @@ class SiteAreaType(models.Model):
 
 
 class AreaType(models.Model):
-    VALID_AREA_TYPES = ["WMC", "WMC23", "STC", "DIS"]
+    VALID_AREA_TYPES = ["WMC", "WMC23", "STC", "DIS", "PFA"]
 
     AREA_TYPES = [
         ("westminster_constituency", "Westminster Constituency"),
         ("single_tier_council", "Single Tier Council"),
         ("district_council", "District Council"),
+        ("policing_area", "Policing Area"),
     ]
 
     code = models.CharField(max_length=10, unique=True)
