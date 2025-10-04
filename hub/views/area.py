@@ -170,16 +170,16 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
 
     def get_overlap_info(self, **kwargs):
         if self.object.area_type.code == "WMC":
-            overlaps = self.object.old_overlaps.all()
+            overlaps = self.object.overlaps_from.all()
         elif self.object.area_type.code == "WMC23":
-            overlaps = self.object.new_overlaps.all()
+            overlaps = self.object.overlaps_to.all()
         else:
             return None
 
         overlap_constituencies = [
             {
-                "new_area": overlap.area_new,
-                "old_area": overlap.area_old,
+                "new_area": overlap.area_to,
+                "old_area": overlap.area_from,
                 "pop_overlap": overlap.population_overlap,
                 "area_overlap": overlap.area_overlap,
             }

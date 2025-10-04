@@ -737,11 +737,11 @@ class Area(models.Model):
 
 
 class AreaOverlap(models.Model):
-    area_old = models.ForeignKey(
-        Area, on_delete=models.CASCADE, related_name="old_overlaps"
+    area_from = models.ForeignKey(
+        Area, on_delete=models.CASCADE, related_name="overlaps_from"
     )
-    area_new = models.ForeignKey(
-        Area, on_delete=models.CASCADE, related_name="new_overlaps"
+    area_to = models.ForeignKey(
+        Area, on_delete=models.CASCADE, related_name="overlaps_to"
     )
     population_overlap = models.SmallIntegerField(default=0)
     area_overlap = models.SmallIntegerField(default=0)
