@@ -495,6 +495,22 @@ class AreaSearchView(CobrandTemplateMixin, TemplateView):
                 area_type__siteareatype__enabled=True,
             )
             areas = list(areas)
+
+            # For policing areas, look up via AreaOverlap from local authorities
+            if "PFA" in settings.AREA_SEARCH_AREA_CODES:
+                # Get all local authorities matching this postcode
+                las = Area.objects.filter(
+                    gss__in=gss_codes, area_type__code__in=["STC", "DIS"]
+                )
+                # Find policing areas that contain these LAs
+                for la in las:
+                    policing_areas = Area.objects.filter(
+                        overlaps_to__area_from=la,
+                        area_type__code="PFA",
+                        area_type__sites=site,
+                        area_type__siteareatype__enabled=True,
+                    )
+                    areas.extend(list(policing_areas))
         except (
             NotFoundException,
             BadRequestException,
@@ -590,10 +606,16 @@ class AreaSearchView(CobrandTemplateMixin, TemplateView):
                     "type": "LA",
                     "areas": [],
                 },
+                {
+                    "type": "PFA",
+                    "areas": [],
+                },
             ]
             for area in context["areas"]:
                 if area.area_type.code == "WMC23":
                     context["areas_by_type"][0]["areas"].append(area)
+                elif area.area_type.code == "PFA":
+                    context["areas_by_type"][2]["areas"].append(area)
                 elif area.area_type.code != "WMC":
                     context["areas_by_type"][1]["areas"].append(area)
 

@@ -14,4 +14,12 @@
     <h2 class="h4 text-primary">Local authorities</h2>
     <p class="text-muted">These bodies have powers over local services like education, planning, and transport.</p>
   {% endif %}
+{% elif type == "PFA" %}
+  {% if areas|length == 1 %}
+    <h2 class="h4 text-primary">Policing area</h2>
+    <p class="text-muted">Police &amp; Crime Commissioners in England and Wales, or police forces in Scotland and Northern Ireland.</p>
+  {% else %}
+    <h2 class="h4 text-primary">Policing areas</h2>
+    <p class="text-muted">Police &amp; Crime Commissioners in England and Wales, or police forces in Scotland and Northern Ireland.</p>
+  {% endif %}
 {% endif %}
