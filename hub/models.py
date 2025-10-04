@@ -686,7 +686,7 @@ class CommonData(models.Model):
 
 
 class Area(models.Model):
-    mapit_id = models.CharField(max_length=30)
+    mapit_id = models.CharField(max_length=30, null=True, blank=True)
     gss = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
     area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE)

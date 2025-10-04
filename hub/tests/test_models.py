@@ -221,6 +221,38 @@ class TestCommonData(TestCase):
         self.assertEqual(data.value(), {"key": "value"})
 
 
+class TestArea(TestCase):
+    fixtures = ["areas.json"]
+
+    def test_area_with_mapit_id(self):
+        area = Area.objects.get(gss="E10000001")
+        self.assertIsNotNone(area.mapit_id)
+
+    def test_area_without_mapit_id(self):
+        from hub.models import AreaType
+
+        area_type, _ = AreaType.objects.get_or_create(
+            code="TEST",
+            defaults={
+                "name_singular": "Test Area Type",
+                "name_plural": "Test Area Types",
+                "short_name_singular": "test area",
+                "short_name_plural": "test areas",
+                "area_type": "test",
+                "description": "Test",
+            },
+        )
+        area = Area.objects.create(
+            gss="E99999999",
+            name="Test Area Without MapIt",
+            area_type=area_type,
+            mapit_id=None,
+        )
+        self.assertIsNone(area.mapit_id)
+        self.assertEqual(area.gss, "E99999999")
+        self.assertEqual(area.name, "Test Area Without MapIt")
+
+
 class TestPerson(TestCase):
     def test_string_rep(self):
         p = Person.objects.create(name="A Person")
