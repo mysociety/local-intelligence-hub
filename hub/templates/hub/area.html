@@ -55,7 +55,7 @@
             </div>
         </div>
 
-      {% if area_type == "WMC" %}
+      {% if area.area_type.code == "WMC" %}
         <div class="mt-4">
             <h2 class="h4 text-danger">This is a historical constituency</h2>
           {% if overlap_constituencies|length == 1 %}
@@ -94,9 +94,13 @@
                 </a>
             </li>
           {% endif %}
-            {% if is_westminster_cons %}
+            {% if area.area_type.area_type == "westminster_constituency" %}
               <li class="nav-item">
                   <a class="nav-link" href="#mp">MP</a>
+              </li>
+            {% elif area.area_type.area_type == "policing_area" and pcc %}
+              <li class="nav-item">
+                  <a class="nav-link" href="#pcc">PCC</a>
               </li>
             {% endif %}
             <li class="nav-item">
@@ -120,7 +124,7 @@
             <p class="d-flex flex-wrap align-items-center text-muted">Tap the {% include 'hub/includes/icons/heart-empty.html' %} icon on any dataset to add it to your {% include 'hub/includes/icons/heart-empty.html' %} Favourites tab.</p>
         </aside>
 
-        {% if is_westminster_cons %}
+        {% if area.area_type.area_type == "westminster_constituency" %}
         <section class="mb-5 mb-lg-6 area-section" id="mp">
             {% if no_mp %}
               <h2 class="text-primary">This constituency has no MP right now</h2>
@@ -429,12 +433,82 @@
         </section>
         {% endif %}
 
+        {% if area.area_type.area_type == "policing_area" and pcc %}
+        <section class="mb-5 mb-lg-6 area-section" id="pcc">
+            <h2 class="mb-3 text-primary">Police &amp; Crime Commissioner</h2>
+            <div class="area-data-grid">
+
+                <div class="card dataset-card area-data--sm area-data--featured">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                {% include 'hub/includes/person-photo.html' with person=pcc.person %}
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h3 class="h4 mb-0 text-primary" id="mp_name">{{ pcc.person.name }}</h3>
+                            {% if pcc.person.party %}
+                                <p class="mb-0 text-muted">{{ pcc.person.party }}</p>
+                            {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <p class="card-text">
+                            <a href="https://democracyclub.org.uk/">Data from Democracy Club.</a>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card dataset-card area-data--sm area-data--featured">
+                    <div class="card-header">
+                        <h3 class="h5">Date elected</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">
+                            {{ pcc.pcc_last_elected|naturalday:"jS M Y" }}
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <p class="card-text">
+                            <a href="https://democracyclub.org.uk/">Data from Democracy Club.</a>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card dataset-card area-data--sm area-data--featured">
+                    <div class="card-header">
+                        <h3 class="h5">{{ pcc.pcc_last_elected|date:"Y"}} majority</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">
+                            {{ pcc.pcc_election_majority|intcomma }}
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <p class="card-text">
+                            <a href="https://democracyclub.org.uk/">Data from Democracy Club.</a>
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+            {% comment %}
+            <div class="area-data-more">
+                <a href="#pcc">
+                    More PCC data
+                    {% include "hub/includes/icons/chevron-right.html" %}
+                </a>
+            </div>
+            {% endcomment %}
+        </section>
+        {% endif %}
+
         {% if categories.place %}
         <section class="mb-5 mb-lg-6 area-section" id="place">
             <h2 class="mb-3 text-primary">Place</h2>
             <div class="area-data-grid">
 
-              {% if area_type == "WMC23" and area.overlaps %}
+              {% if area.area_type.code == "WMC23" and area.overlaps %}
                 <div class="card dataset-card area-data--md">
                     <div class="card-header">
                         <h3 class="h5">Constituency history</h3>

@@ -211,8 +211,10 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         site = self.request.site
-
+        area_type = self.object.area_type
         is_non_member = self.request.user.is_anonymous
+
+        context["slug"] = slugify(self.object.name)
 
         context["overlap_constituencies"] = self.get_overlap_info()
         if (
@@ -221,18 +223,12 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
         ):
             if context["overlap_constituencies"][0].get("unchanged", False):
                 context["overlap_unchanged"] = True
-        area_type = self.object.area_type
-        context["area_type"] = area_type.code
-        context["is_westminster_cons"] = True
-        if area_type.area_type != "westminster_constituency":
-            context["is_westminster_cons"] = False
 
-        context["slug"] = slugify(self.object.name)
-
-        if context["area_type"] == "WMC23":
+        if area_type.code == "WMC23":
             context["PPCs"] = Person.objects.filter(
                 areas=self.object, person_type="PPC"
             )
+
         try:
             context["mp"] = {
                 "person": Person.objects.get(
@@ -353,6 +349,33 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
                 data = data.exclude(data_type__data_set__is_public=False)
             for item in data.all():
                 context["mp"][item.data_type.name] = item.value()
+
+        if area_type.code == "PFA":
+            try:
+                context["pcc"] = {
+                    "person": Person.objects.get(
+                        areas=self.object,
+                        personarea__person_type="PCC",
+                        personarea__end_date__isnull=True,
+                    )
+                }
+
+                data = PersonData.objects.filter(
+                    person=context["pcc"]["person"],
+                    data_type__name__in=[
+                        "pcc_last_elected",
+                        "pcc_election_majority",
+                    ],
+                ).select_related("data_type")
+
+                if is_non_member:
+                    data = data.exclude(data_type__data_set__is_public=False)
+
+                for item in data.all():
+                    context["pcc"][item.data_type.name] = item.value()
+
+            except Person.DoesNotExist:
+                context["no_pcc"] = True
 
         categories = defaultdict(list)
         indexed_categories = defaultdict(dict)

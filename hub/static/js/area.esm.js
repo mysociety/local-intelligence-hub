@@ -2,7 +2,8 @@ import $ from 'jquery/dist/jquery.slim'
 import { Tab } from 'bootstrap/js/dist/tab'
 import trackEvent from './analytics.esm.js'
 
-const hashes = ["#favourites", "#mp", "#opinion", "#place", "#movement"]
+// If you change this, remember to also change the @each loop in _area.scss
+const hashes = ["#favourites", "#mp", "#pcc", "#opinion", "#place", "#movement"]
 
 function getHashFromSection(section) {
     let hash = '#' + section
