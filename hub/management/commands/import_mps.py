@@ -15,22 +15,7 @@ from tqdm import tqdm
 
 from hub.models import Area, AreaType, DataSet, DataType, Person, PersonData
 
-from .base_importers import BaseImportCommand, party_shades
-
-party_map = {
-    "Conservative": "Conservative Party",
-    "Conservative and Unionist Party": "Conservative Party",
-    "Green": "Green Party",
-    "Green Party (England & Wales)": "Green Party",
-    "SDLP (Social Democratic & Labour Party)": "Social Democratic and Labour Party",
-    "DUP": "Democratic Unionist Party",
-    "Labour": "Labour Party",
-    "Labour/Co-operative": "Labour Co-operative",
-    "Speaker": "Speaker of the House of Commons",
-    "Liberal Democrat": "Liberal Democrats",
-    "Alba": "Alba Party",
-    "Independent": "independent politician",
-}
+from .base_importers import BaseImportCommand, party_shades, standardise_party_name
 
 MP_IMPORT_COMMANDS = [
     "import_mps_relevant_votes",
@@ -51,16 +36,6 @@ class Command(BaseImportCommand):
         self.import_mps()
         self.check_for_duplicate_mps()
         self.import_mp_images()
-
-    def standardise_party(self, party):
-        orig_party = party
-        if party_shades.get(party, None) is not None:
-            return party
-
-        if party_map.get(party, None) is not None:
-            return party_map[party]
-
-        return orig_party
 
     # these are separate functions so we can mock them in tests
     def get_twfy_df(self):
@@ -266,7 +241,7 @@ class Command(BaseImportCommand):
                             )
                 if "Party" in mp:
                     try:
-                        party = self.standardise_party(mp["Party"])
+                        party = standardise_party_name(mp["Party"])
                         PersonData.objects.update_or_create(
                             person=person,
                             data_type=data_types["party"],
