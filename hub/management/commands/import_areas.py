@@ -87,6 +87,12 @@ class Command(BaseImportCommand):
             help="Add dataset to all sites",
         )
 
+        parser.add_argument(
+            "--types",
+            nargs="+",
+            help='Area type codes to import (eg, "WMC" "DIS"). If not specified, all types will be imported.',
+        )
+
     def get_site(self):
         if self._site_name:
             try:
@@ -100,9 +106,12 @@ class Command(BaseImportCommand):
     def handle(self, quiet: bool = False, diagnostics: bool = False, *args, **options):
         self._site_name = options.get("site")
         self._all_sites = options.get("all_sites")
+        types_to_import = options.get("types")
         self.get_site()
         mapit_client = MapIt()
         for b_type in self.boundary_types:
+            if types_to_import and b_type["code"] not in types_to_import:
+                continue
             areas = mapit_client.areas_of_type(
                 b_type["mapit_type"], generation=b_type["mapit_generation"]
             )
