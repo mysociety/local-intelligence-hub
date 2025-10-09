@@ -21,16 +21,48 @@ class Command(BaseImportCommand):
     help = "Import Police & Crime Commissioners"
 
     area_type = "PFA"
+    # https://candidates.democracyclub.org.uk/data/export_csv/?election_date=2024-05-02&election_id=%5Epcc.%2A&format=csv&field_group=results&results=True
     source_file = (
         settings.BASE_DIR / "data" / "dc-candidates-pcc-election-results-2024-05-02.csv"
     )
+    # https://candidates.democracyclub.org.uk/data/export_csv/?election_date=2024-05-02&election_id=%5Emayor.%2A&format=csv&field_group=results&results=True
+    mayoral_source_file = (
+        settings.BASE_DIR
+        / "data"
+        / "dc-candidates-mayoral-election-results-2024-05-02.csv"
+    )
     source_file_release_date = "2024-05-02"
+
+    # Mapping from mayoral post_label to PFA GSS codes
+    mayoral_to_pfa_map = {
+        "Greater Manchester": "E23000005",
+        "Greater London Authority": "E23000001",
+        "South Yorkshire Mayoral Combined Authority": "E23000011",
+        "West Yorkshire Combined Authority": "E23000010",
+        "York and North Yorkshire Combined Authority": "E23000009",
+    }
 
     def handle(self, *args, **options):
         super(Command, self).handle(*args, **options)
 
+        # Load PCC data
         self.df = pd.read_csv(self.source_file)
         self.elected_df = self.df[self.df["elected"] == "t"].copy()
+
+        # Load mayoral data for the 5 areas without a PCC
+        mayoral_df = pd.read_csv(self.mayoral_source_file)
+        mayoral_df = mayoral_df[
+            (mayoral_df["post_label"].isin(self.mayoral_to_pfa_map.keys()))
+        ].copy()
+
+        # Combine PCC and mayoral data
+        self.df = pd.concat([self.df, mayoral_df], ignore_index=True)
+
+        mayoral_elected_df = mayoral_df[mayoral_df["elected"] == "t"].copy()
+        self.elected_df = pd.concat(
+            [self.elected_df, mayoral_elected_df], ignore_index=True
+        )
+
         self.area_map = self.get_area_map()
 
         self.import_pccs()
@@ -49,6 +81,9 @@ class Command(BaseImportCommand):
             area_lookup[f"{area.name} Constabulary"] = area.gss
             # And with " Police" suffix
             area_lookup[f"{area.name} Police"] = area.gss
+
+        # Add mayoral area mappings
+        area_lookup.update(self.mayoral_to_pfa_map)
 
         return area_lookup
 
