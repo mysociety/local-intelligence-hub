@@ -1,18 +1,12 @@
 {% load hub_filters %}
-
-<aside class="site-feedback">
-    <div class="container">
-        <h2>How could we improve this page?</h2>
-        <p><a href="https://docs.google.com/forms/d/e/1FAIpQLSfwTS3Mn9g5EOCBcFPF1uCXTbIJ69Tu5NA2kjUR0n-Hc1Knkw/viewform?usp=pp_url&amp;entry.496009622={{ request.build_absolute_uri|urlencode }}">Send us your feedback</a> so we can make the Local Intelligence Hub better for everyone.</p>
-    </div>
-</aside>
+{% load siteinclude %}
 
 <div class="site-footer py-5">
     <div class="container">
         <h2 class="h4 mb-3">{{ site_title }}</h2>
         <div class="row mb-n4">
             <div class="col-md-6 mb-4">
-                <p class="mb-0">Analyse and explore data about local MPs, constituencies, public opinion and the climate and nature movement in order to support your campaigning and organising efforts.</p>
+                <p class="mb-0">Analyse and explore data about elected representatives, public opinion, local demographics, and VAWG sector activity, to supercharge your campaigning and organising efforts.</p>
             </div>
             <div class="col-md-6 col-lg-5 offset-lg-1 mb-4 d-print-none">
                 <ul class="nav site-footer__nav">
@@ -34,19 +28,25 @@
                 <div class="fs-7 d-flex flex-wrap">
                     <div class="site-footer__org mb-3 me-4 me-xl-5">
                         <span>A service from</span>
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center gap-4">
                             <a class="d-print-none" href="https://www.mysociety.org" aria-label="mySociety">
-                                {% include 'hub/includes/icons/mysociety-logo.html' %}
+                                {% site_include 'hub/includes/icons/mysociety-logo.html' %}
                             </a>
                             <a class="d-none d-print-block" href="https://www.mysociety.org" aria-label="mySociety">
-                                {% include 'hub/includes/icons/mysociety-logo-black.html' %}
+                                {% site_include 'hub/includes/icons/mysociety-logo-black.html' %}
+                            </a>
+                            <a class="d-print-none" href="https://www.endviolenceagainstwomen.org.uk" aria-label="End Violence Against Women">
+                                {% site_include 'hub/includes/icons/evaw-logo-reversed.html' with width="48" height="54" %}
+                            </a>
+                            <a class="d-none d-print-block" href="https://www.endviolenceagainstwomen.org.uk" aria-label="End Violence Against Women">
+                                {% site_include 'hub/includes/icons/evaw-logo.html' with width="48" height="54" %}
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-lg-4 mb-4">
-                <p class="fs-7 mb-0 site-footer__legals"><a href="https://www.mysociety.org">mySociety</a> is a registered charity (1076346) and a limited company (03277032).</p>
+                <p class="fs-7 mb-0 site-footer__legals"><a href="https://www.mysociety.org">mySociety</a> is a registered charity (1076346) and a limited company (03277032). <a href="https://www.endviolenceagainstwomen.org.uk">End Violence Against Women</a> is a registered charity (1161132) and a limited company (7317881).
             </div>
             <div class="col-lg-3 mb-4">
                 <ul class="site-footer__socials d-print-none">

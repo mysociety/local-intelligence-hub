@@ -17,7 +17,7 @@ class TitleMixin:
     def get_site_title(self):
         site = self.request.site
         if site.name == "evaw":
-            return "EVAW Data Hub"
+            return "VAWG Data Hub"
         else:
             return "Local Intelligence Hub"
 
