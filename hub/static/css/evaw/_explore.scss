@@ -1,0 +1,9 @@
+.explore-filters {
+    .btn-outline-secondary {
+        @include button-outline-variant($primary);
+
+        small {
+            text-transform: none;
+        }
+    }
+}

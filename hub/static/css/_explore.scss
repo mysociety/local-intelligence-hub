@@ -126,9 +126,9 @@ $osm-sea-blue: rgb(168, 212, 243);
 .filter {
     padding: map-get($spacers, 3);
     margin-bottom: map-get($spacers, 4);
-    border-radius: $border-radius;
+    border-radius: $input-border-radius; // to match the buttons
     background: $gray-100;
-    border: 1px solid $gray-300;
+    border: $border-width solid $gray-400; // to match form controls
 }
 
 .filter--unavailable {

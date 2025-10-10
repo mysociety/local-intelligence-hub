@@ -35,7 +35,7 @@
 
 .area-tabs {
     overflow-x: auto;
-    background: linear-gradient(0deg, var(--bs-border-color-translucent) 1px, transparent 1px);
+    background: linear-gradient(0deg, var(--bs-border-color-translucent) $border-width, transparent $border-width);
 
     .nav {
         --bs-nav-tabs-link-active-bg: var(--bs-light);

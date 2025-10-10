@@ -7,10 +7,10 @@ $color-evaw-gold: #f4cb47;
 $color-evaw-off-black: #301037; // very dark purple, almost black
 
 $white: #fff;
-$gray-100: mix(desaturate($color-evaw-off-black, 30%), #fff, 5%);
-$gray-200: mix(desaturate($color-evaw-off-black, 30%), #fff, 10%);
-$gray-300: mix(desaturate($color-evaw-off-black, 30%), #fff, 15%);
-$gray-400: mix(desaturate($color-evaw-off-black, 30%), #fff, 23%);
+$gray-100: mix(desaturate($color-evaw-off-black, 0%), #fff, 5%);
+$gray-200: mix(desaturate($color-evaw-off-black, 5%), #fff, 10%);
+$gray-300: mix(desaturate($color-evaw-off-black, 10%), #fff, 15%);
+$gray-400: mix(desaturate($color-evaw-off-black, 20%), #fff, 23%);
 $gray-500: mix(desaturate($color-evaw-off-black, 30%), #fff, 35%);
 $gray-600: mix(desaturate($color-evaw-off-black, 30%), #fff, 65%);
 $gray-700: mix(desaturate($color-evaw-off-black, 30%), #fff, 80%);
