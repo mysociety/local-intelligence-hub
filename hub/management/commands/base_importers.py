@@ -1,9 +1,11 @@
+from datetime import date
 from time import sleep
 from typing import Optional
 
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand, CommandError
 
+import duckdb
 import pandas as pd
 import requests
 from tqdm import tqdm
@@ -605,3 +607,100 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
 
     def handle(self, *args, **options):
         super(BaseConstituencyCountImportCommand, self).handle(*args, **options)
+
+
+class BaseMPAPPGMembershipImportCommand(BaseImportCommand):
+    source_base = "https://pages.mysociety.org/appg-membership/data/appg_groups_and_memberships/latest/"
+    register_source = source_base + "register.parquet"
+    categories_source = source_base + "categories.parquet"
+    members_source = source_base + "members.parquet"
+
+    def create_data_type(self, appgs):
+        appgs.sort(key=lambda x: x.replace("'", ""))
+        options = [dict(title=appg, shader="#DCDCDC") for appg in appgs]
+
+        appg_membership_ds, created = DataSet.objects.update_or_create(
+            name="mp_appg_memberships",
+            defaults={
+                "data_type": "text",
+                "description": self.description,
+                "release_date": str(date.today()),
+                "label": self.label,
+                "source_label": self.source_label,
+                "source": self.source,
+                "table": "people__persondata",
+                "options": options,
+                "is_shadable": False,
+                "comparators": DataSet.in_comparators(),
+            },
+        )
+        self.add_object_to_site(appg_membership_ds)
+
+        for at in AreaType.objects.filter(code__in=["WMC23"]):
+            appg_membership_ds.areas_available.add(at)
+
+        appg_membership, created = DataType.objects.update_or_create(
+            data_set=appg_membership_ds,
+            name="mp_appg_memberships",
+            defaults={"data_type": "text"},
+        )
+
+        return appg_membership
+
+    def add_results(self, results, data_type):
+        self.stdout.write("Adding APPG data to Django database")
+        for mp, result in tqdm(results, disable=self._quiet):
+            data, created = PersonData.objects.update_or_create(
+                person=mp,
+                data_type=data_type,
+                data=result,
+            )
+
+    def get_results(self):
+        con = duckdb.connect(":default:")
+
+        con.sql(
+            f"CREATE OR REPLACE VIEW tbl_register as (select * from '{self.register_source}')"
+        )
+        con.sql(
+            f"CREATE OR REPLACE VIEW tbl_categories as (select * from '{self.categories_source}')"
+        )
+        con.sql(
+            f"CREATE OR REPLACE VIEW tbl_members as (select * from '{self.members_source}')"
+        )
+
+        results = con.sql(
+            f"""
+            SELECT
+                tbl_members.name, tbl_members.twfy_id, tbl_register.title
+            FROM tbl_members
+            JOIN tbl_categories ON tbl_members.appg = tbl_categories.appg_slug
+            JOIN tbl_register ON tbl_members.appg = tbl_register.slug
+            WHERE
+                member_type = 'mp' AND
+                category_slug = '{self.category_slug}'
+        """
+        )
+
+        twfy_ids = PersonData.objects.filter(data_type__data_set__name="twfyid")
+        data = []
+        appgs = set()
+        for r in results.fetchall():
+            if r[1] is None:
+                self.stderr.write(f"No id found for {r[0]}")
+                continue
+            try:
+                mp = twfy_ids.filter(data=r[1][25:]).first().person
+            except AttributeError:
+                self.stderr.write(f"Failed to match MP {r[0]} ({r[1]})")
+                continue
+            data.append((mp, r[2]))
+            appgs.add(r[2])
+
+        return data, list(appgs)
+
+    def handle(self, *args, **options):
+        super(BaseMPAPPGMembershipImportCommand, self).handle(*args, **options)
+        results, appgs = self.get_results()
+        data_type = self.create_data_type(appgs)
+        self.add_results(results, data_type)
