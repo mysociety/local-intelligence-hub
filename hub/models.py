@@ -474,12 +474,13 @@ class SiteAreaType(models.Model):
 
 
 class AreaType(models.Model):
-    VALID_AREA_TYPES = ["WMC", "WMC23", "STC", "DIS"]
+    VALID_AREA_TYPES = ["WMC", "WMC23", "STC", "DIS", "PFA"]
 
     AREA_TYPES = [
         ("westminster_constituency", "Westminster Constituency"),
         ("single_tier_council", "Single Tier Council"),
         ("district_council", "District Council"),
+        ("policing_area", "Policing Area"),
     ]
 
     code = models.CharField(max_length=10, unique=True)
@@ -686,7 +687,7 @@ class CommonData(models.Model):
 
 
 class Area(models.Model):
-    mapit_id = models.CharField(max_length=30)
+    mapit_id = models.CharField(max_length=30, null=True, blank=True)
     gss = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
     area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE)
@@ -737,11 +738,11 @@ class Area(models.Model):
 
 
 class AreaOverlap(models.Model):
-    area_old = models.ForeignKey(
-        Area, on_delete=models.CASCADE, related_name="old_overlaps"
+    area_from = models.ForeignKey(
+        Area, on_delete=models.CASCADE, related_name="overlaps_from"
     )
-    area_new = models.ForeignKey(
-        Area, on_delete=models.CASCADE, related_name="new_overlaps"
+    area_to = models.ForeignKey(
+        Area, on_delete=models.CASCADE, related_name="overlaps_to"
     )
     population_overlap = models.SmallIntegerField(default=0)
     area_overlap = models.SmallIntegerField(default=0)

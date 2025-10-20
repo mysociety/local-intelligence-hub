@@ -8,6 +8,8 @@ from django.urls import reverse
 from hub.models import (
     Area,
     AreaAction,
+    AreaOverlap,
+    AreaType,
     DataSet,
     Person,
     PersonArea,
@@ -791,6 +793,137 @@ class TestAreaSearchPage(TestCase):
         context = response.context
         self.assertEqual(len(context["areas"]), 4)
         self.assertNotContains(response, "Borsetshire East Council")
+
+    @patch("utils.mapit.MapIt.postcode_point_to_gss_codes")
+    def test_policing_area_lookup_via_postcode(self, mapit_areas):
+        site = Site.objects.get(domain="testserver")
+
+        # Get or create STC area type and ensure it's enabled for site
+        stc_type = AreaType.objects.get(code="STC")
+        SiteAreaType.objects.get_or_create(
+            areatype=stc_type, site=site, defaults={"enabled": True}
+        )
+
+        # Create policing area infrastructure
+        pfa_type = AreaType.objects.create(
+            code="PFA",
+            area_type="policing_area",
+            name_singular="Policing Area",
+            name_plural="Policing Areas",
+            short_name_singular="policing area",
+            short_name_plural="policing areas",
+            description="Police Force Areas (England & Wales) and countries (Scotland & NI)",
+        )
+        SiteAreaType.objects.create(areatype=pfa_type, site=site, enabled=True)
+
+        # Create a local authority
+        hartlepool = Area.objects.create(
+            name="Hartlepool",
+            gss="E06000001",
+            mapit_id="999",
+            area_type=stc_type,
+        )
+
+        # Create policing area
+        cleveland = Area.objects.create(
+            name="Cleveland",
+            gss="E23000013",
+            mapit_id=None,
+            area_type=pfa_type,
+        )
+
+        # Create overlap relationship
+        AreaOverlap.objects.create(
+            area_from=hartlepool,
+            area_to=cleveland,
+            population_overlap=100,
+            area_overlap=100,
+        )
+
+        # Mock MapIt to return Hartlepool GSS
+        mapit_areas.return_value = ["E06000001"]
+
+        # Test with PFA enabled in settings
+        with self.settings(AREA_SEARCH_AREA_CODES=["STC", "DIS", "WMC23", "PFA"]):
+            url = reverse("area_search")
+            response = self.client.get(url, {"search": "TS24 0AA"})
+
+            # Should show search results page (not redirect) because 2 areas found
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "hub/area_search.html")
+
+            # Should include both Hartlepool (LA) and Cleveland (policing area)
+            areas = response.context["areas"]
+            self.assertEqual(len(areas), 2)
+
+            area_names = [a.name for a in areas]
+            self.assertIn("Hartlepool", area_names)
+            self.assertIn("Cleveland", area_names)
+
+            # Verify the correct area types
+            area_types = {a.name: a.area_type.code for a in areas}
+            self.assertEqual(area_types["Hartlepool"], "STC")
+            self.assertEqual(area_types["Cleveland"], "PFA")
+
+    @patch("utils.mapit.MapIt.postcode_point_to_gss_codes")
+    def test_policing_area_not_included_without_setting(self, mapit_areas):
+        site = Site.objects.get(domain="testserver")
+
+        # Get or create STC area type and ensure it's enabled for site
+        stc_type = AreaType.objects.get(code="STC")
+        SiteAreaType.objects.get_or_create(
+            areatype=stc_type, site=site, defaults={"enabled": True}
+        )
+
+        # Create policing area infrastructure
+        pfa_type = AreaType.objects.create(
+            code="PFA",
+            area_type="policing_area",
+            name_singular="Policing Area",
+            name_plural="Policing Areas",
+            short_name_singular="policing area",
+            short_name_plural="policing areas",
+            description="Police Force Areas (England & Wales) and countries (Scotland & NI)",
+        )
+        SiteAreaType.objects.create(areatype=pfa_type, site=site, enabled=True)
+
+        # Create a local authority
+        hartlepool = Area.objects.create(
+            name="Hartlepool",
+            gss="E06000001",
+            mapit_id="999",
+            area_type=stc_type,
+        )
+
+        # Create policing area
+        cleveland = Area.objects.create(
+            name="Cleveland",
+            gss="E23000013",
+            mapit_id=None,
+            area_type=pfa_type,
+        )
+
+        # Create overlap relationship
+        AreaOverlap.objects.create(
+            area_from=hartlepool,
+            area_to=cleveland,
+            population_overlap=100,
+            area_overlap=100,
+        )
+
+        # Mock MapIt
+        mapit_areas.return_value = ["E06000001"]
+
+        # Test WITHOUT PFA in settings
+        with self.settings(AREA_SEARCH_AREA_CODES=["STC", "DIS", "WMC23"]):
+            url = reverse("area_search")
+            response = self.client.get(url, {"search": "TS24 0AA"}, follow=True)
+
+            # With only 1 area found (Hartlepool), it redirects to the area page
+            self.assertRedirects(response, "/area/STC/Hartlepool")
+            self.assertTemplateUsed(response, "hub/area.html")
+            # Check we got to Hartlepool's page, not Cleveland's
+            self.assertEqual(response.context["area"].name, "Hartlepool")
 
 
 class testUserFavouriteViews(TestCase):

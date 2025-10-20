@@ -337,7 +337,7 @@ const app = createApp({
     geomUrl() {
       let url = new URL(window.location.origin + '/exploregeometry.json')
 
-      if (["WMC", "WMC23", "DIS", "STC"].includes(this.area_type)) {
+      if (["WMC", "WMC23", "DIS", "STC", "PFA"].includes(this.area_type)) {
         url = new URL(window.location.origin + '/exploregeometry/' + this.area_type + '.json')
       }
 
