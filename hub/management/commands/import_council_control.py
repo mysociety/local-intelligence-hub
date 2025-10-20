@@ -11,18 +11,8 @@ from .base_importers import (
     BaseImportFromDataFrameCommand,
     MultipleAreaTypesMixin,
     party_shades,
+    standardise_party_name,
 )
-
-party_map = {
-    "CON": "Conservative Party",
-    "LAB": "Labour Party",
-    "LD": "Liberal Democrats",
-    "PC": "Plaid Cymru",
-    "SNP": "Scottish National Party",
-    "GRN": "Green Party",
-    "IND": "Independents",
-    "NOC": "No overall control",
-}
 
 
 class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
@@ -64,7 +54,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
     }
 
     def get_row_data(self, row, conf):
-        party = party_map.get(row[conf["col"]])
+        party = standardise_party_name(row[conf["col"]])
 
         if party is None:
             party = row[conf["col"]]

@@ -814,9 +814,12 @@ class Person(models.Model):
         return self.name
 
     def party(self):
-        return PersonData.objects.get(
-            person=self, data_type=DataType.objects.get(name="party")
-        ).value()
+        if self.person_type == "PCC":
+            data_type = DataType.objects.get(name="pcc_party")
+        else:
+            data_type = DataType.objects.get(name="party")
+
+        return PersonData.objects.get(person=self, data_type=data_type).value()
 
     class Meta:
         unique_together = ("external_id", "id_type")

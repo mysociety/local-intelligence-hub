@@ -2,7 +2,7 @@ import pandas as pd
 from mysoc_dataset import get_dataset_df
 from tqdm import tqdm
 
-from hub.models import Area, AreaData, AreaType, DataType
+from hub.models import Area, AreaData, AreaOverlap, AreaType, DataType
 from utils.constituency_mapping import convert_data_geographies
 
 
@@ -165,3 +165,128 @@ class WMCToSTCDataTypeConverter(WMCToDISDataTypeConverter):
             return None
 
         return a
+
+
+class CouncilToPFADataTypeConverter(DataTypeConverter):
+    """Converts data from local authority areas (DIS/STC) to policing areas (PFA)"""
+
+    def __init__(self):
+        self.new_con_at = AreaType.objects.get(code="PFA")
+        self.old_con_at = None  # We accept both DIS and STC
+        self.source_area_types = ["DIS", "STC"]
+
+    def get_df_from_datatype(self, dt):
+        """Extract existing data from a DataType as a DataFrame"""
+        data_list = []
+        for area_data in AreaData.objects.filter(
+            data_type=dt, area__area_type__code__in=self.source_area_types
+        ):
+            data_list.append([area_data.area.gss, area_data.value()])
+
+        df = pd.DataFrame(data_list, columns=["gss", "value"])
+        return df
+
+    def get_area_type(self, gss_code):
+        """Get PFA area by GSS code"""
+        try:
+            return Area.objects.get(gss=gss_code, area_type__code="PFA")
+        except Area.DoesNotExist:
+            return None
+
+    def convert_datatype_to_new_geography(
+        self, dt, delete_old=False, quiet=True, method="average"
+    ):
+        """
+        Convert a DataType from local authority level to policing area level.
+        Uses AreaOverlap relationships to aggregate data, rather than the CSV
+        file that convert_data_geographies() would use.
+
+        Args:
+            dt: DataType to convert
+            delete_old: Whether to delete existing PFA data for this DataType
+            quiet: Suppress progress output
+            method: Aggregation method - "average" for weighted average, "sum" for total
+        """
+        self.delete_old = delete_old
+        self._quiet = quiet
+
+        # Get source data
+        df = self.get_df_from_datatype(dt)
+        if df.empty:
+            if not quiet:
+                print(f"No data found for {dt.name}")
+            return
+
+        # Create or get the PFA version of this DataType
+        try:
+            new_dt = DataType.objects.get(
+                name=dt.name, data_set=dt.data_set, area_type=self.new_con_at
+            )
+        except DataType.DoesNotExist:
+            new_dt = DataType.objects.get(pk=dt.id)
+            new_dt.pk = None
+            new_dt._state.adding = True
+            new_dt.area_type = self.new_con_at
+            new_dt.save()
+
+        new_dt.auto_converted = True
+        new_dt.save()
+
+        if self.delete_old:
+            self.delete_old_data(new_dt)
+
+        # Aggregate data to PFA level using AreaOverlap
+        pfa_data = {}
+        for _, row in df.iterrows():
+            la_gss = row["gss"]
+            value = row["value"]
+
+            # Find which PFA(s) this LA belongs to
+            overlaps = AreaOverlap.objects.filter(
+                area_from__gss=la_gss, area_to__area_type=self.new_con_at
+            )
+
+            for overlap in overlaps:
+                pfa_area = overlap.area_to
+
+                if pfa_area.gss not in pfa_data:
+                    pfa_data[pfa_area.gss] = {
+                        "area": pfa_area,
+                        "sum": 0,
+                        "weighted_sum": 0,
+                        "weight_total": 0,
+                    }
+
+                if method == "sum":
+                    # For raw counts, just sum them up
+                    pfa_data[pfa_area.gss]["sum"] += value
+                else:
+                    # For percentages/averages, do weighted average
+                    weight = overlap.population_overlap / 100.0
+                    pfa_data[pfa_area.gss]["weighted_sum"] += value * weight
+                    pfa_data[pfa_area.gss]["weight_total"] += weight
+
+        # Save aggregated data
+        value_col = new_dt.value_col
+        for pfa_gss, data in tqdm(
+            pfa_data.items(), disable=self._quiet, total=len(pfa_data)
+        ):
+            if method == "sum":
+                aggregated_value = data["sum"]
+            else:
+                # Calculate weighted average
+                if data["weight_total"] > 0:
+                    aggregated_value = data["weighted_sum"] / data["weight_total"]
+                else:
+                    aggregated_value = data["weighted_sum"]
+
+            AreaData.objects.update_or_create(
+                area=data["area"],
+                data_type=new_dt,
+                defaults={value_col: aggregated_value},
+            )
+
+        # Update dataset metadata
+        new_dt.data_set.areas_available.add(self.new_con_at)
+        new_dt.update_average()
+        new_dt.update_max_min()

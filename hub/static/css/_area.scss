@@ -120,7 +120,7 @@
     }
 }
 
-@each $tab in ("mp", "opinion", "place", "movement") {
+@each $tab in ("mp", "pcc", "opinion", "place", "movement") {
     .area-content[data-section="#{$tab}"] {
         .area-section:not(##{$tab}),
         .area-data-more {

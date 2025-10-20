@@ -47,6 +47,10 @@ class SourcesView(TitleMixin, CobrandTemplateMixin, TemplateView):
                 "label": "MP",
                 "datasets": [],
             },
+            "pcc": {
+                "label": "Police & Crime Commissioner",
+                "datasets": [],
+            },
             "opinion": {
                 "label": "Public opinion",
                 "datasets": [],

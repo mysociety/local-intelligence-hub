@@ -24,6 +24,14 @@
                             </template>
                         </div>
                     </div>
+                    <div class="col-sm-6 col-lg" v-if="areaTypeHasPCC(area_type)">
+                        <h3 class="h5 my-3 text-primary">Police &amp; Crime Commissioner</h3>
+                        <div v-if="selectableDatasets.pcc.length" class="list-group">
+                            <template v-for="dataset in selectableDatasets.pcc">
+                                {% include 'hub/includes/add-data-modal-button.html' %}
+                            </template>
+                        </div>
+                    </div>
                     <div class="col-sm-6 col-lg">
                         <h3 class="h5 my-3 text-primary">Public opinion</h3>
                         <div v-if="selectableDatasets.opinion.length" class="list-group">

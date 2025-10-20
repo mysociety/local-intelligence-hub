@@ -63,6 +63,7 @@ const app = createApp({
     selectableDatasets() {
       let categories = {
         mp: [],
+        pcc: [],
         opinion: [],
         place: [],
         movement: []
@@ -673,6 +674,9 @@ const app = createApp({
     },
     areaTypeHasMP(area_type) {
       return ( area_type === "WMC" || area_type === "WMC23" )
+    },
+    areaTypeHasPCC(area_type) {
+      return ( area_type === "PFA" )
     }
   }
 })

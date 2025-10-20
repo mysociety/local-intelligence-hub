@@ -21,6 +21,29 @@ from utils.mapit import (
     RateLimitException,
 )
 
+party_map = {
+    "CON": "Conservative Party",
+    "Conservative": "Conservative Party",
+    "Conservative and Unionist Party": "Conservative Party",
+    "GRN": "Green Party",
+    "Green": "Green Party",
+    "Green Party (England & Wales)": "Green Party",
+    "SDLP (Social Democratic & Labour Party)": "Social Democratic and Labour Party",
+    "DUP": "Democratic Unionist Party",
+    "LAB": "Labour Party",
+    "Labour": "Labour Party",
+    "Labour/Co-operative": "Labour Co-operative",
+    "Speaker": "Speaker of the House of Commons",
+    "LD": "Liberal Democrats",
+    "Liberal Democrat": "Liberal Democrats",
+    "Alba": "Alba Party",
+    "IND": "Independents",
+    "Independent": "Independents",
+    "SNP": "Scottish National Party",
+    "PC": "Plaid Cymru",
+    "NOC": "No overall control",
+}
+
 party_shades = {
     "Alba Party": "#005EB8",
     "Alliance Party of Northern Ireland": "#F6CB2F",
@@ -52,6 +75,17 @@ HARD_CODED_CONSTITUENCY_LOOKUP = {
     "Ynys Mon": "Ynys Môn",
     "Montgomeryshire and Glyndwr": "Montgomeryshire and Glyndŵr",
 }
+
+
+def standardise_party_name(party):
+    orig_party = party
+    if party_shades.get(party) is not None:
+        return party
+
+    if party_map.get(party) is not None:
+        return party_map[party]
+
+    return orig_party
 
 
 class MultipleAreaTypesMixin:
