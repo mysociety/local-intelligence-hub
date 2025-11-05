@@ -2079,7 +2079,6 @@
     "file_type":"csv",
     "area_type":"STC",
     "delete_first": true,
-    "is_range": true,
     "is_time_series": true,
     "constituency_col":"gss-code",
     "gss_map": {
@@ -2150,7 +2149,6 @@
     "file_type":"csv",
     "area_type":"STC",
     "delete_first": true,
-    "is_range": true,
     "is_time_series": true,
     "constituency_col":"gss-code",
     "do_not_convert": true,
