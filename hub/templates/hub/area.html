@@ -579,7 +579,7 @@
                             {% include 'hub/includes/icons/document.html' with classes='flex-grow-0 flex-shrink-0 me-3' %}
                             <span>{{ dataset.data.value.link_text|safe }}</span>
                         </a>
-                      {% elif dataset.data_type == "integer" %}
+                      {% elif dataset.data_type == "integer" and not dataset.is_range %}
                         {% if dataset.subcategory == "date" %}
                           <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value }}</p>
                         {% else %}
