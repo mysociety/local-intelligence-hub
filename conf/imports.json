@@ -1845,5 +1845,74 @@
         "data_col":"Other"
       }
     ]
+  },
+  {
+    "name":"council_safeguarding_referrals_overall",
+    "label":"Council overall safeguarding referrals",
+    "description":"",
+    "data_type":"integer",
+    "is_range":true,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"October 2025",
+    "source_label":"FOI requests by mySociety",
+    "source":"https://www.whatdotheyknow.com/",
+    "source_type":"csv",
+    "data_url":"",
+    "table":"areadata",
+    "default_value":0,
+    "comparators":"numerical",
+    "exclude_countries":["Northern Ireland"],
+    "unit_type":"integer",
+    "unit_distribution":"point",
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"safeguarding.csv",
+    "uses_gss":false,
+    "do_not_delete":true,
+    "file_type":"csv",
+    "area_type":"STC",
+    "delete_first": true,
+    "is_range": false,
+    "is_time_series": true,
+    "data_types": [
+      {
+        "name":"council_safeguarding_referrals_overall_2020",
+        "label":"2020",
+        "order": 1,
+        "constituency_col":"public_body",
+        "data_col":"Total referrals, year beginning 2020"
+      },
+      {
+        "name":"council_safeguarding_referrals_overall_2021",
+        "label":"2021",
+        "order": 2,
+        "constituency_col":"public_body",
+        "data_col":"Total referrals, year beginning 2021"
+      },
+      {
+        "name":"council_safeguarding_referrals_overall_2022",
+        "label":"2022",
+        "order": 3,
+        "constituency_col":"public_body",
+        "data_col":"Total referrals, year beginning 2022"
+      },
+      {
+        "name":"council_safeguarding_referrals_overall_2023",
+        "label":"2023",
+        "order": 4,
+        "constituency_col":"public_body",
+        "data_col":"Total referrals, year beginning 2023"
+      },
+      {
+        "name":"council_safeguarding_referrals_overall_2024",
+        "label":"2024",
+        "order": 5,
+        "constituency_col":"public_body",
+        "data_col":"Total referrals, year beginning 2024"
+      }
+    ]
   }
 ]
