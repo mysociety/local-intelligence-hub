@@ -223,9 +223,11 @@ class Command(BaseImportFromDataFrameCommand):
                     df[self.data_col].astype(str).str.strip("%").astype(float)
                 )
         elif self.data_type == "integer":
-            df = df.astype({self.data_col: "int"})
             if self.fill_blanks:
                 df[self.data_col] = df[self.data_col].fillna(0)
+            else:
+                df = df.dropna(subset=[self.data_col])
+            df = df.astype({self.data_col: "int"})
 
         if self.party_data:
             df[self.data_col] = df[self.data_col].map(lambda x: self.party_data[x])
