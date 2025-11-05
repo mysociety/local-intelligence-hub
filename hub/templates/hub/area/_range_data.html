@@ -24,8 +24,13 @@
         <th>
           {{ row.label|html_format_dataset_name|safe }}
         </th>
-        <td>{{ row.value|floatformat }}%</td>
-        <td>{{ row.average|floatformat }}%</td>
+        {% if dataset.data_type == "percentage" %}
+          <td>{{ row.value|floatformat }}%</td>
+          <td>{{ row.average|floatformat }}%</td>
+        {% else %}
+          <td>{{ row.value }}</td>
+          <td>{{ row.average }}</td>
+        {% endif %}
       </tr>
       {% endfor %}
   </tbody>
