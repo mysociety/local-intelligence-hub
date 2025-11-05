@@ -157,6 +157,7 @@ $(function(){
 var makeChart = function() {
     var $table = $(this)
     var chartType = $table.data('chart-type') || 'bar'
+    var dataType = $table.data('data-type') || 'percent'
     var chartWidth = $table.data('chart-width') || 600
     var rowHeight = $table.data('row-height') || 80
     var legendHeight = 60
@@ -172,6 +173,22 @@ var makeChart = function() {
 
     var primaryAxis = $table.data('chart-direction') || 'x'
     var crossAxis = ( primaryAxis == 'x' ) ? 'y' : 'x'
+
+    var formatter = function(value) {
+        return value + '%';
+    }
+    var callback = function (value) {
+        return (value / 100).toLocaleString('en-GB', { style: 'percent' })
+    }
+
+    if (dataType != 'percent') {
+        formatter = function(value) {
+            return value;
+        }
+        callback = function (value) {
+            return value;
+        }
+    }
 
     var config = {
         type: chartType,
@@ -190,9 +207,7 @@ var makeChart = function() {
             scales: {
                 [crossAxis]: {
                     ticks: {
-                        callback: function (value) {
-                            return (value / 100).toLocaleString('en-GB', { style: 'percent' })
-                        }
+                        callback: callback,
                     }
                 },
                 [primaryAxis]: {
@@ -224,9 +239,7 @@ var makeChart = function() {
                     }
                 },
                 datalabels: {
-                    formatter: function(value) {
-                        return value + '%'; // Adds percentage to the data label
-                    },
+                    formatter: formatter,
                     color: '#6c757d',
                     anchor: 'end',
                     align: 'end',

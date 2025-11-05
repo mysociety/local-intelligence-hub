@@ -10,7 +10,11 @@
     {% endfor %}
   </tbody>
 {% else %}
-<table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
+{% if dataset.data_type == "percentage" %}
+<table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y" data-data-type="percent">
+  {% else %}
+<table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="x" data-data-type="number">
+  {% endif %}
   <thead>
       <tr>
           <th scope="col"></th>
