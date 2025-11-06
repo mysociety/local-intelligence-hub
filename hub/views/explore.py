@@ -132,6 +132,7 @@ class ExploreDatasetsJSON(TemplateView):
                 defaultValue=d.default_value,
                 is_in=True if d.comparators[0]["field_lookup"] == "in" else False,
                 is_range=d.is_range,
+                is_time_series=d.is_time_series,
                 data_type=d.data_type,
                 areas_available=[t.code for t in d.areas_available.all()],
             )
