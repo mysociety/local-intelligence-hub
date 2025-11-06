@@ -1,12 +1,12 @@
 import $ from 'jquery/dist/jquery.slim'
-import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip } from 'chart.js'
+import { Chart, BarController, BarElement, LineController, LineElement, PointElement, CategoryScale, LinearScale, Legend, Tooltip } from 'chart.js'
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import trackEvent from './analytics.esm.js'
 import setUpCollapsable from './collapsable.esm.js'
 import Dropdown from 'bootstrap/js/dist/dropdown'
 
 
-Chart.register( BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip, ChartDataLabels);
+Chart.register( BarController, BarElement, LineController, LineElement, PointElement, CategoryScale, LinearScale, Legend, Tooltip, ChartDataLabels);
 
 Chart.defaults.font.family = '"Public Sans", sans-serif'
 Chart.defaults.font.size = 12
@@ -190,12 +190,32 @@ var makeChart = function() {
         }
     }
 
+    // there is no way to alert the legend padding in config so we
+    // need to use a plugin to add some height to stop labels on
+    // time series charts overlapping
+    // from https://github.com/chartjs/Chart.js/issues/10388
+    const legendPaddingPlugin = {
+        beforeInit(chart) {
+            const originalFit = chart.legend.fit;
+            chart.legend.fit = function fit() {
+                originalFit.bind(chart.legend)();
+                this.height += 15;
+            }
+        }
+    }
+
+    var plugins = [];
+    if (chartType == 'line') {
+        plugins = [legendPaddingPlugin];
+    }
+
     var config = {
         type: chartType,
         data: {
             labels: extractLabelsFromTable($table),
             datasets: extractDatasetsFromTable($table, primaryAxis)
         },
+        plugins: plugins,
         options: {
             indexAxis: primaryAxis,
             layout: {
@@ -206,6 +226,7 @@ var makeChart = function() {
             },
             scales: {
                 [crossAxis]: {
+                    min: 0,
                     ticks: {
                         callback: callback,
                     }
