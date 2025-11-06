@@ -1,0 +1,30 @@
+{% load hub_filters %}
+{% if dataset.data_type == "percentage" %}
+<table class="table mb-0 js-chart js-chart-time-series" data-chart-type="line" data-chart-direction="x" data-data-type="percent">
+{% else %}
+<table class="table mb-0 js-chart js-chart-time-series" data-chart-type="line" data-chart-direction="x" data-data-type="number">
+{% endif %}
+  <thead>
+      <tr>
+          <th scope="col"></th>
+          <th scope="col" data-color="#068670">This area</th>
+          <th scope="col" data-color="#ced4da">National average</th>
+      </tr>
+  </thead>
+  <tbody>
+    {% for row in dataset.data %}
+      <tr>
+        <th>
+          {{ row.label|html_format_dataset_name|safe }}
+        </th>
+        {% if dataset.data_type == "percentage" %}
+          <td>{{ row.value|floatformat }}%</td>
+          <td>{{ row.average|floatformat }}%</td>
+        {% else %}
+          <td>{{ row.value }}</td>
+          <td>{{ row.average }}</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+  </tbody>
+</table>
