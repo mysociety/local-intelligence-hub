@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 
 from django.conf import settings
 
@@ -117,6 +118,12 @@ class Command(BaseImportFromDataFrameCommand):
         self.url_prefix = row.get("url_prefix", False)
         self.url_label = row.get("url_label", False)
         self.skip_countries = row.get("skip_countries", [])
+        self.do_not_convert = row.get("do_not_convert")
+
+        if type(self.area_type) is not list:
+            self.area_types = [self.area_type]
+        else:
+            self.area_types = self.area_type
 
         if row["uses_gss"]:
             self.uses_gss = True
@@ -279,8 +286,14 @@ class Command(BaseImportFromDataFrameCommand):
         for conf in configs:
             self.setup(conf["name"], conf)
 
-            if not initial_delete_done and self.delete_first:
-                self.initial_delete(conf)
-                initial_delete_done = True
+            data_sets = deepcopy(self.data_sets)
+            for type in self.area_types:
+                self.area_type = type
+                if not initial_delete_done and self.delete_first:
+                    self.initial_delete(conf)
+                    initial_delete_done = True
 
-            super().handle(skip_new_areatype_conversion, *args, **options)
+                super().handle(skip_new_areatype_conversion, *args, **options)
+                # need to reinstate a deepcopy of this otherwise the data_set_name isn't present
+                # and we end up with multiple datasets
+                self.data_sets = data_sets
