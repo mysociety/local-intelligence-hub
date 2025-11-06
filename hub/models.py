@@ -412,6 +412,7 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
     release_date = models.TextField(blank=True, null=True)
     is_upload = models.BooleanField(default=False)
     is_range = models.BooleanField(default=False)
+    is_time_series = models.BooleanField(default=False)
     featured = models.BooleanField(default=False)
     order = models.IntegerField(blank=True, null=True)
     category = models.TextField(blank=True, null=True, choices=CATEGORY_CHOICES)
