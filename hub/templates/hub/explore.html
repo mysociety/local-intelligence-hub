@@ -60,7 +60,7 @@
                             <button @click="removeFilter(filter.name)" type="button" class="btn-close p-0" aria-label="Remove filter"></button>
                         </div>
                         <div :class="{ 'filter__body': true, 'filter__body--expanded': filter.is_in }">
-                            <select v-if="filter.is_range" v-model="filter.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
+                            <select v-if="filter.is_range || filter.is_time_series" v-model="filter.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
                                 <option v-for="ds_type in getDataTypesForCurrentArea(filter)" :value="ds_type.name">${ ds_type.title }</option>
                             </select>
                             <select v-model="filter.selectedComparator" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
@@ -147,7 +147,7 @@
                                 </li>
                             </ul>
                             <div :class="{ 'filter__body': true, 'filter__body--expanded': true }">
-                                <select v-if="shader.is_range" v-model="shader.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
+                                <select v-if="shader.is_range || shader.is_time_series" v-model="shader.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
                                     <option v-for="ds_type in getDataTypesForCurrentArea(shader)" :value="ds_type.name">${ ds_type.title }</option>
                                 </select>
                             </div>
