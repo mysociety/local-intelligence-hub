@@ -174,6 +174,10 @@ class Command(BaseImportFromDataFrameCommand):
 
         if row["is_range"]:
             defaults["is_range"] = True
+        if row.get("is_time_series"):
+            defaults["is_time_series"] = True
+
+        if row["is_range"] or row["is_time_series"]:
             defaults["data_set_name"] = row["data_set_name"]
             defaults["data_set_label"] = row["data_set_label"]
             if row.get("order"):
