@@ -119,6 +119,7 @@ class Command(BaseImportFromDataFrameCommand):
         self.url_label = row.get("url_label", False)
         self.skip_countries = row.get("skip_countries", [])
         self.do_not_convert = row.get("do_not_convert")
+        self.filter = row.get("filter", None)
 
         if type(self.area_type) is not list:
             self.area_types = [self.area_type]
@@ -245,6 +246,10 @@ class Command(BaseImportFromDataFrameCommand):
 
         if self.gss_map:
             df[self.cons_col] = df[self.cons_col].map(lambda x: self.gss_map.get(x, x))
+
+        if self.filter:
+            df = df[df[self.filter["column"]] == self.filter["value"]]
+
         return df
 
     def get_row_data(self, row, conf):
