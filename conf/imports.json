@@ -1847,7 +1847,6 @@
     ]
   },
   {
-<<<<<<< HEAD
     "name":"council_safeguarding_referrals_overall",
     "label":"Council overall safeguarding referrals",
     "description":"",
@@ -1915,76 +1914,6 @@
         "label":"2024",
         "order": 5,
         "data_col":"Total referrals, year beginning 2024"
-      }
-  },
-  {
-    "name":"reported_rapes_per_100k",
-    "label":"Reported Rapes per 100k",
-    "description":"",
-    "data_type":"integer",
-    "is_range":false,
-    "category":"place",
-    "subcategory":null,
-    "release_date":"July 2025",
-    "source_label":"UK and Scottish governments, combined by mySociety",
-    "source":"https://www.moreincommon.org.uk/latest-insights/more-in-common-s-july-mrp/, https://www.gov.scot/collections/recorded-crime-in-scotland/",
-    "source_type":"csv",
-    "data_url":"",
-    "table":"areadata",
-    "default_value":"",
-    "comparators":"numerical",
-    "exclude_countries":["Northern Ireland"],
-    "unit_type":"integer",
-    "unit_distribution":"point",
-    "fill_blanks":false,
-    "is_public":true,
-    "is_filterable":true,
-    "is_shadeable":true,
-    "data_file":"combined_police_data.csv",
-    "uses_gss":false,
-    "do_not_delete":false,
-    "file_type":"csv",
-    "area_type":"PFA",
-    "delete_first": true,
-    "multiply_percentage": false,
-    "constituency_col":"force",
-    "is_range": true,
-    "data_types": [
-      {
-        "name":"reported_rapes_2020_per_100k",
-        "label":"2020",
-        "order": 1,
-        "data_col":"rapes per 100k in 2020"
-      },
-      {
-        "name":"reported_rapes_2021_per_100k",
-        "label":"2021",
-        "order": 2,
-        "data_col":"rapes per 100k in 2021"
-      },
-      {
-        "name":"reported_rapes_2022_per_100k",
-        "label":"2022",
-        "order": 3,
-        "data_col":"rapes per 100k in 2022"
-      },
-      {
-        "name":"reported_rapes_2023_per_100k",
-        "label":"2023",
-        "order": 4,
-        "data_col":"rapes per 100k in 2023"
-      },
-      {
-        "name":"reported_rapes_2024_per_100k",
-        "label":"2024",
-        "order": 5,
-        "data_col":"rapes per 100k in 2024"
-      },
-      {
-        "name":"reported_rapes_2025_per_100k",
-        "label":"2025",
-        "order": 6,
-        "data_col":"rapes per 100k in 2025"
       }
     ]
   },
@@ -2058,6 +1987,79 @@
         "order": 5,
         "data_col":"Female referrals, year beginning 2024"
       }
+    ]
+  },
+  {
+    "name":"reported_rapes_per_100k",
+    "label":"Reported Rapes per 100k",
+    "description":"",
+    "data_type":"integer",
+    "is_range":false,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"July 2025",
+    "source_label":"UK and Scottish governments, combined by mySociety",
+    "source":"https://www.moreincommon.org.uk/latest-insights/more-in-common-s-july-mrp/, https://www.gov.scot/collections/recorded-crime-in-scotland/",
+    "source_type":"csv",
+    "data_url":"",
+    "table":"areadata",
+    "default_value":"",
+    "comparators":"numerical",
+    "exclude_countries":["Northern Ireland"],
+    "unit_type":"integer",
+    "unit_distribution":"point",
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"combined_police_data.csv",
+    "uses_gss":false,
+    "do_not_delete":false,
+    "file_type":"csv",
+    "area_type":"PFA",
+    "delete_first": true,
+    "multiply_percentage": false,
+    "constituency_col":"force",
+    "is_time_series": true,
+    "do_not_convert": true,
+    "data_types": [
+      {
+        "name":"reported_rapes_2020_per_100k",
+        "label":"2020",
+        "order": 1,
+        "data_col":"rapes per 100k in 2020"
+      },
+      {
+        "name":"reported_rapes_2021_per_100k",
+        "label":"2021",
+        "order": 2,
+        "data_col":"rapes per 100k in 2021"
+      },
+      {
+        "name":"reported_rapes_2022_per_100k",
+        "label":"2022",
+        "order": 3,
+        "data_col":"rapes per 100k in 2022"
+      },
+      {
+        "name":"reported_rapes_2023_per_100k",
+        "label":"2023",
+        "order": 4,
+        "data_col":"rapes per 100k in 2023"
+      },
+      {
+        "name":"reported_rapes_2024_per_100k",
+        "label":"2024",
+        "order": 5,
+        "data_col":"rapes per 100k in 2024"
+      },
+      {
+        "name":"reported_rapes_2025_per_100k",
+        "label":"2025",
+        "order": 6,
+        "data_col":"rapes per 100k in 2025"
+      }
+    ]
   },
   {
     "name":"reported_rapes",
@@ -2090,7 +2092,8 @@
     "delete_first": true,
     "multiply_percentage": false,
     "constituency_col":"force",
-    "is_range": true,
+    "is_time_series": true,
+    "do_not_convert": true,
     "data_types": [
       {
         "name":"reported_rapes_2020",
