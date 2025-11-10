@@ -35,7 +35,7 @@ class Command(BaseImportCommand):
                     )
 
                 data_types = DataType.objects.filter(
-                    data_set=ds, area_type__code__in=["DIS", "STC"]
+                    data_set=ds, area_type__code__in=["STC"]
                 )
 
                 for dt in data_types:
