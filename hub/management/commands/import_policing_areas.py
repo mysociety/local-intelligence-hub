@@ -27,6 +27,9 @@ class Command(BaseImportCommand):
 
     _site_name = None
 
+    # the importers standardise from & to and
+    name_map = {"Devon & Cornwall": "Devon and Cornwall"}
+
     def add_arguments(self, parser):
         parser.add_argument(
             "-q", "--quiet", action="store_true", help="Silence progress bars."
