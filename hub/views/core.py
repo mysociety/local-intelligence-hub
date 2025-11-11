@@ -41,6 +41,7 @@ class SourcesView(TitleMixin, CobrandTemplateMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        site = self.request.site
 
         categories = {
             "mp": {
@@ -65,7 +66,9 @@ class SourcesView(TitleMixin, CobrandTemplateMixin, TemplateView):
             },
         }
 
-        for dataset in DataSet.objects.filter(visible=True).order_by("label"):
+        for dataset in DataSet.objects.filter(
+            visible=True, sites=site, sitedataset__enabled=True
+        ).order_by("label"):
             # MP datasets are associated with a Person not an Area,
             # so need to default them to WMC.
             areas_available = dataset.areas_available.all() or [
