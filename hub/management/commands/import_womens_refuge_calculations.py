@@ -1,3 +1,5 @@
+import math
+
 import pandas as pd
 
 from hub.models import AreaData, DataSet, DataType
@@ -17,11 +19,11 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
     data_sets = {
         "recommended_womens_refuges": {
             "defaults": {
-                "label": "Recommended number of women’s refuge spaces",
-                "description": "The Council of Europe recommends one family place (in specialised women’s shelters) per 10,000 citizens.",
+                "label": "Recommended minimum number of women’s refuge spaces",
+                "description": "The Council of Europe recommends at least one family place (in specialised women’s shelters) per 10,000 citizens.",
                 "source": "https://www.coe.int/t/dc/files/ministerial_conferences/2009_justice/EG-TFV(2008)6_complete%20text.pdf",
                 "source_label": "Calculated based on recommendations from The Council of Europe’s EG-TFV task force.",
-                "data_type": "float",
+                "data_type": "integer",
                 "category": "place",
                 "source_type": "",
                 "table": "areadata",
@@ -37,11 +39,11 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         },
         "recommended_rape_crisis_centres": {
             "defaults": {
-                "label": "Recommended number of rape crisis centres",
-                "description": "The Council of Europe recommends one rape crisis centre per 200,000 women.",
+                "label": "Recommended minimum number of rape crisis centres",
+                "description": "The Council of Europe recommends at least one rape crisis centre per 200,000 women.",
                 "source": "https://www.coe.int/t/dc/files/ministerial_conferences/2009_justice/EG-TFV(2008)6_complete%20text.pdf",
                 "source_label": "Calculated based on recommendations from The Council of Europe’s EG-TFV task force.",
-                "data_type": "float",
+                "data_type": "integer",
                 "category": "place",
                 "source_type": "",
                 "table": "areadata",
@@ -57,11 +59,11 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         },
         "recommended_womens_counselling": {
             "defaults": {
-                "label": "Recommended number of women’s counselling centres",
-                "description": "The Council of Europe recommends one women’s counselling centre for every 50,000 women.",
+                "label": "Recommended minimum number of women’s counselling centres",
+                "description": "The Council of Europe recommends at least one women’s counselling centre for every 50,000 women.",
                 "source": "https://www.coe.int/t/dc/files/ministerial_conferences/2009_justice/EG-TFV(2008)6_complete%20text.pdf",
                 "source_label": "Calculated based on recommendations from The Council of Europe’s EG-TFV task force.",
-                "data_type": "float",
+                "data_type": "integer",
                 "category": "place",
                 "source_type": "",
                 "table": "areadata",
@@ -93,9 +95,9 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         df = pd.DataFrame([
             {
                 self.cons_row: row.area.gss,
-                self.data_sets["recommended_womens_refuges"]["col"]: row.value() / 10000,
-                self.data_sets["recommended_rape_crisis_centres"]["col"]: row.value() / 2 / 200000,
-                self.data_sets["recommended_womens_counselling"]["col"]: row.value() / 2 / 50000,
+                self.data_sets["recommended_womens_refuges"]["col"]: math.ceil(row.value() / 10000),
+                self.data_sets["recommended_rape_crisis_centres"]["col"]: math.ceil(row.value() / 2 / 200000),
+                self.data_sets["recommended_womens_counselling"]["col"]: math.ceil(row.value() / 2 / 50000),
             }
             for row in ad
         ])
