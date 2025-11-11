@@ -145,7 +145,7 @@ class ExploreDatasetsJSON(TemplateView):
                 and type_map[d.name]["stats"]
             ):
                 ds = {**ds, **type_map[d.name]}
-            if d.is_range:
+            if d.is_range or d.is_time_series:
                 ds["types"] = [
                     {
                         "name": dt.name,
