@@ -107,7 +107,7 @@ class Command(BaseImportCommand):
                 "table": "person__persondata",
                 "is_public": True,
                 "is_filterable": True,
-                "is_shadable": False,
+                "is_shadable": True,
                 "comparators": DataSet.comparators_default(),
             },
         )
@@ -233,7 +233,7 @@ class Command(BaseImportCommand):
                 "comparators": DataSet.numerical_comparators()[::-1],
                 "is_public": True,
                 "is_filterable": True,
-                "is_shadable": False,
+                "is_shadable": True,
                 "unit_type": "raw",
                 "unit_distribution": "other",
             },
