@@ -27,6 +27,9 @@ class Command(BaseImportCommand):
 
     _site_name = None
 
+    # the importers standardise from & to and
+    name_map = {"Devon & Cornwall": "Devon and Cornwall"}
+
     def add_arguments(self, parser):
         parser.add_argument(
             "-q", "--quiet", action="store_true", help="Silence progress bars."
@@ -97,7 +100,7 @@ class Command(BaseImportCommand):
         pfa_to_lads = defaultdict(list)
         for _, row in df.iterrows():
             pfa_code = row["PFA23CD"]
-            pfa_name = row["PFA23NM"]
+            pfa_name = self.name_map.get(row["PFA23NM"], row["PFA23NM"])
             lad_code = row["LAD23CD"]
             pfa_to_lads[pfa_code].append(
                 {"lad_code": lad_code, "pfa_name": pfa_name, "pfa_code": pfa_code}

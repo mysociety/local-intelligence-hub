@@ -94,6 +94,15 @@ class Command(BaseImportCommand):
         # Create data types for PCC data
         area_type = AreaType.objects.get(code=self.area_type)
 
+        opt_map = {
+            "Labour Co-operative": "Labour and Co-operative Party",
+            "Plaid Cymru": "Plaid Cymru - The Party of Wales",
+        }
+        options = [
+            {"title": opt_map.get(party, party), "shader": shade}
+            for party, shade in party_shades.items()
+        ]
+
         party_ds, _ = DataSet.objects.update_or_create(
             name="pcc_party",
             defaults={
@@ -107,7 +116,8 @@ class Command(BaseImportCommand):
                 "table": "person__persondata",
                 "is_public": True,
                 "is_filterable": True,
-                "is_shadable": False,
+                "is_shadable": True,
+                "options": options,
                 "comparators": DataSet.comparators_default(),
             },
         )
@@ -233,7 +243,7 @@ class Command(BaseImportCommand):
                 "comparators": DataSet.numerical_comparators()[::-1],
                 "is_public": True,
                 "is_filterable": True,
-                "is_shadable": False,
+                "is_shadable": True,
                 "unit_type": "raw",
                 "unit_distribution": "other",
             },
@@ -285,6 +295,15 @@ class Command(BaseImportCommand):
         majority_dt.update_average()
         majority_dt.update_max_min()
 
+        opt_map = {
+            "Labour Co-operative": "Labour and Co-operative Party",
+            "Plaid Cymru": "Plaid Cymru - The Party of Wales",
+        }
+        options = [
+            {"title": opt_map.get(party, party), "shader": shade}
+            for party, shade in party_shades.items()
+        ]
+
         # Create DataSet for second placed party
         second_party_ds, _ = DataSet.objects.update_or_create(
             name="pcc_second_party",
@@ -297,10 +316,7 @@ class Command(BaseImportCommand):
                 "source": "https://democracyclub.org.uk/",
                 "source_label": "Data from Democracy Club.",
                 "table": "areadata",
-                "options": [
-                    {"title": party, "shader": shade}
-                    for party, shade in party_shades.items()
-                ],
+                "options": options,
                 "is_public": True,
                 "is_filterable": True,
                 "comparators": DataSet.in_comparators(),
