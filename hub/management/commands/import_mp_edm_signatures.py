@@ -14,7 +14,15 @@ from .base_importers import BaseImportCommand
 class Command(BaseImportCommand):
     help = "Import relevant MP EDM signatures"
 
-    edm_list = settings.BASE_DIR / "data" / "relevant_edms.csv"
+    # Default CSV file
+    edm_list = settings.BASE_DIR / "data" / "climate_edms.csv"
+
+    # Site-specific CSV files
+    edm_list_by_site = {
+        "lih": settings.BASE_DIR / "data" / "climate_edms.csv",
+        "evaw": settings.BASE_DIR / "data" / "vawg_edms.csv",
+    }
+
     early_day_motion_ids = []
     edm_data = {}
 
@@ -31,6 +39,12 @@ class Command(BaseImportCommand):
             }
 
     def handle(self, *args, **options):
+        # Store the site argument to determine which CSV file to use
+        site_arg = options.get("site", "")
+
+        # Set edm_list based on the site
+        self.edm_list = self.edm_list_by_site.get(site_arg, self.edm_list)
+
         super(Command, self).handle(*args, **options)
         if not self._quiet:
             print("Getting relevant data on EDMs from Parliament API")
