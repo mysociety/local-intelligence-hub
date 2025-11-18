@@ -43,7 +43,7 @@ class CurrentSiteMiddlware:
 
     def __call__(self, request):
         site = None
-        if not request.path.startswith("/admin"):
+        if not request.path.startswith("/admin/"):
             try:
                 site = Site.objects.get_current(request)
             except Site.DoesNotExist:
