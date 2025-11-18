@@ -649,6 +649,20 @@ class BaseMPAPPGMembershipImportCommand(BaseImportCommand):
     categories_source = source_base + "categories.parquet"
     members_source = source_base + "members.parquet"
 
+    def get_category_slugs(self):
+        """
+        Returns a list of category slugs to filter on.
+        Can be overridden by subclasses to provide multiple slugs.
+        """
+        if hasattr(self, "category_slugs") and self.category_slugs:
+            return self.category_slugs
+        elif hasattr(self, "category_slug") and self.category_slug:
+            return [self.category_slug]
+        else:
+            raise NotImplementedError(
+                "Either category_slug or category_slugs must be defined"
+            )
+
     def create_data_type(self, appgs):
         appgs.sort(key=lambda x: x.replace("'", ""))
         options = [dict(title=appg, shader="#DCDCDC") for appg in appgs]
@@ -703,6 +717,10 @@ class BaseMPAPPGMembershipImportCommand(BaseImportCommand):
             f"CREATE OR REPLACE VIEW tbl_members as (select * from '{self.members_source}')"
         )
 
+        # Get the list of category slugs to filter on
+        category_slugs = self.get_category_slugs()
+        slugs_list = "', '".join(category_slugs)
+
         results = con.sql(
             f"""
             SELECT
@@ -712,7 +730,7 @@ class BaseMPAPPGMembershipImportCommand(BaseImportCommand):
             JOIN tbl_register ON tbl_members.appg = tbl_register.slug
             WHERE
                 member_type = 'mp' AND
-                category_slug = '{self.category_slug}'
+                category_slug IN ('{slugs_list}')
         """
         )
 
