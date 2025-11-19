@@ -1,20 +1,9 @@
 {% load hub_filters %}
-{% if dataset.db_name == "council_action_scorecard_sections" %}
-<table class="table mb-0 mt-2">
-  <tbody>
-    {% for row in dataset.data %}
-      <tr>
-        <th>{{ row.label|html_format_dataset_name|safe }}</th>
-        <td>{{ row.value|floatformat:"0" }}%</td>
-      </tr>
-    {% endfor %}
-  </tbody>
-{% else %}
 {% if dataset.data_type == "percentage" %}
-<table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y" data-data-type="percent">
-  {% else %}
-<table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="x" data-data-type="number">
-  {% endif %}
+<table class="table mb-0 js-chart js-chart-time-series" data-chart-type="line" data-chart-direction="x" data-data-type="percent">
+{% else %}
+<table class="table mb-0 js-chart js-chart-time-series" data-chart-type="line" data-chart-direction="x" data-data-type="number">
+{% endif %}
   <thead>
       <tr>
           <th scope="col"></th>
@@ -38,5 +27,4 @@
       </tr>
       {% endfor %}
   </tbody>
-{% endif %}
 </table>
