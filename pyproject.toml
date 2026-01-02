@@ -30,7 +30,7 @@ requests = "2.32.4"
 urllib3 = "2.5.0"
 duckdb = "^1.4.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 django-debug-toolbar = "^3.7.0"
 black = "^24.3.0"
 coverage = "^6.5.0"
