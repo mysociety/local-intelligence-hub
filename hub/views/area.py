@@ -414,6 +414,7 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
             "constituency_transition_group_count": "constituency_transition_groups",
             "power_postcodes_count": "power_postcodes",
             "tcc_open_letter_signatories_count": "tcc_open_letter_signatories",
+            "tcc_2025_local_lobby_count": "tcc_2025_local_lobby_groups",
             "wildlife_trusts_reserves_count": "wildlife_trusts_reserves",
             "rspb_reserves_count": "rspb_reserves",
             "council_net_zero_date": "council_net_zero_details",
