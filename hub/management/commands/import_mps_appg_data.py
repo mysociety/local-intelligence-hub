@@ -28,7 +28,7 @@ class Command(BaseMPAPPGMembershipImportCommand):
             "HEALTH_MEDICINE_PUBLIC_HEALTH",
             "HUMAN_RIGHTS_EQUALITY_SOCIAL_JUSTICE",
             "SOCIAL_CARE_WELFARE_FAMILY_SUPPORT",
-        ]
+        ],
     }
 
     def handle(self, *args, **options):
@@ -37,7 +37,8 @@ class Command(BaseMPAPPGMembershipImportCommand):
 
         # Set category_slugs based on the site
         self.category_slugs = self.category_slugs_by_site.get(
-            site_arg, self.category_slugs)
+            site_arg, self.category_slugs
+        )
 
         # Call the parent handle method
         super().handle(*args, **options)
