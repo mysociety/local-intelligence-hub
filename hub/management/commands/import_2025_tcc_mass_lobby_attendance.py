@@ -44,7 +44,7 @@ class Command(BaseImportFromDataFrameCommand):
         },
         "2025_mass_lobby_constituents": {
             "defaults": {
-                "label": "Constituents attending 2025 Act Now Change Forever Mass Lobby",
+                "label": "Constituents registered for 2025 Act Now Change Forever Mass Lobby",
                 "data_type": "integer",
                 "category": "movement",
                 "release_date": "July 2025",
