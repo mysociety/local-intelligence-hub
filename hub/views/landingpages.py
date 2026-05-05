@@ -10,7 +10,7 @@ class BaseLandingPageView(TitleMixin, TemplateView):
     template_name = "hub/landing_page.html"
 
     # Default values which could be overridden in the extending Views
-    example_filter_label = "Great Big Green Week events 2023"
+    example_filter_label = "Great Big Green Week events 2025"
     example_filter_comparator = "is greater than"
     example_filter_value = "1"
     example_shader_label = "MP majority"
