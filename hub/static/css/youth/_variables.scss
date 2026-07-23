@@ -1,0 +1,145 @@
+// Color system
+
+$color-yif-purple: #5A1E84;
+$color-yif-lime: #D7FB51;
+$color-yif-orange: #FFAE58;
+$color-yif-blue: #0000FF;
+$color-yif-grey: #424242;
+$color-yif-offwhite: #F4F4F4;
+
+$white:    #fff;
+$gray-100: $color-yif-offwhite;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #6c757d;
+$gray-700: $color-yif-grey;
+$gray-800: #343a40;
+$gray-900: #212529;
+$black:    #000;
+
+$blue: $color-yif-blue;
+$purple: $color-yif-purple;
+$orange: $color-yif-orange;
+$yellow: $color-yif-lime;
+
+$purple-100: tint-color($purple, 80%) !default;
+
+$primary: $purple;
+$secondary: $color-yif-grey;
+$info: $blue;
+$warning: $orange;
+$light: $gray-100;
+$dark: $gray-900;
+
+// Options
+
+// Gradient
+
+// Spacing
+
+// Position
+
+// Body
+
+$body-bg: $white;
+$body-color: $dark;
+
+// Utilities maps
+
+// Links
+
+$link-color: $blue;
+$link-hover-decoration: none;
+
+// Paragraphs
+
+// Grid breakpoints
+
+// Grid containers
+
+// Grid columns
+
+// Container padding
+
+// Components
+
+// Typography
+
+$font-family-sans-serif: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+$headings-font-family: Geologica, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+$headings-font-weight: 600;
+
+$display-font-family: $headings-font-family;
+$display-font-weight: 600;
+
+// Tables
+
+// Buttons + Forms
+
+// Buttons
+
+// Forms
+
+// Form validation
+
+// Z-index master list
+
+// Navs
+
+// Navbar
+
+// Dropdowns
+
+// Pagination
+
+// Placeholders
+
+// Cards
+
+// Accordion
+
+// Tooltips
+
+// Popovers
+
+// Toasts
+
+// Badges
+
+// Modals
+
+// Alerts
+
+// Progress bars
+
+// List group
+
+// Image thumbnails
+
+// Figures
+
+// Breadcrumbs
+
+// Carousel
+
+// Spinners
+
+// Close
+
+// Offcanvas
+
+// Code
+
+// Local Intelligence Hub
+
+$site-nav-bg: $purple-100;
+
+$site-footer-bg: $color-yif-grey;
+$site-footer-color: $white;
+$site-footer-link-color: $white;
+$site-footer-link-hover-color: $color-yif-lime;
+
+$homepage-search-section-bg: $site-nav-bg;
