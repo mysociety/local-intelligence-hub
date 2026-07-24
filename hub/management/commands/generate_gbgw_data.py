@@ -26,14 +26,14 @@ class Command(BaseLatLonGeneratorCommand):
             settings.BASE_DIR / "data" / f"gbgw_events_{self.year}_processed.csv"
         )
 
-        if self.year == 25:
+        if self.year in (25, 26):
             self.row_name = "name"
             self.uses_postcodes = True
         else:
             self.row_name = "Organisation"
 
     def get_location_from_row(self, row):
-        if self.year == 25:
+        if self.year in (25, 26):
             return {"postcode": row["postcode"]}
         else:
             return {"lat_lon": [row.Lat, row.Long]}
