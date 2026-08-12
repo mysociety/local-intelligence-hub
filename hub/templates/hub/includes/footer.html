@@ -11,36 +11,11 @@
     <div class="container">
         <h2 class="h4 mb-3">{{ site_title }}</h2>
         <div class="row mb-n4">
-            <div class="col-md-5 mb-4">
+            <div class="col-lg-4 col-sm-8 mb-4">
                 <p class="mb-0">Analyse and explore data about local MPs, constituencies, public opinion and the climate and nature movement in order to support your campaigning and organising efforts.</p>
-
-                <div class="mysoc-newsletter mt-4 d-print-none">
-                    <h3 class="h5 mb-3 lh-sm">Subscribe to hear from <br> Local Intelligence Hub, and mySociety</h3>
-                    <div id="mc_embed_signup">
-                        <form action="https://mysociety.us9.list-manage.com/subscribe/post?u=53d0d2026dea615ed488a8834&amp;id=287dc28511&amp;f_id=002a44e1f0" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form">
-
-                            <div class="mysoc-newsletter--input-wrapper">
-                                <div class="d-flex flex-column">
-                                <label class="mb-1" for="mce-EMAIL">Email Address</label>
-                                <input class="form-control mb-2 mb-sm-0" type="email" name="EMAIL" id="mce-EMAIL" required value="">
-                                </div>
-                                <input class="btn btn-primary font-weight-bold" type="submit" name="subscribe" id="mc-embedded-subscribe" value="Subscribe">
-                            </div>
-
-                            <!-- mySociety newsletter -->
-                            <input type="checkbox" name="group[11745][32]" value="" hidden checked>
-                            <!-- Climate action -->
-                            <input type="checkbox" name="group[11745][68719476736]" value="" hidden checked>
-
-                            <div aria-hidden="true" style="position: absolute; left: -5000px;">
-                            <input type="text" name="b_53d0d2026dea615ed488a8834_287dc28511" tabindex="-1" value="">
-                            </div>
-
-                        </form>
-                    </div>
-                </div>
             </div>
-            <div class="col-md-6 col-lg-5 offset-lg-2 mb-4 d-print-none">
+
+            <div class="col-lg-4 offset-lg-1 mb-4 d-print-none">
                 <ul class="nav site-footer__nav">
                     {% include 'hub/includes/nav-item.html' with name='about' label='About' %}
                     {% include 'hub/includes/nav-item.html' with name='privacy' label='Privacy policy' %}
@@ -54,6 +29,29 @@
                   {% endif %}
                 </ul>
             </div>
+
+            <div class="col-lg-3 mb-4">
+                <div class="mysoc-newsletter d-print-none">
+                    <p class="fw-bold">Subscribe to hear from <br> Local Intelligence Hub, and mySociety</p>
+                    <form class="mailing-list-signup js-mailing-list-signup {{ classes }}" method="POST" action="{% url 'mailing_list_signup' %}">
+                        <div class="mt-3 js-mailing-list-email mysoc-newsletter--input-wrapper">
+                            <div class="d-flex flex-column">
+                                <label class="form-label" for="email">Email address</label>
+                                <input type="email" name="email" id="email" class="form-control" autocomplete="email" spellcheck="false">
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-4">Subscribe</button>
+                            <input class="form-check-input" type="checkbox" value="yes" name="mysoc_signup" id="mysoc_signup" hidden>
+                            <input class="form-check-input" type="checkbox" value="yes" name="tcc_signup" id="tcc_signup" hidden>
+                        {% if form.errors.email %}
+                            <div class="invalid-feedback d-block fs-6 mt-2 mb-n3">
+                                {{ form.errors.email }}
+                            </div>
+                        {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
         </div>
         <hr class="my-4 my-md-5">
         <div class="row mb-n4">
