@@ -11,10 +11,11 @@
     <div class="container">
         <h2 class="h4 mb-3">{{ site_title }}</h2>
         <div class="row mb-n4">
-            <div class="col-md-6 mb-4">
+            <div class="col-lg-4 col-sm-8 mb-4">
                 <p class="mb-0">Analyse and explore data about local MPs, constituencies, public opinion and the climate and nature movement in order to support your campaigning and organising efforts.</p>
             </div>
-            <div class="col-md-6 col-lg-5 offset-lg-1 mb-4 d-print-none">
+
+            <div class="col-lg-4 offset-lg-1 mb-4 d-print-none">
                 <ul class="nav site-footer__nav">
                     {% include 'hub/includes/nav-item.html' with name='about' label='About' %}
                     {% include 'hub/includes/nav-item.html' with name='privacy' label='Privacy policy' %}
@@ -28,6 +29,29 @@
                   {% endif %}
                 </ul>
             </div>
+
+            <div class="col-lg-3 mb-4">
+                <div class="mysoc-newsletter d-print-none">
+                    <p class="fw-bold">Subscribe to hear from <br> Local Intelligence Hub, and mySociety</p>
+                    <form class="mailing-list-signup js-mailing-list-signup {{ classes }}" method="POST" action="{% url 'mailing_list_signup' %}">
+                        <div class="mt-3 js-mailing-list-email mysoc-newsletter--input-wrapper">
+                            <div class="d-flex flex-column">
+                                <label class="form-label" for="email">Email address</label>
+                                <input type="email" name="email" id="email" class="form-control" autocomplete="email" spellcheck="false">
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-4">Subscribe</button>
+                            <input class="form-check-input" type="checkbox" value="yes" name="mysoc_signup" id="mysoc_signup" hidden>
+                            <input class="form-check-input" type="checkbox" value="yes" name="tcc_signup" id="tcc_signup" hidden>
+                        {% if form.errors.email %}
+                            <div class="invalid-feedback d-block fs-6 mt-2 mb-n3">
+                                {{ form.errors.email }}
+                            </div>
+                        {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
         </div>
         <hr class="my-4 my-md-5">
         <div class="row mb-n4">

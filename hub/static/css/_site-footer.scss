@@ -11,14 +11,24 @@
     --bs-nav-link-padding-y: 0.25rem;
     --bs-nav-link-padding-x: 0;
     margin-top: calc(var(--bs-nav-link-padding-y) * -1);
+    flex-direction: column;
 
     .nav-item {
-        width: 50%;
+        width: 100%;
     }
 
     .nav-link {
         text-transform: uppercase;
         font-weight: bold;
+        white-space: nowrap;
+    }
+
+    @include media-breakpoint-up(lg) {
+        flex-direction: row;
+
+        .nav-item {
+            width: 50%;
+        }
     }
 }
 

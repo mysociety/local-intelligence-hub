@@ -1,0 +1,22 @@
+.mysoc-newsletter--input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 20rem;
+
+    @include media-breakpoint-up(sm) {
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 0;
+
+        .form-control {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .btn {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+    }
+}
