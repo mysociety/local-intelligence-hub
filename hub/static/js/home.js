@@ -3,6 +3,20 @@ import Modal from 'bootstrap/js/dist/modal'
 import trackEvent from './analytics.esm.js'
 import setUpCollapsable from './collapsable.esm.js'
 
+async function mailingListSignup($form) {
+    const response = await fetch($form.attr('action'), {
+        method: $form.attr('method') || 'GET',
+        mode: 'cors',
+        credentials: 'same-origin',
+        body: $form.serialize(),
+        headers: {
+            "Content-Type": 'application/x-www-form-urlencoded',
+            "Accept": 'application/json; charset=utf-8',
+        },
+    })
+    return response.json()
+}
+
 $(function(){
     if( 'geolocation' in navigator ) {
         $('.js-geolocate').removeClass('d-none');
@@ -96,6 +110,59 @@ $(function(){
             }
         );
     });
+
+    $('.js-collapsable-mailing-list-form').each(function(){
+        setUpCollapsable(
+            $(this).find('.js-mailing-list-name, .js-mailing-list-extras'),
+            $(this).find('.js-mailing-list-email input[name="email"]'),
+            'keyup change',
+            function($targets, $triggers){
+                return $triggers.eq(0).val() !== '';
+            }
+        );
+    });
+
+    // A page can contain more than one signup form (eg: one in the main
+    // content and one in the footer) so everything here is scoped to the
+    // form that was actually submitted.
+    $('.js-mailing-list-signup').on('submit', function(e){
+        e.preventDefault();
+        var $form = $(this);
+        $form.find('.invalid-feedback').remove()
+        $form.find('.is-invalid').removeClass('is-invalid')
+
+        mailingListSignup($form).then(function(response){
+            if (response['response'] == 'ok') {
+                $form.hide()
+                $form.next('.js-mailing-list-success').removeClass('d-none')
+                return
+            }
+
+            var generalErrors = []
+
+            for (var k in response['errors']) {
+                var $field = $form.find('[name="' + k + '"]').eq(0)
+                if ( k === 'mailchimp' || $field.length === 0 ) {
+                    // Either a non-field error, or an error about a field
+                    // this particular variant of the form doesn’t display.
+                    generalErrors.push('There was a problem signing you up, please try again.')
+                } else {
+                    $field.addClass('is-invalid')
+                    $('<div>')
+                        .addClass('invalid-feedback d-block fs-6 mt-2')
+                        .html('<p>' + response['errors'][k].join(', ') + '</p>')
+                        .insertAfter($field)
+                }
+            }
+
+            if ( generalErrors.length ) {
+                $('<div>')
+                    .addClass('invalid-feedback d-block fs-6 mb-3')
+                    .html('<p class="mb-0">' + generalErrors[0] + '</p>')
+                    .prependTo($form)
+            }
+        });
+    })
 
     $('.feedback-modal').each(function(){
         var modal = new Modal(this);

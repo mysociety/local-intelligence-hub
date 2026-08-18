@@ -1,21 +1,38 @@
 <form class="mailing-list-signup js-mailing-list-signup {{ classes }}" method="POST" action="{% url 'mailing_list_signup' %}">
     {% csrf_token %}
+  {% if compact %}
+    <p class="fw-bold">Subscribe to hear from mySociety and The Climate Coalition</p>
+    <input type="hidden" name="mysoc_signup" value="yes">
+    <input type="hidden" name="tcc_signup" value="yes">
+    <div class="mt-3 js-mailing-list-email mysoc-newsletter--input-wrapper">
+        <div class="d-flex flex-column">
+            <label class="form-label" for="{{ id_prefix }}email">Email address</label>
+            <input type="email" name="email" id="{{ id_prefix }}email" class="form-control" autocomplete="email" spellcheck="false">
+        </div>
+        <button type="submit" class="btn btn-primary mt-4">Subscribe</button>
+      {% if show_server_errors and form.errors.email %}
+        <div class="invalid-feedback d-block fs-6 mt-2 mb-n3">
+            {{ form.errors.email }}
+        </div>
+      {% endif %}
+    </div>
+  {% else %}
     <h2 class="h4 mt-0">Want to know when we add new data?</h2>
     <fieldset class="mw-30rem">
         <legend class="float-none mb-0">Tell us your email address and we’ll notify you when we add new data to the Local Intelligence Hub.</legend>
         <div class="mt-3 js-mailing-list-email">
-            <label class="form-label" for="email">Email address</label>
-            <input type="email" name="email" id="email" class="form-control" autocomplete="email" spellcheck="false">
-          {% if form.errors.email %}
+            <label class="form-label" for="{{ id_prefix }}email">Email address</label>
+            <input type="email" name="email" id="{{ id_prefix }}email" class="form-control" autocomplete="email" spellcheck="false">
+          {% if show_server_errors and form.errors.email %}
             <div class="invalid-feedback d-block fs-6 mt-2 mb-n3">
                 {{ form.errors.email }}
             </div>
           {% endif %}
         </div>
         <div class="mt-3 js-mailing-list-name">
-            <label class="form-label" for="full_name">Name</label>
-            <input type="text" name="full_name" id="full_name" class="form-control">
-          {% if form.errors.full_name %}
+            <label class="form-label" for="{{ id_prefix }}full_name">Name</label>
+            <input type="text" name="full_name" id="{{ id_prefix }}full_name" class="form-control" autocomplete="name">
+          {% if show_server_errors and form.errors.full_name %}
             <div class="invalid-feedback d-block fs-6 mt-2 mb-n3">
                 {{ form.errors.full_name }}
             </div>
@@ -25,24 +42,29 @@
     <fieldset class="mt-4 js-mailing-list-extras mw-30rem">
         <legend>You can also, optionally, join our newsletters for more inspiration on data, democracy, and climate action:</legend>
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="yes" name="mysoc_signup" id="mysoc_signup">
-            <label class="form-check-label" for="mysoc_signup">
+            <input class="form-check-input" type="checkbox" value="yes" name="mysoc_signup" id="{{ id_prefix }}mysoc_signup">
+            <label class="form-check-label" for="{{ id_prefix }}mysoc_signup">
                 mySociety newsletter
                 <a href="https://www.mysociety.org/privacy/" target="_blank" title="Opens in a new window">(privacy policy)</a>
             </label>
         </div>
         <div class="form-check mt-2">
-            <input class="form-check-input" type="checkbox" value="yes" name="tcc_signup" id="tcc_signup">
-            <label class="form-check-label" for="tcc_signup">
+            <input class="form-check-input" type="checkbox" value="yes" name="tcc_signup" id="{{ id_prefix }}tcc_signup">
+            <label class="form-check-label" for="{{ id_prefix }}tcc_signup">
                 The Climate Coalition  newsletter
                 <a href="https://www.theclimatecoalition.org/privacy-policy" target="_blank" title="Opens in a new window">(privacy policy)</a>
             </label>
         </div>
     </fieldset>
     <button type="submit" class="btn btn-primary mt-4">Subscribe</button>
+  {% endif %}
 </form>
 
 <div class="d-none js-mailing-list-success">
+  {% if compact %}
+    <p class="fw-bold mb-0">Thanks for signing up!</p>
+  {% else %}
     <h2 class="h4 mt-0">Thanks for signing up!</h2>
     <p class="mw-30rem">We’ll let you know when there’s new data we think you’ll be interested in, on the Local Intelligence Hub.</p>
+  {% endif %}
 </div>

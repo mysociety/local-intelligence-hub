@@ -163,7 +163,7 @@ class InactiveCheckLoginForm(AuthenticationForm):
 
 class MailingListSignupForm(Form):
     email = EmailField(label="Email")
-    full_name = CharField()
+    full_name = CharField(required=False)
     mysoc_signup = BooleanField(
         required=False,
         label=mark_safe(

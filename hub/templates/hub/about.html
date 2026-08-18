@@ -35,23 +35,7 @@
 
 
             <div class="alert alert-primary d-print-none mysoc-newsletter">
-                <p class="fw-bold">Subscribe to hear from Local Intelligence Hub, and mySociety</p>
-                <form class="mailing-list-signup js-mailing-list-signup {{ classes }}" method="POST" action="{% url 'mailing_list_signup' %}">
-                    <div class="mt-3 js-mailing-list-email mysoc-newsletter--input-wrapper">
-                        <div class="d-flex flex-column">
-                            <label class="form-label" for="email">Email address</label>
-                            <input type="email" name="email" id="email" class="form-control" autocomplete="email" spellcheck="false">
-                        </div>
-                        <button type="submit" class="btn btn-primary mt-4">Subscribe</button>
-                        <input class="form-check-input" type="checkbox" value="yes" name="mysoc_signup" id="mysoc_signup" hidden>
-                        <input class="form-check-input" type="checkbox" value="yes" name="tcc_signup" id="tcc_signup" hidden>
-                    {% if form.errors.email %}
-                        <div class="invalid-feedback d-block fs-6 mt-2 mb-n3">
-                            {{ form.errors.email }}
-                        </div>
-                    {% endif %}
-                    </div>
-                </form>
+                {% include 'hub/includes/mailing-list-form.html' with classes="js-collapsable-mailing-list-form" compact=True id_prefix="about_" %}
             </div>
 
 
