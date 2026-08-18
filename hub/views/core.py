@@ -147,7 +147,7 @@ class MailChimpSignupView(TitleMixin, FormView):
 
         name = form.cleaned_data.get("full_name")
         merge_fields = None
-        if name is not None:
+        if name:
             name = name.strip()
             name = re.sub(r"\s+", " ", name)
             parts = name.split(" ", maxsplit=1)
