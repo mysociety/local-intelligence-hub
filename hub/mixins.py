@@ -18,6 +18,8 @@ class TitleMixin:
         site = self.request.site
         if site.name == "evaw":
             return "VAWG Data Hub"
+        elif site.name == "youth":
+            return "Youth Data Hub"
         else:
             return "Local Intelligence Hub"
 
