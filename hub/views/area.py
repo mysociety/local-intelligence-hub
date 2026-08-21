@@ -140,6 +140,11 @@ class BaseAreaView(TitleMixin, DetailView):
         }
         if data_set.is_range:
             data["is_range"] = True
+
+        if data_set.is_time_series:
+            data["is_time_series"] = True
+
+        if data_set.is_range or data_set.is_time_series:
             data_range = base_qs.select_related("data_type").order_by(
                 "data_type__order", "data_type__name"
             )

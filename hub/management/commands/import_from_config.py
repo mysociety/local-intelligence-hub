@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 
 from django.conf import settings
 
@@ -117,6 +118,13 @@ class Command(BaseImportFromDataFrameCommand):
         self.url_prefix = row.get("url_prefix", False)
         self.url_label = row.get("url_label", False)
         self.skip_countries = row.get("skip_countries", [])
+        self.do_not_convert = row.get("do_not_convert")
+        self.filter = row.get("filter", None)
+
+        if type(self.area_type) is not list:
+            self.area_types = [self.area_type]
+        else:
+            self.area_types = self.area_type
 
         if row["uses_gss"]:
             self.uses_gss = True
@@ -174,6 +182,10 @@ class Command(BaseImportFromDataFrameCommand):
 
         if row["is_range"]:
             defaults["is_range"] = True
+        if row.get("is_time_series"):
+            defaults["is_time_series"] = True
+
+        if row["is_range"] or row["is_time_series"]:
             defaults["data_set_name"] = row["data_set_name"]
             defaults["data_set_label"] = row["data_set_label"]
             if row.get("order"):
@@ -223,15 +235,21 @@ class Command(BaseImportFromDataFrameCommand):
                     df[self.data_col].astype(str).str.strip("%").astype(float)
                 )
         elif self.data_type == "integer":
-            df = df.astype({self.data_col: "int"})
             if self.fill_blanks:
                 df[self.data_col] = df[self.data_col].fillna(0)
+            else:
+                df = df.dropna(subset=[self.data_col])
+            df = df.astype({self.data_col: "int"})
 
         if self.party_data:
             df[self.data_col] = df[self.data_col].map(lambda x: self.party_data[x])
 
         if self.gss_map:
             df[self.cons_col] = df[self.cons_col].map(lambda x: self.gss_map.get(x, x))
+
+        if self.filter:
+            df = df[df[self.filter["column"]] == self.filter["value"]]
+
         return df
 
     def get_row_data(self, row, conf):
@@ -273,8 +291,14 @@ class Command(BaseImportFromDataFrameCommand):
         for conf in configs:
             self.setup(conf["name"], conf)
 
-            if not initial_delete_done and self.delete_first:
-                self.initial_delete(conf)
-                initial_delete_done = True
+            data_sets = deepcopy(self.data_sets)
+            for type in self.area_types:
+                self.area_type = type
+                if not initial_delete_done and self.delete_first:
+                    self.initial_delete(conf)
+                    initial_delete_done = True
 
-            super().handle(skip_new_areatype_conversion, *args, **options)
+                super().handle(skip_new_areatype_conversion, *args, **options)
+                # need to reinstate a deepcopy of this otherwise the data_set_name isn't present
+                # and we end up with multiple datasets
+                self.data_sets = data_sets
