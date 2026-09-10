@@ -1,9 +1,9 @@
 services:
   db:
-    image: postgres:13
+    image: postgres:15
     volumes:
       - .:/app
-      - pgdata:/var/lib/postgresql/data
+      - pgdata-15:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: 'password'
       POSTGRES_DB: 'local-intelligence'
@@ -49,6 +49,6 @@ services:
          - email.svc
 
 volumes:
-  pgdata:
+  pgdata-15:
   build:
   node_modules:
