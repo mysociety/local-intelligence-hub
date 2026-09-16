@@ -6,14 +6,14 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4"
-django = "5.2"
+django = "5.2.16"
 django-bootstrap5 = "^22.1"
 django-environ = "0.13"
 django-sslserver = "^0.22"
 psycopg2 = "^2.9.3"
 django-libsass = "^0.9"
 requests-cache = "^0.9.6"
-Pillow = "12.2.0"
+Pillow = "12.3.0"
 python-magic = "^0.4.27"
 tqdm = "^4.66.3"
 pandas = ">=1.5.1,<3"
