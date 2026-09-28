@@ -849,10 +849,14 @@ def cast_data(sender, instance, *args, **kwargs):
         instance.date = date
         instance.data = ""
 
-    elif instance.is_float and instance.float is None and instance.data:
+    elif (
+        instance.is_float and instance.float is None and instance.data not in (None, "")
+    ):
         instance.float = float(instance.data)
         instance.data = ""
 
-    elif instance.is_number and instance.int is None and instance.data:
+    elif (
+        instance.is_number and instance.int is None and instance.data not in (None, "")
+    ):
         instance.int = int(instance.data)
         instance.data = ""
