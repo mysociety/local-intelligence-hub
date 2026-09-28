@@ -406,7 +406,6 @@ class AreaView(CobrandTemplateMixin, BaseAreaView):
                 indexed_categories[data["db_name"]] = data
 
         context["related_categories"] = {
-            "constituency_christian_aid_group_count": "constituency_christian_aid_groups",
             "constituency_foe_groups_count": "constituency_foe_groups",
             "constituency_nt_properties_count": "constituency_nt_properties",
             "constituency_wi_group_count": "constituency_wi_groups",
