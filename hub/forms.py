@@ -33,7 +33,7 @@ class SignupForm(UserCreationForm):
         error_messages={"required": "You must accept the Terms of use"},
     )
 
-    def save(self, commit=True):
+    def save(self, commit=True, site=None):
         user = super().save(commit=False)
         user.email = user.username
         user.is_active = False
@@ -48,6 +48,8 @@ class SignupForm(UserCreationForm):
         if commit:
             user.save()
             props.save()
+            if site is not None:
+                props.sites.add(site)
 
         return user
 

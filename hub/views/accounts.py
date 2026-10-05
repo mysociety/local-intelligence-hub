@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.views import LoginView
+from django.contrib.sites.shortcuts import get_current_site
 from django.db.models import F
 from django.http import HttpResponse
 from django.shortcuts import redirect, reverse
@@ -27,7 +28,7 @@ class SignupView(TitleMixin, FormView):
     success_url = "/confirmation_sent/"
 
     def form_valid(self, form):
-        self.object = form.save()
+        self.object = form.save(site=get_current_site(self.request))
         form.send_confirmation_email(request=self.request, user=self.object)
         return super().form_valid(form)
 

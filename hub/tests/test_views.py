@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from hub.models import (
@@ -63,6 +63,73 @@ class TestSiteLogin(TestCase):
             {"username": "user@example.org", "password": "password"},
         )
         self.assertTrue(response.wsgi_request.user.is_authenticated)
+
+
+@override_settings(ALLOWED_HOSTS=["testserver", "bestserver"])
+class TestSignup(TestCase):
+    fixtures = [
+        "sites.json",  # contains "testserver" and "bestserver" sites
+    ]
+
+    signup_data = {
+        "username": "new@example.org",
+        "password1": "8e#!SxTBQP*mBT7T$!",  # just a random password
+        "password2": "8e#!SxTBQP*mBT7T$!",
+        "full_name": "New User",
+        "organisation": "Example Org",
+        "terms": "on",
+    }
+
+    def signup(self, **extra):
+        response = self.client.post(reverse("signup"), self.signup_data, **extra)
+        self.assertRedirects(
+            response, "/confirmation_sent/", fetch_redirect_response=False
+        )
+        return User.objects.get(username="new@example.org")
+
+    def approve(self, user):
+        props = user.userproperties
+        props.email_confirmed = True
+        props.account_confirmed = True
+        props.save()
+        user.is_active = True
+        user.save()
+
+    def login(self, **extra):
+        return self.client.post(
+            reverse("login"),
+            {"username": "new@example.org", "password": "8e#!SxTBQP*mBT7T$!"},
+            **extra,
+        )
+
+    def test_signup_associates_user_with_current_site(self):
+        # Note that the Client in django.test.TestCase isn’t passed a
+        # HTTP_HOST, so defaults to the value of SERVER_NAME, which is
+        # set to "testserver" by RequestFactory._base_environ().
+        user = self.signup()
+        self.assertEqual(
+            list(user.userproperties.sites.all()),
+            [Site.objects.get(domain="testserver")],
+        )
+
+    def test_signup_on_other_site_associates_user_with_that_site(self):
+        user = self.signup(HTTP_HOST="bestserver")
+        self.assertEqual(
+            list(user.userproperties.sites.all()),
+            [Site.objects.get(domain="bestserver")],
+        )
+
+    def test_approved_user_can_log_in(self):
+        user = self.signup()
+        self.approve(user)
+        response = self.login()
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+
+    def test_approved_user_cannot_log_in_to_other_site(self):
+        user = self.signup()
+        self.approve(user)
+        response = self.login(HTTP_HOST="bestserver")
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
 
 
 class TestExploreDatasetsPage(TestCase):
