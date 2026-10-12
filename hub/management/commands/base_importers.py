@@ -425,6 +425,9 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
             )
         elif dt.data_set.table == "people__persondata":
             person = self.get_person_from_row(row, area)
+            # eg: the area's MP has changed since the data was collected
+            if person is None:
+                return None, False
             data, created = PersonData.objects.update_or_create(
                 data_type=dt,
                 person=person,

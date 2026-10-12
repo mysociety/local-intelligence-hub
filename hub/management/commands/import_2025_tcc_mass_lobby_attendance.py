@@ -78,17 +78,19 @@ class Command(BaseImportFromDataFrameCommand):
         return person
 
     def get_dataframe(self):
-        df = pd.read_csv(
-            self.file_url,
-            usecols=[
+        df = pd.read_csv(self.file_url, header=1)  # Headers on second row
+        df.columns = [col.split("\n")[0].strip() for col in df.columns]
+
+        df = df[
+            [
                 "MP Name",
                 "Constituency",
                 "Did the MP attend?",
                 "Did MP send a representative instead?",
                 "Did MP or rep. attend?",
                 "Number of constituents registered (final numbers)",
-            ],
-        )
+            ]
+        ]
 
         # Rename the columns, for simplicity
         df.columns = [
@@ -118,8 +120,23 @@ class Command(BaseImportFromDataFrameCommand):
                 "Zoe Franklin": "Zöe Franklin",
                 "DÃ¡ire Hughes": "Dáire Hughes",
                 "Ã“rfhlaith Begley": "Órfhlaith Begley",
+                "Emma Lewell-Buck": "Emma Lewell",  # Changed her name in 2025
             }
         )
+
+        # Fabian Hamilton’s row has his party in the constituency column
+        df.loc[
+            (df["mp_name"] == "Fabian Hamilton")
+            & (df["constituency_name"] == "Labour Party"),
+            "constituency_name",
+        ] = "Leeds North East"
+
+        # Monmouthshire’s row has an attendance answer in this column
+        df.loc[
+            (df["constituency_name"] == "Monmouthshire")
+            & (df["mp_name"] == "Yes"),
+            "mp_name",
+        ] = "Catherine Fookes"
 
         # Replace empty values in the "total_constituents" column with 0
         df["total_constituents"] = df["total_constituents"].fillna(0)
