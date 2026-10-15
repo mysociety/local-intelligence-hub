@@ -597,6 +597,11 @@
                         {% endif %}
                       {% elif dataset.is_range and dataset.data|length > 0 %}
                           {% include 'hub/area/_range_data.html' with dataset=dataset %}
+                      {% elif dataset.db_name == "ymca_youth_spend_per_person" %}
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">£{{ dataset.data.value|floatformat:2 }}</p>
+                        {% if dataset.data.average is not None %}
+                        <p class="card-text mt-2 text-muted">£{{dataset.data.average|floatformat:2 }} national average</p>
+                        {% endif %}
                       {% else %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}{% if dataset.data_type == "percent" %}%{% endif %}</p>
                         {% if dataset.data.average is not None %}
